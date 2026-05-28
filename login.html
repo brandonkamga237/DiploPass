@@ -1,0 +1,105 @@
+
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-32">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Login | ENSET Douala</title>
+
+    <!-- Favicons -->
+    <link href="assets/icon/favicon.png" rel="icon">
+    <link href="assets/icon/apple-touch-icon.png" rel="apple-touch-icon">
+
+    <!-- Vendor CSS Files -->
+    <link href="assets/css/fonts.css" rel="stylesheet">
+    <link href="assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/bootstrap-icons.css" rel="stylesheet">
+    
+
+    <!-- Template CSS File -->
+    <link href="assets/css/color.css" rel="stylesheet">
+    <link href="assets/css/preloader.css" rel="stylesheet">
+    <link href="assets/css/landing.css" rel="stylesheet">
+    
+</head>
+<body id="">
+
+    <!-- Preloader -->
+    <div id="preloader"></div>
+    <script src="assets/js/preloader.js"></script>
+    <!-- End preloader -->
+    
+    <!-- Logo -->
+    
+        <div class="login-logo d-flex justify-content-center align-items-end">
+            <img src="/themes/shared/logo.png" alt="">
+        </div>
+    
+      
+    <!-- Main Form  -->
+    <main class="login-form-wrapper d-flex justify-content-center my-0">
+        
+    <form class="login-form container d-flex flex-column align-items-center" method="POST" action="/home/login">
+
+        <input id="csrf_token" name="csrf_token" type="hidden" value="IjY1MGVkOTgxOTc0MzAwMGNiZjFkYjk2OTdmZjc5NTU1YzRmODY2NTQi.agyM1w.H8EsUl4zDn7I1puJwfLmq_jhFUk">
+
+        <!-- Header -->
+        <div class="row w-100 py-5 d-flex justify-content-center">
+            <div class="col-10 text-center">
+                <h4>Connecter-vous pour continuer</h4>
+            </div>
+        </div>
+        
+        
+
+        <!-- Identifiant -->
+        <div class="field row my-2 w-100 d-flex justify-content-center">
+            <div class="col-10 col-lg-4">
+                <input class="form-control" id="id" name="id" placeholder="Saisissez votre identifiant" required size="20" type="text" value="">           
+            </div>
+        </div><!-- End Identifiant -->
+
+        <!-- Securite -->
+        <div class="field row my-2 w-100 d-flex justify-content-center">
+            <div class="col-10 col-lg-4">   
+                <input class="form-control" id="pwd" name="pwd" placeholder="Saisissez votre mot de passe" required type="password" value="">        
+            </div>
+        </div><!-- End Securite -->
+
+        <div class="row pt-5 w-100 d-flex justify-content-center">
+            <div class="col-10 col-lg-4 flex-column align-items-start">
+                <input class="btn btn-primary w-100" type="submit" value="Connexion">
+                <ul class="login-links">
+                    <!-- <li><a class="btn btn-link mt-5" href="#">Identifiant ou mot de passe oublié ?</a></li> -->
+                    <a class="btn btn-link mt-1" href="home.html">Retour a l'accueil !</a>
+                </ul>
+            </div>
+        </div>
+    </form>
+
+    </main><!-- End Main Form  -->
+    
+
+    <!-- Footer  -->
+    <footer id="footer" class="footer my-0">        
+      <!-- Footer Copyright -->
+      <div class="container copyright text-center mt-4">
+          <p>© 
+              <span>Copyright</span> 
+              <strong class="px-1 sitename">ENSET</strong> 
+              <span>All Rights Reserved</span>
+          </p>
+
+          </div>
+      </div><!-- End Footer copyright -->
+  </footer><!-- ENd Footer -->
+
+    <!-- Vendor JS Files -->
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    
+    
+    
+</body>
+</html>

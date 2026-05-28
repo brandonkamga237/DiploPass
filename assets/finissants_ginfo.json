@@ -1,0 +1,467 @@
+[
+  {
+    "matricule": "15NTI002I",
+    "nom": "ALENE AMOUGOU",
+    "prenom": "FRANCOIS",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "24NTIL02A",
+    "nom": "BISSAYA",
+    "prenom": "PRISCILLE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "24NTIL03A",
+    "nom": "CHUIWA LEUMAHA",
+    "prenom": "LAURAIN MANUEL",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "21NTI006I",
+    "nom": "DJIONANG TSOBGNI",
+    "prenom": "BILISTINE ROCHINELLE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "21NTI005I",
+    "nom": "DJOUADJON SIGA",
+    "prenom": "AUDREY DANIELLE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "21NTI004I",
+    "nom": "DONGFACK MEDIEU",
+    "prenom": "RONNELLE MELISSA",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "21NTI013I",
+    "nom": "EBANDA ENYEGUE",
+    "prenom": "ARTHUR DIMITRI",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "14NTI018I",
+    "nom": "EDJIMBI ONDUA",
+    "prenom": "CHRISTEL CYRILLE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+    
+  },
+  {
+    "matricule": "24NTIL04A",
+    "nom": "EKENGLO EKWEL",
+    "prenom": "PATRICIA DANIEL",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "15NTI007I",
+    "nom": "EKODO MVODO",
+    "prenom": "JEAN PATRICE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "24NTIL05A",
+    "nom": "EKOUMOU AZANGUE",
+    "prenom": "YOAN MAEL",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "21NTI016I",
+    "nom": "ENO AYAMBA MAVIA",
+    "prenom": "AUGUSTIN",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "21NTI025I",
+    "nom": "ESSAMA",
+    "prenom": "CHARLES FRÉDÉRIC",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "15NTI016I",
+    "nom": "EYI MENDOMO",
+    "prenom": "SYNTRICE FEUILLANGE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "24NTIL06A",
+    "nom": "FOSSO TSAPI",
+    "prenom": "RAOUL",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "24NTIL07A",
+    "nom": "FOTSE WOGUIA",
+    "prenom": "GLORY",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "23NTIB05A",
+    "nom": "GUIMATIO TIGOT",
+    "prenom": "BREVINE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "15NTI010I",
+    "nom": "MAWEL",
+    "prenom": "ETIENNE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "24NTIL08A",
+    "nom": "MBOSOP TETSING",
+    "prenom": "STEVE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "14NTI029I",
+    "nom": "MEDJO",
+    "prenom": "CARINE AUDREY",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "16N7775I",
+    "nom": "MINKOULOU",
+    "prenom": "EMMANUEL ARSENE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "14NTI024I",
+    "nom": "NDJE BIHOLONG",
+    "prenom": "BIENVENU MAGLOIRE",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "14NTI032I",
+    "nom": "NGUEMA",
+    "prenom": "FERDINAND BOUQUET",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "16N78748",
+    "nom": "NGUETEDE",
+    "prenom": "RICHARD",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "21NTI001E",
+    "nom": "ONGUIBA BOUTNA",
+    "prenom": "DANIEL",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "23NTIB01A",
+    "nom": "POUNDEU WOTCHOKO",
+    "prenom": "LANDRY LEMONN",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "23NTIB11A",
+    "nom": "RASIFA DAHIBOU",
+    "prenom": "",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "24NTIL10A",
+    "nom": "SOUOP KAMGUO",
+    "prenom": "VALENTIN",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "21NTI007I",
+    "nom": "TATCHOUP",
+    "prenom": "YVES JAURES",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "24NTIL12A",
+    "nom": "TSAMO FOLEFACK",
+    "prenom": "AUREL",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "23NTIB02A",
+    "nom": "TYHA FOTOUO",
+    "prenom": "ARTHUR DUMAS",
+    "filiere": "TIC",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "21NII006I",
+    "nom": "ATANGANA MEZUI",
+    "prenom": "MELYSSA INGRID",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "23NIIB04A",
+    "nom": "AYONTA DJOUNDA",
+    "prenom": "HADYLENE",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "14NII004I",
+    "nom": "DASSIE FOMO",
+    "prenom": "VEDEL",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "14NII013I",
+    "nom": "DONCHI NAWESSI TOKO",
+    "prenom": "MUKEL",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "11GI004",
+    "nom": "EGOMGOM YELEM",
+    "prenom": "OLIVIER",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "21NII010I",
+    "nom": "ENYEGUE NGONO",
+    "prenom": "YVES MICHEL MARIE",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "23NIIB06A",
+    "nom": "FOGANG FOTSING",
+    "prenom": "DARYL HERMAN LANDRY",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "24NIIL01A",
+    "nom": "JOUANANG",
+    "prenom": "YVANA ANGE MARINA",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "23NTIB06A",
+    "nom": "KAMGA",
+    "prenom": "RICHARD ALBERT",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "21NII004I",
+    "nom": "KAZE",
+    "prenom": "ANGE ERICA",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "16N78018",
+    "nom": "MAHMOUDOU",
+    "prenom": "BABBA",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "21NII001E",
+    "nom": "MBAIYELKOM",
+    "prenom": "GHISLAIN",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "23NIIB07A",
+    "nom": "MBOUHOM MBOUHOM",
+    "prenom": "PAUL JUSTIN WILFRIED",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "21NII013I",
+    "nom": "MBOUOLANG TIOTSIA",
+    "prenom": "MASLOW",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "14NII020I",
+    "nom": "MBOZO'O METOU'OU",
+    "prenom": "EMMANUEL BERANGER",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "14NII011I",
+    "nom": "MEKONGO BIDJA",
+    "prenom": "YACINTHE CEDRIC",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "15NII014I",
+    "nom": "METANGO SOKENG",
+    "prenom": "ALAIN FELIX",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "14NII007I",
+    "nom": "MINDIGA LOME",
+    "prenom": "JESSICA TRACY",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "13NGI015I",
+    "nom": "NANA",
+    "prenom": "ROGER CYRILLE",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "10GI022",
+    "nom": "NDZANA",
+    "prenom": "ACHILLE GHISLAIN",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "21NII011I",
+    "nom": "NGAGNIGNI",
+    "prenom": "NAFISSETOU",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"interne"
+  },
+  {
+    "matricule": "16N78742",
+    "nom": "NGOUA",
+    "prenom": "KEVIN",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "15NII013I",
+    "nom": "NGUENG",
+    "prenom": "ADRIENNE WILFRIED",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "24NIIL03A",
+    "nom": "NOKAM NGUETA",
+    "prenom": "PAMELA",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "24NIIL04A",
+    "nom": "NOUMECHI NGANSOP",
+    "prenom": "LIONNEL DUVAL",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  },
+  {
+    "matricule": "15NII002I",
+    "nom": "OYONO ABENA",
+    "prenom": "LAURENT BERENGER",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"RT"
+  },
+  {
+    "matricule": "24NIIL07A",
+    "nom": "TOTOCK BOAYELEBA",
+    "prenom": "FERDINAND",
+    "filiere": "II",
+    "niveau": 5,
+    "categorie":"AL"
+  }
+]

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENSET — Admin Système</title>
+  <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="assets/css/bootstrap-icons.css" />
+  <link rel="stylesheet" href="assets/css/admin.css" />
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <a href="#" class="sidebar-brand">
+    <div class="sidebar-brand-icon">DP</div>
+    <div class="sidebar-brand-text">ENSET Douala<br><small>DiploPass</small></div>
+  </a>
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Tableau de bord</div>
+    <a href="#" class="nav-link active"><i class="bi bi-speedometer2"></i><span class="sidebar-label">Vue d'ensemble</span></a>
+    <div class="sidebar-section">Gestion des comptes</div>
+    <a href="#" class="nav-link" onclick="showSection('comptes');return false;"><i class="bi bi-person-badge"></i><span class="sidebar-label">Utilisateurs</span></a>
+    <a href="#" class="nav-link" onclick="showSection('import');return false;"><i class="bi bi-upload"></i><span class="sidebar-label">Import étudiants</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sidebar-label">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <button id="sidebarToggle"><i class="bi bi-list"></i></button>
+  <div class="ms-2 d-none d-md-block">
+    <span style="font-size:.8rem;color:var(--gris-dark);">Connecté en tant que</span>
+    <span style="font-size:.85rem;font-weight:700;color:var(--blue);margin-left:4px;">Admin Système</span>
+  </div>
+  <div class="topbar-right">
+    <button class="topbar-icon-btn"><i class="bi bi-bell"></i><span class="badge-dot"></span></button>
+    <a href="#" class="topbar-avatar">
+      <div class="topbar-avatar-fallback">AS</div>
+      <span class="topbar-name">Administrateur</span>
+    </a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+
+  <!-- VUE D'ENSEMBLE -->
+  <section id="section-overview">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Administration Système</h1>
+        <p class="page-subtitle">Gestion des comptes et des données · ENSET Douala</p>
+      </div>
+      <button class="btn-primary-custom" onclick="openCreateModal()">
+        <i class="bi bi-person-plus-fill"></i> Nouveau compte
+      </button>
+    </div>
+
+    <!-- STATS -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-xl-3">
+        <div class="stat-card blue">
+          <div>
+            <div class="stat-label">Utilisateurs actifs</div>
+            <div class="stat-value" id="stat-actif">0</div>
+            <div class="stat-sub">Comptes activés</div>
+          </div>
+          <i class="bi bi-people-fill stat-icon"></i>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="stat-card green">
+          <div>
+            <div class="stat-label">Étudiants importés</div>
+            <div class="stat-value" id="stat-etudiants">1 240</div>
+            <div class="stat-sub">Promotion 2025/2026</div>
+          </div>
+          <i class="bi bi-mortarboard-fill stat-icon"></i>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="stat-card yellow">
+          <div>
+            <div class="stat-label">Comptes inactifs</div>
+            <div class="stat-value" id="stat-inactif">0</div>
+            <div class="stat-sub">Désactivés manuellement</div>
+          </div>
+          <i class="bi bi-person-x-fill stat-icon"></i>
+        </div>
+      </div>
+      <div class="col-6 col-xl-3">
+        <div class="stat-card orange">
+          <div>
+            <div class="stat-label">Rôles configurés</div>
+            <div class="stat-value">4</div>
+            <div class="stat-sub">Directeur · CSS · CB · RF</div>
+          </div>
+          <i class="bi bi-shield-fill-check stat-icon"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS RAPIDES -->
+    <div class="row g-3 mb-4">
+      <div class="col-12">
+        <h6 style="font-size:.78rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);margin-bottom:12px;">Actions rapides</h6>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="action-card" onclick="openCreateModal()">
+          <div class="action-card-icon blue"><i class="bi bi-person-plus-fill"></i></div>
+          <div class="action-card-title">Créer un compte acteur</div>
+          <div class="action-card-desc">Ajouter un Directeur, Chef de service, Chef de bureau ou Représentant de filière dans le système.</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="action-card" onclick="showSection('import')">
+          <div class="action-card-icon green"><i class="bi bi-file-earmark-arrow-up-fill"></i></div>
+          <div class="action-card-title">Importer des étudiants</div>
+          <div class="action-card-desc">Charger la liste des finissants via un fichier JSON pour initialiser le processus de diplomation.</div>
+        </div>
+      </div>
+      <div class="col-12 col-md-4">
+        <div class="action-card" onclick="showSection('comptes')">
+          <div class="action-card-icon red"><i class="bi bi-person-slash"></i></div>
+          <div class="action-card-title">Gérer les comptes</div>
+          <div class="action-card-desc">Consulter, désactiver ou supprimer les comptes utilisateurs existants dans le système.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERNIERS COMPTES -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title"><i class="bi bi-clock-history me-2" style="color:var(--blue)"></i>Derniers comptes créés</span>
+        <button class="btn-outline-sm" onclick="showSection('comptes')">Voir tout <i class="bi bi-arrow-right ms-1"></i></button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="mini-table">
+          <thead><tr><th>Utilisateur</th><th>Rôle</th><th>Date création</th><th>Statut</th><th></th></tr></thead>
+          <tbody id="recent-accounts-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION COMPTES -->
+  <section id="section-comptes" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Gestion des comptes</h1>
+        <p class="page-subtitle">Utilisateurs actifs dans le système</p>
+      </div>
+      <button class="btn-primary-custom" onclick="openCreateModal()">
+        <i class="bi bi-person-plus-fill"></i> Nouveau compte
+      </button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header" style="gap:12px;flex-wrap:wrap;">
+        <div class="filter-tabs" id="filter-tabs">
+          <button class="filter-tab active" data-role="tous">Tous</button>
+          <button class="filter-tab" data-role="Directeur">Directeur</button>
+          <button class="filter-tab" data-role="Chef de service">Chef service</button>
+          <button class="filter-tab" data-role="Chef de bureau">Chef bureau</button>
+          <button class="filter-tab" data-role="Représentant filière">Représentant</button>
+        </div>
+        <input type="text" id="searchInput" class="search-input ms-auto" placeholder="Rechercher un utilisateur…" style="width:220px;" oninput="filterUsers()">
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Utilisateur</th>
+              <th>Rôle</th>
+              <th>Filière / Service</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+      </div>
+      <div id="empty-state" class="text-center py-5" style="display:none;">
+        <i class="bi bi-person-x" style="font-size:2rem;color:#c0c4cc;"></i>
+        <p style="color:var(--gris-dark);font-size:.85rem;margin-top:8px;">Aucun utilisateur trouvé</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION IMPORT -->
+  <section id="section-import" style="display:none;">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Import des étudiants</h1>
+        <p class="page-subtitle">Charger la liste des finissants via fichier JSON</p>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-12 col-lg-7">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title"><i class="bi bi-upload me-2" style="color:var(--green)"></i>Charger un fichier JSON</span>
+          </div>
+          <div class="panel-body">
+            <div class="drop-zone" id="dropZone">
+              <i class="bi bi-file-earmark-code-fill d-block"></i>
+              <p class="mt-2"><strong>Glisser-déposer</strong> votre fichier ici</p>
+              <p style="font-size:.75rem;margin-top:4px;">ou <strong style="cursor:pointer;color:var(--blue);" onclick="document.getElementById('fileInput').click()">parcourir vos fichiers</strong></p>
+              <p style="font-size:.72rem;color:#b0b3b8;margin-top:8px;">Format accepté : .json · Taille max : 10 Mo</p>
+            </div>
+            <input type="file" id="fileInput" accept=".json" style="display:none;" onchange="handleFileSelect(this)">
+
+            <div id="file-preview" style="display:none;margin-top:16px;">
+              <div style="background:#f8f9fb;border-radius:10px;padding:14px;display:flex;align-items:center;gap:12px;">
+                <div style="width:40px;height:40px;background:#e6f5ef;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:1.2rem;">
+                  <i class="bi bi-file-earmark-check-fill"></i>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:.88rem;font-weight:600;color:var(--dark);" id="file-name">—</div>
+                  <div style="font-size:.75rem;color:var(--gris-dark);" id="file-info">—</div>
+                </div>
+                <button class="btn-icon-sm delete" onclick="clearFile()" title="Retirer le fichier"><i class="bi bi-x-lg"></i></button>
+              </div>
+
+              <div id="json-summary" style="margin-top:12px;"></div>
+
+              <button class="btn-primary-custom w-100 mt-3 justify-content-center" id="importBtn" onclick="launchImport()">
+                <i class="bi bi-cloud-upload-fill"></i> Lancer l'import
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-5">
+        <div class="panel mb-3">
+          <div class="panel-header">
+            <span class="panel-title"><i class="bi bi-info-circle me-2" style="color:var(--blue)"></i>Format attendu</span>
+          </div>
+          <div class="panel-body">
+            <p style="font-size:.82rem;color:var(--gris-dark);margin-bottom:12px;">Le fichier JSON doit respecter la structure suivante :</p>
+            <pre style="background:#f0f2f5;border-radius:8px;padding:14px;font-size:.75rem;color:var(--dark);overflow-x:auto;margin:0;">[
+  {
+    "matricule": "22D0001",
+    "nom": "DUPONT",
+    "prenom": "Jean",
+    "filiere": "Génie Informatique",
+    "cycle": "DIPET II",
+    "annee": "2025-2026"
+  },
+  ...
+]</pre>
+            <div style="margin-top:12px;padding:10px 14px;background:#fff4e0;border-radius:8px;font-size:.78rem;color:#a06010;display:flex;gap:8px;">
+              <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+              <span>Les champs <strong>matricule</strong>, <strong>nom</strong>, <strong>prenom</strong> et <strong>filiere</strong> sont obligatoires.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title"><i class="bi bi-clock-history me-2" style="color:var(--gris-dark)"></i>Historique des imports</span>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <div id="import-history" style="padding:12px 20px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- MODAL CRÉER COMPTE -->
+<div class="modal fade" id="createModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header-custom d-flex align-items-center justify-content-between">
+        <span class="modal-title"><i class="bi bi-person-plus-fill me-2"></i>Créer un compte utilisateur</span>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label-custom">Nom</label>
+            <input type="text" id="f-nom" class="form-control-custom" placeholder="NOM">
+          </div>
+          <div class="col-6">
+            <label class="form-label-custom">Prénom(s)</label>
+            <input type="text" id="f-prenom" class="form-control-custom" placeholder="Prénom">
+          </div>
+          <div class="col-12">
+            <label class="form-label-custom">Adresse email</label>
+            <input type="email" id="f-email" class="form-control-custom" placeholder="exemple@enset.cm">
+          </div>
+          <div class="col-12">
+            <label class="form-label-custom">Rôle</label>
+            <select id="f-role" class="form-select-custom" onchange="toggleFiliereField()">
+              <option value="">— Sélectionner un rôle —</option>
+              <option>Directeur</option>
+              <option>Chef de service</option>
+              <option>Chef de bureau</option>
+              <option>Représentant filière</option>
+            </select>
+          </div>
+          <div class="col-12" id="filiere-field" style="display:none;">
+            <label class="form-label-custom">Filière représentée</label>
+            <select id="f-filiere" class="form-select-custom">
+              <option value="">— Sélectionner une filière —</option>
+              <option>Génie Informatique</option>
+              <option>Génie Électrique</option>
+              <option>Génie Civil</option>
+              <option>Génie Mécanique</option>
+              <option>Enseignement Ménager</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label-custom">Mot de passe provisoire</label>
+            <div style="position:relative;">
+              <input type="password" id="f-password" class="form-control-custom" placeholder="••••••••" style="padding-right:40px;">
+              <button type="button" onclick="togglePwd()" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gris-dark);cursor:pointer;font-size:.95rem;"><i class="bi bi-eye" id="pwd-eye"></i></button>
+            </div>
+          </div>
+          <div class="col-12">
+            <div style="padding:10px 14px;background:#e8f0fc;border-radius:8px;font-size:.78rem;color:var(--blue);display:flex;gap:8px;">
+              <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+              <span>L'utilisateur devra changer son mot de passe à la première connexion.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 px-4 pb-4 d-flex gap-2">
+        <button class="btn-outline-sm px-4 py-2" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn-primary-custom flex-fill justify-content-center" onclick="createAccount()"><i class="bi bi-check-lg"></i> Créer le compte</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM OVERLAY -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirm-icon-el"><i id="confirm-icon-i" class="bi bi-trash3-fill"></i></div>
+    <h6 style="font-weight:700;margin-bottom:6px;" id="confirm-title">Supprimer le compte ?</h6>
+    <p style="font-size:.84rem;color:var(--gris-dark);margin-bottom:20px;" id="confirm-msg">Cette action est irréversible.</p>
+    <div class="d-flex gap-2 justify-content-center">
+      <button class="btn-outline-sm px-4 py-2" onclick="closeConfirm()">Annuler</button>
+      <button id="confirm-action-btn" class="btn-danger-custom px-4 py-2">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="assets/js/bootstrap.bundle.min.js"></script>
+<script src="assets/js/admin.js"></script>
+
+</body>
+</html>
