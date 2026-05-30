@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENSET — Tableau de bord</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    :root {
+      --blue:       #25669e;
+      --blue-dark:  #1a4f7a;
+      --blue-light: #3a7fc1;
+      --gris-bg:    #eeeff1;
+      --gris-dark:  #797a7c;
+      --white-soft: #fefefe;
+      --white-pure: #ffffff;
+      --dark:       #4b4b4b;
+      --sidebar-w:  240px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--gris-bg);
+      color: var(--dark);
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--blue);
+      z-index: 1040;
+      display: flex;
+      flex-direction: column;
+      transition: transform .28s ease, width .28s ease;
+      overflow: hidden;
+    }
+
+    #sidebar.collapsed { width: 64px; }
+    #sidebar.collapsed .sidebar-label,
+    #sidebar.collapsed .sidebar-brand-text,
+    #sidebar.collapsed .sidebar-section { display: none; }
+    #sidebar.collapsed .nav-link { justify-content: center; padding: 12px; }
+    #sidebar.collapsed .nav-link i { margin: 0; font-size: 1.25rem; }
+
+    .sidebar-brand {
+      padding: 18px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      min-height: 64px;
+      text-decoration: none;
+    }
+    .sidebar-brand-icon {
+      width: 36px; height: 36px;
+      background: var(--white-pure);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      color: var(--blue);
+      font-weight: 800;
+      font-size: .85rem;
+    }
+    .sidebar-brand-text {
+      color: var(--white-pure);
+      font-weight: 700;
+      font-size: .95rem;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .sidebar-brand-text small { font-weight: 400; opacity: .75; font-size: .72rem; }
+
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 0; }
+    .sidebar-section {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.45);
+      padding: 14px 20px 4px;
+    }
+
+    .sidebar-nav .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: rgba(255,255,255,.78);
+      padding: 10px 20px;
+      border-radius: 0;
+      font-size: .875rem;
+      transition: background .15s, color .15s;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .sidebar-nav .nav-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .sidebar-nav .nav-link.active { background: var(--blue-dark); color: #fff; border-left: 3px solid #fff; }
+    .sidebar-nav .nav-link i { font-size: 1rem; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 14px 16px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .sidebar-footer .nav-link {
+      display: flex; align-items: center; gap: 12px;
+      color: rgba(255,255,255,.65);
+      font-size: .85rem;
+      text-decoration: none;
+      padding: 6px 4px;
+    }
+    .sidebar-footer .nav-link:hover { color: #fff; }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      position: fixed;
+      top: 0; right: 0;
+      height: 64px;
+      left: var(--sidebar-w);
+      background: var(--white-pure);
+      border-bottom: 1px solid rgba(0,0,0,.08);
+      z-index: 1030;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      gap: 12px;
+      transition: left .28s ease;
+    }
+    #topbar.sidebar-collapsed { left: 64px; }
+
+    #sidebarToggle {
+      background: none;
+      border: none;
+      color: var(--gris-dark);
+      font-size: 1.35rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    #sidebarToggle:hover { background: var(--gris-bg); }
+
+    .topbar-search {
+      flex: 1;
+      max-width: 340px;
+    }
+    .topbar-search input {
+      border: 1px solid #e0e1e3;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: .875rem;
+      background: var(--gris-bg);
+      color: var(--dark);
+      width: 100%;
+    }
+    .topbar-search input:focus { outline: none; border-color: var(--blue); background: #fff; }
+
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+    .topbar-icon-btn {
+      position: relative;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      background: none;
+      border: none;
+      border-radius: 50%;
+      color: var(--gris-dark);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: background .15s;
+      text-decoration: none;
+    }
+    .topbar-icon-btn:hover { background: var(--gris-bg); color: var(--dark); }
+    .badge-dot {
+      position: absolute;
+      top: 5px; right: 5px;
+      width: 9px; height: 9px;
+      background: #e05252;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+
+    .topbar-avatar {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background .15s;
+      text-decoration: none;
+    }
+    .topbar-avatar:hover { background: var(--gris-bg); }
+    .topbar-avatar img {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .topbar-avatar-fallback {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: #fff;
+      font-size: .78rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-name { font-size: .83rem; font-weight: 600; color: var(--dark); white-space: nowrap; }
+
+    /* ── MAIN ── */
+    #main {
+      margin-left: var(--sidebar-w);
+      margin-top: 64px;
+      padding: 28px;
+      transition: margin-left .28s ease;
+      min-height: calc(100vh - 64px);
+    }
+    #main.sidebar-collapsed { margin-left: 64px; }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .page-title { font-size: 1.55rem; font-weight: 700; color: var(--dark); margin: 0; }
+
+    /* ── STAT CARDS ── */
+    .stat-card {
+      background: var(--white-pure);
+      border-radius: 12px;
+      padding: 20px 22px;
+      border-left: 4px solid transparent;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      display: flex; align-items: center; justify-content: space-between;
+      transition: box-shadow .2s;
+    }
+    .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .stat-card.blue   { border-color: var(--blue); }
+    .stat-card.green  { border-color: #2da06e; }
+    .stat-card.yellow { border-color: #e8a020; }
+    .stat-card.red    { border-color: #e05252; }
+
+    .stat-label { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gris-dark); }
+    .stat-value { font-size: 1.6rem; font-weight: 700; color: var(--dark); margin-top: 2px; }
+    .stat-icon {
+      font-size: 1.9rem;
+      opacity: .2;
+    }
+    .stat-card.blue   .stat-icon { color: var(--blue); }
+    .stat-card.green  .stat-icon { color: #2da06e; }
+    .stat-card.yellow .stat-icon { color: #e8a020; }
+    .stat-card.red    .stat-icon { color: #e05252; }
+
+    /* ── PANELS ── */
+    .panel {
+      background: var(--white-pure);
+      border-radius: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gris-bg);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px;
+    }
+    .panel-title { font-size: .95rem; font-weight: 700; color: var(--dark); margin: 0; }
+    .panel-body { padding: 20px; }
+
+    /* progress rows */
+    .progress-item { margin-bottom: 16px; }
+    .progress-item:last-child { margin-bottom: 0; }
+    .progress-label { display: flex; justify-content: space-between; font-size: .83rem; margin-bottom: 5px; }
+    .progress { height: 8px; border-radius: 99px; background: var(--gris-bg); }
+    .progress-bar { border-radius: 99px; }
+
+    /* recent table */
+    .recent-table th { font-size: .73rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gris-dark); border: none; padding: 10px 14px; }
+    .recent-table td { font-size: .85rem; border: none; padding: 10px 14px; vertical-align: middle; }
+    .recent-table tbody tr { border-top: 1px solid var(--gris-bg); }
+    .recent-table tbody tr:hover { background: #f8f9fb; }
+
+    .badge-status {
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 99px;
+    }
+    .badge-complet   { background: #e6f5ef; color: #1f7a52; }
+    .badge-en-cours  { background: #fff4e0; color: #a06010; }
+    .badge-manquant  { background: #fdecea; color: #a03030; }
+
+    /* ── MOBILE OVERLAY ── */
+    #sidebarOverlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 1039;
+    }
+    #sidebarOverlay.show { display: block; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 991px) {
+      #sidebar { transform: translateX(-100%); width: var(--sidebar-w) !important; }
+      #sidebar.mobile-open { transform: translateX(0); }
+      #sidebar.collapsed { transform: translateX(-100%); }
+
+      #topbar { left: 0 !important; }
+      #main { margin-left: 0 !important; padding: 18px; }
+    }
+
+    @media (max-width: 575px) {
+      .topbar-search { display: none; }
+      .topbar-name { display: none; }
+      #main { padding: 14px; }
+      .page-title { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar overlay (mobile) -->
+<div id="sidebarOverlay"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <a href="home.html" class="sidebar-brand">
+    <div class="sidebar-brand-icon">EN</div>
+    <div class="sidebar-brand-text">ENSET Douala<br><small>Scolarité</small></div>
+  </a>
+
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Interface</div>
+
+    <a href="home.html" class="nav-link active">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Tableau de bord</span>
+    </a>
+    <a href="tables.html" class="nav-link">
+      <i class="bi bi-table"></i>
+      <span class="sidebar-label">Finissants</span>
+    </a>
+
+    <div class="sidebar-section">Modules</div>
+
+    <a href="#" class="nav-link">
+      <i class="bi bi-person-badge"></i>
+      <span class="sidebar-label">Inscriptions</span>
+    </a>
+    <a href="#" class="nav-link">
+      <i class="bi bi-mortarboard"></i>
+      <span class="sidebar-label">Diplomation</span>
+    </a>
+    <a href="#" class="nav-link">
+      <i class="bi bi-cash-coin"></i>
+      <span class="sidebar-label">Paiements</span>
+    </a>
+    <a href="#" class="nav-link">
+      <i class="bi bi-file-earmark-text"></i>
+      <span class="sidebar-label">Documents</span>
+    </a>
+    <a href="#" class="nav-link">
+      <i class="bi bi-graph-up"></i>
+      <span class="sidebar-label">Statistiques</span>
+    </a>
+
+    <div class="sidebar-section">Administration</div>
+    <a href="#" class="nav-link">
+      <i class="bi bi-people"></i>
+      <span class="sidebar-label">Utilisateurs</span>
+    </a>
+    <a href="#" class="nav-link">
+      <i class="bi bi-gear"></i>
+      <span class="sidebar-label">Paramètres</span>
+    </a>
+  </div>
+
+  <div class="sidebar-footer">
+    <a href="login.html" class="nav-link">
+      <i class="bi bi-box-arrow-right"></i>
+      <span class="sidebar-label">Déconnexion</span>
+    </a>
+  </div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<header id="topbar">
+  <button id="sidebarToggle" title="Réduire/Ouvrir la barre">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <div class="topbar-search">
+    <input type="text" placeholder="Rechercher un étudiant, dossier…" />
+  </div>
+
+  <div class="topbar-right">
+    <a href="#" class="topbar-icon-btn" title="Alertes">
+      <i class="bi bi-bell"></i>
+      <span class="badge-dot"></span>
+    </a>
+    <a href="#" class="topbar-icon-btn" title="Messages">
+      <i class="bi bi-envelope"></i>
+      <span class="badge-dot"></span>
+    </a>
+    <a href="#" class="topbar-avatar">
+      <div class="topbar-avatar-fallback">AD</div>
+      <span class="topbar-name d-none d-md-block">Administrateur</span>
+    </a>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main id="main">
+  <div class="page-header">
+    <h1 class="page-title">Tableau de bord</h1>
+    <button class="btn btn-sm btn-primary" style="background:var(--blue);border-color:var(--blue);border-radius:8px;">
+      <i class="bi bi-download me-1"></i>Générer un rapport
+    </button>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card blue">
+        <div>
+          <div class="stat-label">Étudiants inscrits</div>
+          <div class="stat-value">1 240</div>
+        </div>
+        <i class="bi bi-people stat-icon"></i>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card green">
+        <div>
+          <div class="stat-label">Dossiers complets</div>
+          <div class="stat-value">312</div>
+        </div>
+        <i class="bi bi-folder-check stat-icon"></i>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card yellow">
+        <div>
+          <div class="stat-label">En attente</div>
+          <div class="stat-value">87</div>
+        </div>
+        <i class="bi bi-hourglass-split stat-icon"></i>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="stat-card red">
+        <div>
+          <div class="stat-label">Dossiers incomplets</div>
+          <div class="stat-value">45</div>
+        </div>
+        <i class="bi bi-exclamation-circle stat-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Progression dossiers -->
+    <div class="col-12 col-lg-7">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="bi bi-bar-chart-line me-2 text-primary" style="color:var(--blue)!important;"></i>Progression par filière</h2>
+          <small class="text-muted">Année 2024-2025</small>
+        </div>
+        <div class="panel-body">
+          <div class="progress-item">
+            <div class="progress-label"><span>Génie Informatique</span><span>78%</span></div>
+            <div class="progress"><div class="progress-bar" style="width:78%;background:var(--blue);"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>Génie Électrique</span><span>63%</span></div>
+            <div class="progress"><div class="progress-bar" style="width:63%;background:#2da06e;"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>Génie Civil</span><span>51%</span></div>
+            <div class="progress"><div class="progress-bar" style="width:51%;background:#e8a020;"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>Génie Mécanique</span><span>44%</span></div>
+            <div class="progress"><div class="progress-bar" style="width:44%;background:#e05252;"></div></div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-label"><span>Sciences Industrielles</span><span>92%</span></div>
+            <div class="progress"><div class="progress-bar" style="width:92%;background:var(--blue-light);"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activité récente -->
+    <div class="col-12 col-lg-5">
+      <div class="panel h-100">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="bi bi-activity me-2" style="color:var(--blue);"></i>Activité récente</h2>
+          <a href="tables.html" class="btn btn-sm" style="font-size:.78rem;color:var(--blue);">Voir tout →</a>
+        </div>
+        <div class="panel-body p-0">
+          <table class="table recent-table mb-0">
+            <thead>
+              <tr>
+                <th>Matricule</th>
+                <th>Étudiant</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code style="font-size:.8rem;color:var(--blue);">21G0001</code></td>
+                <td>Mballa Jean</td>
+                <td><span class="badge-status badge-complet">Complet</span></td>
+              </tr>
+              <tr>
+                <td><code style="font-size:.8rem;color:var(--blue);">21G0002</code></td>
+                <td>Fomo Claire</td>
+                <td><span class="badge-status badge-en-cours">En cours</span></td>
+              </tr>
+              <tr>
+                <td><code style="font-size:.8rem;color:var(--blue);">21G0003</code></td>
+                <td>Ngono Paul</td>
+                <td><span class="badge-status badge-manquant">Incomplet</span></td>
+              </tr>
+              <tr>
+                <td><code style="font-size:.8rem;color:var(--blue);">21G0004</code></td>
+                <td>Biya Sylvie</td>
+                <td><span class="badge-status badge-complet">Complet</span></td>
+              </tr>
+              <tr>
+                <td><code style="font-size:.8rem;color:var(--blue);">21G0005</code></td>
+                <td>Ateba Marc</td>
+                <td><span class="badge-status badge-en-cours">En cours</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  const sidebar  = document.getElementById('sidebar');
+  const topbar   = document.getElementById('topbar');
+  const main     = document.getElementById('main');
+  const toggle   = document.getElementById('sidebarToggle');
+  const overlay  = document.getElementById('sidebarOverlay');
+  const isMobile = () => window.innerWidth < 992;
+
+  toggle.addEventListener('click', () => {
+    if (isMobile()) {
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('show');
+    } else {
+      sidebar.classList.toggle('collapsed');
+      topbar.classList.toggle('sidebar-collapsed');
+      main.classList.toggle('sidebar-collapsed');
+    }
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  });
+
+  window.addEventListener('resize', () => {
+    if (!isMobile()) {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('show');
+    }
+  });
+</script>
+</body>
+</html>

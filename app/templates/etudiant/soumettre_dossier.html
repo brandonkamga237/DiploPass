@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Soumettre mon dossier{% endblock %}
+{% block page_title %}Dépôt de dossier de diplomation{% endblock %}
+
+{% block content %}
+
+{# ── En-tête ── #}
+<div class="page-header" style="margin-bottom:1.5rem">
+  <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+    <div style="width:42px;height:42px;border-radius:10px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+      <i class="bi bi-send-fill" style="color:#fff;font-size:1.1rem"></i>
+    </div>
+    <div>
+      <h1 style="font-size:1.2rem;font-weight:700;color:var(--dark);margin:0">Soumettre mon dossier</h1>
+      <p style="font-size:.82rem;color:var(--gris-dark);margin:2px 0 0">
+        Filière <strong>{{ current_user.filiere }}</strong> · Année <strong>{{ communique.annee_academique }}</strong>
+      </p>
+    </div>
+    <a href="{{ url_for('etudiant.dashboard') }}"
+       class="ms-auto text-decoration-none"
+       style="font-size:.8rem;color:var(--gris-dark)">
+      <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+    </a>
+  </div>
+</div>
+
+{# ── Communiqué ── #}
+<div class="panel mb-4">
+  <div class="panel-header">
+    <h2 class="panel-title"><i class="bi bi-megaphone me-2" style="color:var(--blue)"></i>Communiqué de diplomation</h2>
+    <span style="font-size:.75rem;font-weight:700;color:var(--blue);background:var(--blue-bg);padding:3px 10px;border-radius:20px">
+      {{ communique.annee_academique }}
+    </span>
+  </div>
+  <div class="panel-body">
+    <div style="font-size:.92rem;font-weight:600;color:var(--dark);margin-bottom:.35rem">{{ communique.titre }}</div>
+    {% if communique.contenu %}
+    <p style="font-size:.84rem;color:var(--gris-dark);margin-bottom:.75rem">{{ communique.contenu }}</p>
+    {% endif %}
+    {% if communique.date_limite_depot %}
+    <div style="display:inline-flex;align-items:center;gap:.4rem;background:var(--yellow-bg);border-radius:8px;padding:6px 14px;font-size:.82rem;font-weight:600;color:#92600a">
+      <i class="bi bi-calendar-event"></i>
+      Date limite de dépôt :&nbsp;<strong>{{ communique.date_limite_depot.strftime('%d/%m/%Y') }}</strong>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# ── Formulaire de dépôt ── #}
+<form method="POST" enctype="multipart/form-data" id="form-soumission">
+
+  {# ── Pièces justificatives ── #}
+  <div class="panel mb-4">
+    <div class="panel-header" style="flex-wrap:wrap;gap:8px">
+      <h2 class="panel-title">
+        <i class="bi bi-paperclip me-2" style="color:var(--blue)"></i>Pièces justificatives
+        <span style="font-size:.73rem;color:var(--gris-dark);font-weight:500;margin-left:6px">({{ documents|length }} documents)</span>
+      </h2>
+      <span style="font-size:.74rem;color:var(--gris-dark)">
+        <i class="bi bi-info-circle me-1"></i>PDF, JPG, PNG — max 10 Mo · Vous pouvez compléter après soumission
+      </span>
+    </div>
+    <div class="panel-body p-0">
+
+      {% for doc in documents %}
+      <div class="d-flex align-items-center gap-3 px-4 py-3"
+           style="border-bottom:1px solid var(--gris-bg);flex-wrap:wrap">
+
+        {# Numéro #}
+        <div style="width:34px;height:34px;border-radius:8px;background:var(--blue-bg);
+                    display:flex;align-items:center;justify-content:center;
+                    font-size:.78rem;font-weight:700;color:var(--blue);flex-shrink:0">
+          {{ doc.numero }}
+        </div>
+
+        {# Libellé + observation #}
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:.86rem;font-weight:600;color:var(--dark)">
+            {{ doc.nom }}
+            {% if not doc.obligatoire %}
+            <span style="font-size:.68rem;font-weight:700;color:var(--yellow);
+                         background:var(--yellow-bg);padding:2px 7px;border-radius:10px;margin-left:6px">
+              CONDITIONNEL
+            </span>
+            {% endif %}
+          </div>
+          {% if doc.observation %}
+          <div style="font-size:.76rem;color:var(--gris-dark);margin-top:2px">{{ doc.observation }}</div>
+          {% endif %}
+        </div>
+
+        {# Input fichier #}
+        <div style="flex-shrink:0;min-width:220px">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;
+                        background:var(--gris-bg);border:1.5px dashed #c0c3c8;border-radius:8px;
+                        padding:8px 14px;font-size:.78rem;font-weight:600;color:var(--dark);
+                        transition:border-color .15s"
+                 class="file-label" id="label-{{ doc.id_document }}">
+            <i class="bi bi-cloud-upload" style="font-size:1rem;color:var(--blue)"></i>
+            <span class="label-text-{{ doc.id_document }}">Choisir un fichier…</span>
+            <input type="file"
+                   name="fichier_{{ doc.id_document }}"
+                   accept=".pdf,.jpg,.jpeg,.png"
+                   style="display:none"
+                   onchange="majLabel(this, {{ doc.id_document }})">
+          </label>
+        </div>
+
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+  {# ── Note finale + actions ── #}
+  <div class="panel">
+    <div class="panel-body">
+      <div class="d-flex align-items-flex-start gap-3 mb-4"
+           style="background:var(--blue-bg);border-radius:10px;padding:14px 18px">
+        <i class="bi bi-info-circle-fill flex-shrink-0 mt-1" style="color:var(--blue)"></i>
+        <div style="font-size:.84rem;color:var(--dark)">
+          Vous pouvez soumettre votre dossier <strong>sans joindre de fichiers maintenant</strong> et
+          les déposer ensuite depuis la page de votre dossier. Seuls les formats
+          <strong>PDF, JPG et PNG</strong> sont acceptés (max 10 Mo par fichier).
+        </div>
+      </div>
+      <div class="d-flex gap-3 flex-wrap">
+        <button type="submit" class="btn btn-primary" style="padding:10px 28px;font-size:.9rem;font-weight:700">
+          <i class="bi bi-send me-2"></i>Soumettre mon dossier
+        </button>
+        <a href="{{ url_for('etudiant.dashboard') }}"
+           class="btn"
+           style="padding:10px 20px;font-size:.9rem;background:var(--gris-bg);color:var(--dark);border:none">
+          Annuler
+        </a>
+      </div>
+    </div>
+  </div>
+
+</form>
+
+<script>
+function majLabel(input, idDoc) {
+  var span = document.querySelector('.label-text-' + idDoc);
+  var label = document.getElementById('label-' + idDoc);
+  if (input.files && input.files.length > 0) {
+    span.textContent = input.files[0].name;
+    label.style.borderColor = 'var(--green)';
+    label.style.background  = 'var(--green-bg)';
+    label.querySelector('i').style.color = 'var(--green)';
+  } else {
+    span.textContent = 'Choisir un fichier…';
+    label.style.borderColor = '';
+    label.style.background  = '';
+    label.querySelector('i').style.color = 'var(--blue)';
+  }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Vérification dossier</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.2rem;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .np{background:#e05252;color:#fff;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:auto;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.15rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-circle{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+
+    /* BREADCRUMB */
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+    .bc i{font-size:.7rem;}
+
+    /* ÉTUDIANT CARD */
+    .etd-card{background:var(--white);border-radius:13px;box-shadow:0 1px 7px rgba(0,0,0,.07);padding:20px;margin-bottom:20px;display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;}
+    .etd-av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:1.2rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .etd-name{font-size:1.05rem;font-weight:800;color:var(--dark);}
+    .etd-mat{font-size:.8rem;color:var(--blue);font-weight:700;margin-top:2px;}
+    .etd-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;}
+    .chip{display:inline-flex;align-items:center;gap:5px;font-size:.73rem;font-weight:700;padding:3px 10px;border-radius:99px;}
+    .chip-blue{background:var(--blue-xlight);color:var(--blue);}
+    .chip-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .etd-progress{margin-left:auto;text-align:center;flex-shrink:0;}
+    .progress-ring{position:relative;width:68px;height:68px;}
+    .pr-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    .pr-val{font-size:1rem;font-weight:800;color:var(--dark);}
+    .pr-sub{font-size:.6rem;color:var(--gris-dark);}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* PIÈCE VÉRIFICATION */
+    .verif-piece{border:2px solid var(--gris-border);border-radius:12px;padding:16px;margin-bottom:12px;transition:border-color .2s,box-shadow .2s;}
+    .verif-piece.ok{border-color:var(--green);background:rgba(45,160,110,.03);}
+    .verif-piece.ko{border-color:var(--red);background:rgba(224,82,82,.03);}
+    .verif-piece.pending{border-color:var(--gris-border);}
+    .vp-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px;}
+    .vp-num{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:.75rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+    .vp-doc-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;background:var(--gris-bg);color:var(--gris-dark);}
+    .vp-info{flex:1;}
+    .vp-name{font-size:.9rem;font-weight:700;color:var(--dark);}
+    .vp-req{font-size:.75rem;color:var(--gris-dark);margin-top:2px;}
+    .vp-file{display:inline-flex;align-items:center;gap:6px;background:var(--blue-xlight);color:var(--blue);font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:7px;margin-top:6px;cursor:pointer;text-decoration:none;}
+    .vp-file:hover{background:var(--blue);color:#fff;}
+    .vp-absent{display:inline-flex;align-items:center;gap:6px;background:var(--red-bg);color:var(--red);font-size:.75rem;font-weight:700;padding:4px 10px;border-radius:7px;margin-top:6px;}
+    .vp-actions{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn-valider{background:var(--green);color:#fff;border:none;border-radius:9px;padding:8px 18px;font-size:.84rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s;}
+    .btn-valider:hover{background:#228a5c;}
+    .btn-rejeter{background:var(--red-bg);color:var(--red);border:2px solid var(--red);border-radius:9px;padding:8px 18px;font-size:.84rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;}
+    .btn-rejeter:hover{background:var(--red);color:#fff;}
+    .btn-annuler{background:var(--gris-bg);color:var(--gris-dark);border:none;border-radius:9px;padding:8px 14px;font-size:.84rem;font-weight:600;cursor:pointer;transition:background .15s;}
+    .btn-annuler:hover{background:var(--gris-border);}
+    .vp-status{font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:99px;margin-left:auto;flex-shrink:0;}
+    .vps-ok{background:var(--green-bg);color:var(--green);}
+    .vps-ko{background:var(--red-bg);color:var(--red);}
+    .vps-pending{background:var(--gris-bg);color:var(--gris-dark);}
+    .vp-motif-area{margin-top:10px;display:none;}
+    .vp-motif-area.show{display:block;}
+    .vp-motif-area textarea{border:1px solid var(--gris-border);border-radius:9px;padding:8px 12px;font-size:.84rem;width:100%;resize:vertical;min-height:70px;}
+    .vp-motif-area textarea:focus{outline:none;border-color:var(--red);}
+    .vp-obs{font-size:.78rem;font-style:italic;color:var(--red);margin-top:6px;background:var(--red-bg);padding:6px 10px;border-radius:7px;display:none;}
+    .vp-obs.show{display:block;}
+
+    /* BARRE DE PROGRESSION STICKY */
+    .sticky-progress{position:sticky;top:66px;z-index:100;background:var(--white);border-bottom:1px solid var(--gris-bg);padding:12px 0;margin:-26px -26px 20px;padding-left:26px;padding-right:26px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+    .sp-inner{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .sp-label{font-size:.8rem;font-weight:700;color:var(--dark);flex-shrink:0;}
+    .sp-bar-wrap{flex:1;min-width:150px;}
+    .sp-bar{height:8px;border-radius:99px;background:var(--gris-bg);overflow:hidden;}
+    .sp-fill{height:100%;border-radius:99px;background:var(--blue);transition:width .4s;}
+    .sp-counts{display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap;}
+    .sp-count{font-size:.75rem;font-weight:700;display:flex;align-items:center;gap:4px;}
+
+    /* VALIDATION GLOBALE */
+    .submit-panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:20px;}
+    .sp-title{font-size:.92rem;font-weight:800;color:var(--dark);margin-bottom:12px;}
+    .btn-submit-global{background:var(--green);color:#fff;border:none;border-radius:11px;padding:13px 28px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .18s;}
+    .btn-submit-global:hover{background:#228a5c;}
+    .btn-submit-global:disabled{background:#b0d6c0;cursor:not-allowed;}
+    .btn-reject-global{background:var(--red-bg);color:var(--red);border:2px solid var(--red);border-radius:11px;padding:13px 22px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .18s;}
+    .btn-reject-global:hover{background:var(--red);color:#fff;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}.sticky-progress{margin:-16px -16px 16px;padding:12px 16px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}.sticky-progress{margin:-12px -12px 12px;padding:10px 12px;}.vp-actions{gap:6px;}.btn-valider,.btn-rejeter{padding:7px 12px;font-size:.79rem;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="representant.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Représentant filière</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Mon espace</div>
+    <a href="representant.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Tableau de bord</span></a>
+    <a href="representant.html" class="nav-link active"><i class="bi bi-check2-square"></i><span class="sl">Mes dossiers</span></a>
+    <a href="notifications.html" class="nav-link"><i class="bi bi-bell"></i><span class="sl">Notifications</span><span class="np">3</span></a>
+    <div class="ss">Outils</div>
+    <a href="#" class="nav-link"><i class="bi bi-graph-up"></i><span class="sl">Statistiques</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div style="font-size:.85rem;font-weight:700;color:var(--dark);" class="d-none d-md-block">Vérification dossier</div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-circle">RF</div>
+      <div class="d-none d-md-block"><div class="av-name">M. FOUDA Eric</div><div class="av-role">Représentant GInfo</div></div>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- STICKY PROGRESS -->
+  <div class="sticky-progress">
+    <div class="sp-inner">
+      <span class="sp-label">Progression vérification</span>
+      <div class="sp-bar-wrap">
+        <div class="sp-bar"><div class="sp-fill" id="progressBar" style="width:0%;"></div></div>
+      </div>
+      <div class="sp-counts">
+        <span class="sp-count" style="color:var(--green);"><i class="bi bi-check-circle-fill"></i><span id="countOk">0</span> validées</span>
+        <span class="sp-count" style="color:var(--red);"><i class="bi bi-x-circle-fill"></i><span id="countKo">0</span> rejetées</span>
+        <span class="sp-count" style="color:var(--gris-dark);"><i class="bi bi-circle"></i><span id="countPending">8</span> restantes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BREADCRUMB -->
+  <div class="bc">
+    <a href="representant.html">Mes dossiers</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Vérification — 21G0042 MBALLA Jean-Baptiste</span>
+  </div>
+
+  <!-- ÉTUDIANT -->
+  <div class="etd-card">
+    <div class="etd-av">MB</div>
+    <div style="flex:1;">
+      <div class="etd-name">MBALLA Jean-Baptiste</div>
+      <div class="etd-mat"><i class="bi bi-hash" style="font-size:.75rem;"></i> 21G0042</div>
+      <div class="etd-chips">
+        <span class="chip chip-blue"><i class="bi bi-cpu"></i> Génie Informatique</span>
+        <span class="chip chip-blue">Licence 3</span>
+        <span class="chip chip-yellow"><i class="bi bi-clock"></i> En vérification</span>
+      </div>
+      <div style="font-size:.78rem;color:var(--gris-dark);margin-top:8px;"><i class="bi bi-calendar3 me-1"></i>Dépôt le 15 jan. 2025 · <i class="bi bi-alarm me-1 ms-1"></i>Clôture : <strong style="color:var(--red);">31 jan. 2025</strong></div>
+    </div>
+    <div class="etd-progress">
+      <svg width="68" height="68" viewBox="0 0 68 68">
+        <circle cx="34" cy="34" r="28" fill="none" stroke="var(--gris-bg)" stroke-width="8"/>
+        <circle cx="34" cy="34" r="28" fill="none" stroke="var(--blue)" stroke-width="8"
+          stroke-dasharray="176" stroke-dashoffset="176" id="svgRing"
+          stroke-linecap="round" transform="rotate(-90 34 34)" style="transition:stroke-dashoffset .4s;"/>
+      </svg>
+      <div style="position:relative;margin-top:-52px;text-align:center;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="font-size:.95rem;font-weight:800;color:var(--dark);" id="ringLabel">0/8</div>
+        <div style="font-size:.62rem;color:var(--gris-dark);">vérifiées</div>
+      </div>
+      <div style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- INSTRUCTIONS -->
+  <div class="alert mb-4" style="background:var(--blue-xlight);border:none;border-radius:11px;font-size:.83rem;">
+    <i class="bi bi-info-circle-fill me-2" style="color:var(--blue);"></i>
+    <strong>Mode vérification pièce par pièce.</strong> Pour chaque document, consultez le fichier déposé, puis cliquez <strong>Valider</strong> s'il est conforme aux exigences, ou <strong>Rejeter</strong> avec un motif. L'étudiant sera notifié automatiquement à la fin.
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-8">
+
+      <!-- PIÈCES -->
+      <div id="piecesContainer"></div>
+
+      <!-- OBSERVATIONS GLOBALES -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-chat-text me-2" style="color:var(--blue);"></i>Observations globales du représentant</span></div>
+        <div class="panel-bd">
+          <textarea class="form-control" rows="4" id="obsGlobal" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Ajoutez ici vos observations générales sur ce dossier (facultatif). Ces notes seront visibles par le Chef de Service."></textarea>
+        </div>
+      </div>
+
+      <!-- SOUMISSION FINALE -->
+      <div class="submit-panel">
+        <div class="sp-title">Décision finale sur le dossier</div>
+        <div class="alert mb-3" id="submitAlert" style="border:none;border-radius:10px;font-size:.82rem;background:var(--gris-bg);display:flex;align-items:flex-start;gap:8px;">
+          <i class="bi bi-info-circle me-1" style="color:var(--gris-dark);margin-top:2px;"></i>
+          <span id="submitAlertText">Vérifiez toutes les pièces avant de soumettre votre décision.</span>
+        </div>
+        <div class="d-flex gap-3 flex-wrap">
+          <button class="btn-submit-global" id="btnValiderGlobal" onclick="soumettreDecision('valider')">
+            <i class="bi bi-check-circle-fill"></i>Valider le dossier complet
+          </button>
+          <button class="btn-reject-global" onclick="soumettreDecision('rejeter')">
+            <i class="bi bi-x-circle"></i>Signaler dossier incomplet
+          </button>
+        </div>
+        <div style="font-size:.74rem;color:var(--gris-dark);margin-top:10px;">
+          <i class="bi bi-bell me-1"></i>Une notification sera automatiquement envoyée à l'étudiant et au Chef de Service à la soumission.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-12 col-lg-4">
+
+      <!-- LÉGENDE -->
+      <div class="panel mb-4" style="margin-bottom:20px!important;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-question-circle me-2" style="color:var(--blue);"></i>Guide de vérification</span></div>
+        <div class="panel-bd d-flex flex-column gap-3" style="font-size:.82rem;">
+          <div>
+            <div style="font-weight:700;color:var(--dark);margin-bottom:4px;"><i class="bi bi-check-circle-fill me-1" style="color:var(--green);"></i>Valider une pièce</div>
+            <div style="color:var(--gris-dark);line-height:1.5;">Le document est présent, lisible, légalisé si requis, et correspond aux informations de l'étudiant.</div>
+          </div>
+          <div>
+            <div style="font-weight:700;color:var(--dark);margin-bottom:4px;"><i class="bi bi-x-circle-fill me-1" style="color:var(--red);"></i>Rejeter une pièce</div>
+            <div style="color:var(--gris-dark);line-height:1.5;">Document illisible, périmé, non légalisé, incohérent ou ne correspondant pas à l'étudiant. Saisissez le motif précis.</div>
+          </div>
+          <div style="background:var(--yellow-bg);border-radius:9px;padding:10px 12px;">
+            <div style="font-weight:700;color:var(--yellow);margin-bottom:3px;"><i class="bi bi-exclamation-triangle-fill me-1"></i>Points de vigilance</div>
+            <ul style="color:var(--dark);padding-left:16px;line-height:1.8;font-size:.8rem;">
+              <li>Légalisation : moins de 3 mois</li>
+              <li>Photos : fond blanc, récentes</li>
+              <li>Reçus : tous les exercices</li>
+              <li>Cert. médical : médecin agréé</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- RÉSUMÉ TEMPS RÉEL -->
+      <div class="panel" style="position:sticky;top:100px;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-clipboard2-pulse me-2" style="color:var(--blue);"></i>Récapitulatif</span></div>
+        <div class="panel-bd" id="recapContainer">
+          <div style="color:var(--gris-dark);font-size:.82rem;text-align:center;padding:10px 0;">Aucune pièce vérifiée pour l'instant.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- MODAL CONFIRMATION -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title" id="confirmTitle" style="font-weight:800;font-size:1rem;"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <p id="confirmBody" style="font-size:.86rem;color:var(--gris-dark);"></p>
+        <div id="confirmAlertBox" class="alert mb-0" style="border:none;border-radius:10px;font-size:.81rem;"></div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" id="confirmOkBtn" style="border-radius:8px;font-weight:700;border:none;" onclick="confirmerDecision()"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ══ DONNÉES ══ */
+const piecesData = [
+  { id:1, nom:"Fiche d'inscription officielle (signée)", req:"Original signé par le Directeur de l'ENSET", obligatoire:true, fichier:"fiche_inscription_21G0042.pdf", taille:"245 Ko", present:true },
+  { id:2, nom:"Acte de naissance (copie légalisée)", req:"Légalisation de moins de 3 mois", obligatoire:true, fichier:"acte_naissance_21G0042.pdf", taille:"312 Ko", present:true },
+  { id:3, nom:"Carte Nationale d'Identité (recto-verso)", req:"Copie lisible et non expirée", obligatoire:true, fichier:"cni_21G0042.jpg", taille:"198 Ko", present:true },
+  { id:4, nom:"Diplôme du Baccalauréat (original ou copie légalisée)", req:"Original ou copie certifiée conforme", obligatoire:true, fichier:"bac_21G0042.pdf", taille:"540 Ko", present:true },
+  { id:5, nom:"Reçus de paiement des frais de scolarité (toutes années)", req:"3 reçus correspondant aux 3 années de formation", obligatoire:true, fichier:"recus_scolarite_21G0042.pdf", taille:"780 Ko", present:true },
+  { id:6, nom:"4 photos d'identité récentes (fond blanc)", req:"Format 4×4 cm, moins de 3 mois, fond blanc uniforme", obligatoire:true, fichier:"photos_21G0042.zip", taille:"1.2 Mo", present:true },
+  { id:7, nom:"Certificat médical de visite d'aptitude", req:"Délivré par un médecin agréé, validité 3 mois", obligatoire:true, fichier:null, taille:null, present:false },
+  { id:8, nom:"Fiche de fin d'études (signée par le Directeur et le Doyen)", req:"Formulaire ENSET officiel, double signature obligatoire", obligatoire:true, fichier:null, taille:null, present:false },
+];
+
+const statuts = {}; // id -> 'ok' | 'ko' | 'pending'
+piecesData.forEach(p => statuts[p.id] = 'pending');
+
+let pendingDecision = null;
+
+/* ══ RENDU ══ */
+function renderPieces(){
+  const c = document.getElementById('piecesContainer');
+  c.innerHTML = piecesData.map(p => {
+    const st = statuts[p.id];
+    const borderCls = st==='ok'?'ok': st==='ko'?'ko':'pending';
+    const statusBadge = st==='ok'
+      ? `<span class="vp-status vps-ok"><i class="bi bi-check-lg me-1"></i>Validée</span>`
+      : st==='ko'
+      ? `<span class="vp-status vps-ko"><i class="bi bi-x-lg me-1"></i>Rejetée</span>`
+      : `<span class="vp-status vps-pending">À vérifier</span>`;
+    const fileBtn = p.present
+      ? `<a href="#" class="vp-file"><i class="bi bi-eye me-1"></i>${p.fichier} · ${p.taille}</a>`
+      : `<span class="vp-absent"><i class="bi bi-file-earmark-x me-1"></i>Fichier non fourni</span>`;
+    const actions = st==='pending'
+      ? `<div class="vp-actions">
+          ${p.present ? `<button class="btn-valider" onclick="validerPiece(${p.id})"><i class="bi bi-check-circle-fill"></i>Valider</button>` : ''}
+          <button class="btn-rejeter" onclick="afficherMotif(${p.id})"><i class="bi bi-x-circle"></i>Rejeter</button>
+        </div>
+        <div class="vp-motif-area" id="motif-${p.id}">
+          <label style="font-size:.8rem;font-weight:700;color:var(--red);margin-bottom:4px;margin-top:8px;display:block;">Motif de rejet <span>*</span></label>
+          <textarea id="motif-text-${p.id}" placeholder="Ex: Document périmé, illisible, non légalisé, nom différent…"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn-rejeter" onclick="rejeterPiece(${p.id})"><i class="bi bi-send"></i>Confirmer le rejet</button>
+            <button class="btn-annuler" onclick="annulerMotif(${p.id})">Annuler</button>
+          </div>
+        </div>`
+      : st==='ok'
+      ? `<div style="font-size:.78rem;color:var(--green);font-weight:600;"><i class="bi bi-check-circle-fill me-1"></i>Pièce validée
+          <button class="btn-annuler" style="margin-left:10px;font-size:.75rem;" onclick="resetPiece(${p.id})">Modifier</button>
+        </div>`
+      : `<div class="vp-obs show" id="obs-${p.id}"></div>
+         <button class="btn-annuler" style="font-size:.75rem;margin-top:6px;" onclick="resetPiece(${p.id})">Modifier</button>`;
+    return `
+      <div class="verif-piece ${borderCls}" id="piece-${p.id}">
+        <div class="vp-top">
+          <div class="vp-num">${p.id}</div>
+          <div class="vp-doc-icon" style="${p.present?'background:var(--blue-xlight);color:var(--blue);':'background:var(--red-bg);color:var(--red);'}">
+            <i class="bi ${p.present?'bi-file-earmark-text':'bi-file-earmark-x'}"></i>
+          </div>
+          <div class="vp-info">
+            <div class="vp-name">${p.nom}</div>
+            <div class="vp-req"><i class="bi bi-info-circle me-1"></i>${p.req}</div>
+            ${fileBtn}
+          </div>
+          ${statusBadge}
+        </div>
+        ${actions}
+      </div>`;
+  }).join('');
+  updateProgress();
+  updateRecap();
+}
+
+function validerPiece(id){ statuts[id]='ok'; renderPieces(); }
+
+function afficherMotif(id){
+  document.getElementById(`motif-${id}`).classList.add('show');
+}
+function annulerMotif(id){
+  document.getElementById(`motif-${id}`).classList.remove('show');
+  document.getElementById(`motif-text-${id}`).value='';
+}
+function rejeterPiece(id){
+  const txt = document.getElementById(`motif-text-${id}`).value.trim();
+  if(!txt){ alert('Veuillez saisir un motif de rejet.'); return; }
+  statuts[id]='ko';
+  // store motif
+  piecesData.find(p=>p.id===id)._motif=txt;
+  renderPieces();
+  // restore obs after re-render
+  const obsEl = document.getElementById(`obs-${id}`);
+  if(obsEl){ obsEl.textContent=`Motif : ${txt}`; obsEl.classList.add('show'); }
+}
+function resetPiece(id){ statuts[id]='pending'; delete piecesData.find(p=>p.id===id)._motif; renderPieces(); }
+
+function updateProgress(){
+  const ok = Object.values(statuts).filter(s=>s==='ok').length;
+  const ko = Object.values(statuts).filter(s=>s==='ko').length;
+  const total = piecesData.length;
+  const done = ok+ko;
+  const pct = Math.round(done/total*100);
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('countOk').textContent=ok;
+  document.getElementById('countKo').textContent=ko;
+  document.getElementById('countPending').textContent=total-done;
+  // SVG ring
+  const circ=176;
+  document.getElementById('svgRing').setAttribute('stroke-dashoffset', circ - (circ*(ok/total)));
+  document.getElementById('ringLabel').textContent=`${ok}/${total}`;
+  // Submit alert
+  const alert=document.getElementById('submitAlert');
+  const alertText=document.getElementById('submitAlertText');
+  if(done<total){
+    alert.style.background='var(--gris-bg)';
+    alertText.textContent=`${total-done} pièce(s) non encore vérifiée(s). Vous devez vérifier toutes les pièces avant de soumettre.`;
+  } else if(ko>0){
+    alert.style.background='var(--red-bg)';
+    alertText.innerHTML=`<strong style="color:var(--red);">${ko} pièce(s) rejetée(s).</strong> En soumettant, le dossier sera signalé incomplet et l'étudiant sera notifié.`;
+  } else {
+    alert.style.background='var(--green-bg)';
+    alertText.innerHTML=`<strong style="color:var(--green);">✓ Toutes les pièces sont validées.</strong> Vous pouvez soumettre votre validation.`;
+  }
+}
+
+function updateRecap(){
+  const cont = document.getElementById('recapContainer');
+  const done = piecesData.filter(p=>statuts[p.id]!=='pending');
+  if(!done.length){ cont.innerHTML='<div style="color:var(--gris-dark);font-size:.82rem;text-align:center;padding:10px 0;">Aucune pièce vérifiée pour l\'instant.</div>'; return; }
+  cont.innerHTML=done.map(p=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--gris-bg);">
+      <i class="bi ${statuts[p.id]==='ok'?'bi-check-circle-fill':'bi-x-circle-fill'}"
+         style="color:${statuts[p.id]==='ok'?'var(--green)':'var(--red)'};font-size:.9rem;flex-shrink:0;"></i>
+      <span style="font-size:.79rem;color:var(--dark);flex:1;line-height:1.3;">${p.nom}</span>
+    </div>`).join('');
+}
+
+function soumettreDecision(type){
+  const done=Object.values(statuts).filter(s=>s!=='pending').length;
+  if(done<piecesData.length){ alert('Veuillez vérifier toutes les pièces avant de soumettre.'); return; }
+  pendingDecision=type;
+  const ko=Object.values(statuts).filter(s=>s==='ko').length;
+  const modal=document.getElementById('confirmModal');
+  const title=document.getElementById('confirmTitle');
+  const body=document.getElementById('confirmBody');
+  const alertBox=document.getElementById('confirmAlertBox');
+  const okBtn=document.getElementById('confirmOkBtn');
+  if(type==='valider' && ko===0){
+    title.innerHTML='<i class="bi bi-check-circle-fill me-2" style="color:var(--green);"></i>Valider le dossier';
+    body.textContent='Vous êtes sur le point de valider le dossier de MBALLA Jean-Baptiste. Toutes les pièces ont été vérifiées et sont conformes.';
+    alertBox.style.background='var(--green-bg)';
+    alertBox.innerHTML='<i class="bi bi-bell me-2" style="color:var(--green);"></i><strong>L\'étudiant et le Chef de Service seront notifiés automatiquement.</strong>';
+    okBtn.style.background='var(--green)';
+    okBtn.textContent='Confirmer la validation';
+  } else {
+    title.innerHTML='<i class="bi bi-x-circle-fill me-2" style="color:var(--red);"></i>Signaler le dossier incomplet';
+    body.textContent=`${ko} pièce(s) ont été rejetée(s). Le dossier sera signalé incomplet.`;
+    alertBox.style.background='var(--red-bg)';
+    alertBox.innerHTML='<i class="bi bi-bell me-2" style="color:var(--red);"></i><strong>L\'étudiant sera notifié des motifs de rejet et devra corriger son dossier.</strong>';
+    okBtn.style.background='var(--red)';
+    okBtn.textContent='Confirmer et notifier';
+  }
+  new bootstrap.Modal(modal).show();
+}
+
+function confirmerDecision(){
+  bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide();
+  setTimeout(()=>{
+    const ko=Object.values(statuts).filter(s=>s==='ko').length;
+    if(ko===0) alert('✓ Dossier validé avec succès ! MBALLA Jean-Baptiste et le Chef de Service ont été notifiés.');
+    else alert(`✓ Dossier signalé incomplet. ${ko} motif(s) de rejet envoyé(s) à MBALLA Jean-Baptiste.`);
+    window.location.href='representant.html';
+  },300);
+}
+
+// SIDEBAR
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+// INIT
+renderPieces();
+</script>
+</body>
+</html>

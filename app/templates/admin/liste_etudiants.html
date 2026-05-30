@@ -1,0 +1,448 @@
+{% extends 'base.html' %}
+{% block title %}Étudiants{% endblock %}
+{% block page_title %}Étudiants{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalCreer">
+  <i class="bi bi-person-plus me-1"></i>Créer
+</button>
+<a href="{{ url_for('admin.importer_etudiants') }}" class="btn btn-sm btn-primary">
+  <i class="bi bi-upload me-1"></i>Importer JSON
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><i class="bi bi-mortarboard me-2"></i>Étudiants finissants</h1>
+    <p class="text-muted mb-0" style="font-size:.85rem">
+      <strong>{{ etudiants|length }}</strong> étudiant(s) dans la base
+    </p>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header" style="flex-wrap:wrap;gap:10px">
+    <h2 class="panel-title" style="margin:0">Liste complète</h2>
+    <div class="d-flex gap-2 ms-auto align-items-center flex-wrap">
+      {# Filtre cycle #}
+      <select id="filtreCycle" class="form-select form-select-sm" style="width:130px;font-size:.8rem">
+        <option value="">Tous cycles</option>
+        <option value="LICENCE">Licence</option>
+        <option value="MASTER">Master</option>
+      </select>
+      {# Filtre année #}
+      <select id="filtreAnnee" class="form-select form-select-sm" style="width:130px;font-size:.8rem">
+        <option value="">Toutes années</option>
+        {% for a in annees %}
+        <option value="{{ a.code }}">{{ a.code }}</option>
+        {% endfor %}
+      </select>
+      {# Recherche #}
+      <div style="position:relative">
+        <i class="bi bi-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--gris-dark);font-size:.8rem"></i>
+        <input type="text" id="rechercheEtu" placeholder="Nom, matricule, filière…"
+               class="form-control form-control-sm" style="padding-left:30px;width:210px;font-size:.8rem">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table recent-table mb-0" id="tableEtu">
+        <thead>
+          <tr>
+            <th>Matricule</th>
+            <th>Nom & Prénom</th>
+            <th>Filière</th>
+            <th>Cycle / N.</th>
+            <th>Type</th>
+            <th>Année</th>
+            <th>Statut</th>
+            <th style="width:50px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in etudiants %}
+          <tr class="etu-row"
+              data-nom="{{ (e.nom ~ ' ' ~ e.prenom) | lower }}"
+              data-matricule="{{ e.matricule | lower }}"
+              data-filiere="{{ e.filiere | lower }}"
+              data-cycle="{{ e.cycle }}"
+              data-annee="{{ e.annee_academique or '' }}">
+            <td><code style="color:var(--blue);font-size:.8rem">{{ e.matricule }}</code></td>
+            <td class="fw-500">{{ e.nom }} {{ e.prenom }}</td>
+            <td style="font-size:.82rem">{{ e.filiere }}</td>
+            <td>
+              <span class="badge-status badge-en-cours" style="font-size:.68rem">{{ e.cycle or '—' }}</span>
+              {% if e.niveau %}<span class="text-muted ms-1" style="font-size:.75rem">N{{ e.niveau }}</span>{% endif %}
+            </td>
+            <td>
+              <span class="badge-status {% if e.type_etudiant == 'FONCTIONNAIRE' %}badge-complet{% else %}badge-en-cours{% endif %}" style="font-size:.68rem">
+                {{ 'Fonct.' if e.type_etudiant == 'FONCTIONNAIRE' else 'Régulier' }}
+              </span>
+            </td>
+            <td style="font-size:.82rem">{{ e.annee_academique or '—' }}</td>
+            <td>
+              <span class="badge-status {{ 'badge-complet' if e.actif else 'badge-manquant' }}" style="font-size:.68rem">
+                {{ 'Actif' if e.actif else 'Inactif' }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-icon-sm" title="Modifier"
+                      onclick="ouvrirEdition({{ {
+                        'matricule':          e.matricule,
+                        'nom':                e.nom,
+                        'prenom':             e.prenom,
+                        'sexe':               e.sexe or 'M',
+                        'date_naissance':     e.date_naissance.isoformat() if e.date_naissance else '',
+                        'lieu_naissance':     e.lieu_naissance or '',
+                        'filiere':            e.filiere or '',
+                        'cycle':              e.cycle or 'LICENCE',
+                        'niveau':             e.niveau or 3,
+                        'annee_academique':   e.annee_academique or '',
+                        'type_etudiant':      e.type_etudiant or 'REGULIER',
+                        'statut_fonctionnaire': e.statut_fonctionnaire,
+                        'actif':              e.actif,
+                        'email':              e.email or '',
+                        'telephone':          e.telephone or ''
+                      } | tojson }})">
+                <i class="bi bi-pencil"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8">
+              <div style="text-align:center;padding:48px 20px">
+                <i class="bi bi-mortarboard" style="font-size:2.5rem;opacity:.2;color:var(--gris-dark);display:block;margin-bottom:12px"></i>
+                <h6 style="color:var(--dark);margin-bottom:6px">Aucun étudiant importé</h6>
+                <p class="text-muted mb-3" style="font-size:.85rem">Utilisez l'import JSON pour ajouter des finissants.</p>
+                <a href="{{ url_for('admin.importer_etudiants') }}"
+                   class="btn btn-sm" style="background:var(--blue);color:#fff;border-radius:8px">
+                  <i class="bi bi-upload me-1"></i>Importer maintenant
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Ligne compteur résultats #}
+    <div id="compteurResultats" class="px-4 py-2 text-muted" style="font-size:.78rem;border-top:1px solid var(--gris-bg)">
+      {{ etudiants|length }} étudiant(s) affiché(s)
+    </div>
+  </div>
+</div>
+
+
+{# ═══════════════════════════════════════════════════════════
+   MODAL — Créer un étudiant
+═══════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalCreer" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" action="{{ url_for('admin.creer_etudiant') }}">
+        <div class="modal-header" style="border-bottom:1px solid var(--gris-bg);padding:20px 24px 16px">
+          <h5 class="modal-title" style="font-weight:700;color:var(--dark)">
+            <i class="bi bi-person-plus me-2" style="color:var(--blue)"></i>Nouvel étudiant
+            {% if annee_active %}
+            <span class="badge bg-primary ms-2" style="font-size:.7rem">{{ annee_active }}</span>
+            {% endif %}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px">
+          <div class="row g-3">
+
+            <div class="col-12"><p class="mb-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark)">Identité</p></div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Matricule <span class="text-danger">*</span></label>
+              <input type="text" name="matricule" class="form-control form-control-sm" required placeholder="22G0001">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Nom <span class="text-danger">*</span></label>
+              <input type="text" name="nom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-5">
+              <label class="form-label form-label-sm">Prénom <span class="text-danger">*</span></label>
+              <input type="text" name="prenom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Sexe</label>
+              <select name="sexe" class="form-select form-select-sm">
+                <option value="M">M</option>
+                <option value="F">F</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Date de naissance <span class="text-danger">*</span></label>
+              <input type="date" name="date_naissance" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Lieu de naissance</label>
+              <input type="text" name="lieu_naissance" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-12 mt-2"><p class="mb-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark)">Scolarité</p></div>
+            <div class="col-md-5">
+              <label class="form-label form-label-sm">Filière <span class="text-danger">*</span></label>
+              <select name="filiere" class="form-select form-select-sm" required>
+                <option value="">— Choisir —</option>
+                {% for f in filieres %}
+                <option value="{{ f.nom }}">{{ f.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Cycle</label>
+              <select name="cycle" class="form-select form-select-sm">
+                <option value="LICENCE">Licence</option>
+                <option value="MASTER">Master</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Niveau</label>
+              <select name="niveau" class="form-select form-select-sm">
+                <option value="3">3</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Type</label>
+              <select name="type_etudiant" class="form-select form-select-sm">
+                <option value="REGULIER">Régulier</option>
+                <option value="FONCTIONNAIRE">Fonctionnaire</option>
+              </select>
+            </div>
+
+            <div class="col-12 mt-2"><p class="mb-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark)">Contact</p></div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Email</label>
+              <input type="email" name="email" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Téléphone</label>
+              <input type="text" name="telephone" class="form-control form-control-sm">
+            </div>
+
+            <div class="col-12">
+              <small class="text-muted"><i class="bi bi-key me-1"></i>Mot de passe initial = matricule</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--gris-bg);padding:16px 24px">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-sm btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Créer l'étudiant
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ═══════════════════════════════════════════════════════════
+   MODAL — Édition étudiant
+═══════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalEdition" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" id="formEdition">
+
+        <div class="modal-header" style="border-bottom:1px solid var(--gris-bg);padding:20px 24px 16px">
+          <h5 class="modal-title" style="font-weight:700;color:var(--dark)">
+            <i class="bi bi-pencil-square me-2" style="color:var(--blue)"></i>
+            Modifier l'étudiant — <span id="editMatricule" style="color:var(--blue)"></span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body" style="padding:24px">
+          <div class="row g-3">
+
+            {# Identité #}
+            <div class="col-12"><p class="mb-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark)">Identité</p></div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Nom</label>
+              <input type="text" name="nom" id="editNom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Prénom</label>
+              <input type="text" name="prenom" id="editPrenom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Sexe</label>
+              <select name="sexe" id="editSexe" class="form-select form-select-sm">
+                <option value="M">Masculin</option>
+                <option value="F">Féminin</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Date de naissance</label>
+              <input type="date" name="date_naissance" id="editDateNaissance" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Lieu de naissance</label>
+              <input type="text" name="lieu_naissance" id="editLieuNaissance" class="form-control form-control-sm">
+            </div>
+
+            {# Scolarité #}
+            <div class="col-12 mt-2"><p class="mb-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark)">Scolarité</p></div>
+            <div class="col-md-5">
+              <label class="form-label form-label-sm">Filière</label>
+              <select name="filiere" id="editFiliere" class="form-select form-select-sm">
+                {% for f in filieres %}
+                <option value="{{ f.nom }}">{{ f.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">Cycle</label>
+              <select name="cycle" id="editCycle" class="form-select form-select-sm">
+                <option value="LICENCE">Licence</option>
+                <option value="MASTER">Master</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Niveau</label>
+              <select name="niveau" id="editNiveau" class="form-select form-select-sm">
+                <option value="3">3</option>
+                <option value="5">5</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">Année dipl.</label>
+              <select name="annee_academique" id="editAnnee" class="form-select form-select-sm">
+                <option value="">—</option>
+                {% for a in annees %}
+                <option value="{{ a.code }}">{{ a.code }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">Type</label>
+              <select name="type_etudiant" id="editType" class="form-select form-select-sm">
+                <option value="REGULIER">Régulier</option>
+                <option value="FONCTIONNAIRE">Fonctionnaire</option>
+              </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check">
+                <input type="hidden" name="statut_fonctionnaire" value="0">
+                <input class="form-check-input" type="checkbox" name="statut_fonctionnaire"
+                       id="editFonctionnaire" value="1">
+                <label class="form-check-label" for="editFonctionnaire" style="font-size:.82rem">
+                  Statut fonctionnaire
+                </label>
+              </div>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+              <div class="form-check">
+                <input type="hidden" name="actif" value="0">
+                <input class="form-check-input" type="checkbox" name="actif"
+                       id="editActif" value="1">
+                <label class="form-check-label" for="editActif" style="font-size:.82rem">
+                  Compte actif
+                </label>
+              </div>
+            </div>
+
+            {# Contact #}
+            <div class="col-12 mt-2"><p class="mb-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark)">Contact</p></div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Email</label>
+              <input type="email" name="email" id="editEmail" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Téléphone</label>
+              <input type="text" name="telephone" id="editTelephone" class="form-control form-control-sm">
+            </div>
+
+            {# Sécurité #}
+            <div class="col-12 mt-2">
+              <p class="mb-1" style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark)">Réinitialisation mot de passe</p>
+              <p class="text-muted mb-2" style="font-size:.78rem">Laissez vide pour ne pas changer. Par défaut = matricule.</p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label form-label-sm">Nouveau mot de passe</label>
+              <input type="password" name="nouveau_mdp" class="form-control form-control-sm"
+                     minlength="6" placeholder="Min. 6 caractères">
+            </div>
+
+          </div>
+        </div>
+
+        <div class="modal-footer" style="border-top:1px solid var(--gris-bg);padding:16px 24px">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-sm"
+                  style="background:var(--blue);color:#fff;border-radius:8px;min-width:130px">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+// ── Filtrage / recherche ─────────────────────────────────────────────────────
+function filtrer() {
+  const q      = document.getElementById('rechercheEtu').value.toLowerCase().trim();
+  const cycle  = document.getElementById('filtreCycle').value;
+  const annee  = document.getElementById('filtreAnnee').value;
+  let visible  = 0;
+
+  document.querySelectorAll('#tableEtu .etu-row').forEach(row => {
+    const matchQ     = !q     || row.dataset.nom.includes(q) || row.dataset.matricule.includes(q) || row.dataset.filiere.includes(q);
+    const matchCycle = !cycle || row.dataset.cycle === cycle;
+    const matchAnnee = !annee || row.dataset.annee === annee;
+    const show = matchQ && matchCycle && matchAnnee;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('compteurResultats').textContent =
+    visible + ' étudiant(s) affiché(s)';
+}
+
+document.getElementById('rechercheEtu').addEventListener('input', filtrer);
+document.getElementById('filtreCycle').addEventListener('change', filtrer);
+document.getElementById('filtreAnnee').addEventListener('change', filtrer);
+
+// ── Ouverture modal édition ──────────────────────────────────────────────────
+function ouvrirEdition(e) {
+  // URL de soumission
+  document.getElementById('formEdition').action = '/admin/etudiants/' + e.matricule + '/modifier';
+
+  document.getElementById('editMatricule').textContent = e.matricule;
+  document.getElementById('editNom').value             = e.nom || '';
+  document.getElementById('editPrenom').value          = e.prenom || '';
+  document.getElementById('editSexe').value            = e.sexe || 'M';
+  document.getElementById('editDateNaissance').value   = e.date_naissance || '';
+  document.getElementById('editLieuNaissance').value   = e.lieu_naissance || '';
+  document.getElementById('editFiliere').value         = e.filiere || '';
+  document.getElementById('editCycle').value           = e.cycle || 'LICENCE';
+  document.getElementById('editNiveau').value          = e.niveau || '3';
+  document.getElementById('editAnnee').value           = e.annee_academique || '';
+  document.getElementById('editType').value            = e.type_etudiant || 'REGULIER';
+  document.getElementById('editFonctionnaire').checked = !!e.statut_fonctionnaire;
+  document.getElementById('editActif').checked         = e.actif !== false;
+  document.getElementById('editEmail').value           = e.email || '';
+  document.getElementById('editTelephone').value       = e.telephone || '';
+
+  // Vider le champ mdp
+  document.querySelector('#formEdition [name=nouveau_mdp]').value = '';
+
+  new bootstrap.Modal(document.getElementById('modalEdition')).show();
+}
+</script>
+{% endblock %}

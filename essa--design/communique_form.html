@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Émettre un communiqué</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{--blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--gris-bg:#eeeff1;--gris-dark:#797a7c;--white-pure:#ffffff;--dark:#4b4b4b;--sidebar-w:240px;--green:#2da06e;--yellow:#e8a020;--red:#e05252;}
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue);z-index:1040;display:flex;flex-direction:column;transition:transform .28s ease,width .28s ease;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sidebar-label,#sidebar.collapsed .sidebar-brand-text,#sidebar.collapsed .sidebar-section{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.25rem;}
+    .sidebar-brand{padding:18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.12);min-height:64px;text-decoration:none;}
+    .sidebar-brand-icon{width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--blue);font-weight:800;font-size:.85rem;}
+    .sidebar-brand-text{color:#fff;font-weight:700;font-size:.95rem;line-height:1.2;white-space:nowrap;}
+    .sidebar-brand-text small{font-weight:400;opacity:.75;font-size:.72rem;}
+    .sidebar-nav{flex:1;overflow-y:auto;padding:10px 0;}
+    .sidebar-section{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:14px 20px 4px;}
+    .sidebar-nav .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.78);padding:10px 20px;font-size:.875rem;transition:background .15s,color .15s;white-space:nowrap;text-decoration:none;}
+    .sidebar-nav .nav-link:hover{background:rgba(255,255,255,.1);color:#fff;}
+    .sidebar-nav .nav-link.active{background:var(--blue-dark);color:#fff;border-left:3px solid #fff;}
+    .sidebar-nav .nav-link i{font-size:1rem;flex-shrink:0;}
+    .sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.12);}
+    .sidebar-footer .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.65);font-size:.85rem;text-decoration:none;padding:6px 4px;}
+    .sidebar-footer .nav-link:hover{color:#fff;}
+    #topbar{position:fixed;top:0;right:0;height:64px;left:var(--sidebar-w);background:#fff;border-bottom:1px solid rgba(0,0,0,.08);z-index:1030;display:flex;align-items:center;padding:0 24px;gap:12px;transition:left .28s ease;}
+    #topbar.sidebar-collapsed{left:64px;}
+    #sidebarToggle{background:none;border:none;color:var(--gris-dark);font-size:1.35rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s;flex-shrink:0;}
+    #sidebarToggle:hover{background:var(--gris-bg);}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .topbar-icon-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.2rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .topbar-icon-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .badge-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;background:#e05252;border-radius:50%;border:2px solid #fff;}
+    .topbar-avatar{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background .15s;text-decoration:none;}
+    .topbar-avatar:hover{background:var(--gris-bg);}
+    .topbar-avatar-fallback{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .topbar-name{font-size:.83rem;font-weight:600;color:var(--dark);white-space:nowrap;}
+    #main{margin-left:var(--sidebar-w);margin-top:64px;padding:28px;transition:margin-left .28s ease;min-height:calc(100vh - 64px);}
+    #main.sidebar-collapsed{margin-left:64px;}
+    .page-title{font-size:1.4rem;font-weight:700;color:var(--dark);margin:0;}
+    .page-subtitle{font-size:.83rem;color:var(--gris-dark);margin-top:3px;}
+
+    /* FORM CARD */
+    .form-card{background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,.07);overflow:hidden;}
+    .form-card-header{padding:20px 26px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;gap:12px;}
+    .form-card-icon{width:42px;height:42px;background:#e8f0fc;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:1.2rem;flex-shrink:0;}
+    .form-card-body{padding:26px;}
+
+    /* FORM CONTROLS */
+    .form-label{font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:5px;}
+    .form-label .req{color:var(--red);margin-left:2px;}
+    .form-control,.form-select{border:1px solid #dde0e5;border-radius:9px;padding:9px 14px;font-size:.875rem;color:var(--dark);background:#fefefe;transition:border-color .15s,box-shadow .15s;}
+    .form-control:focus,.form-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,102,158,.12);outline:none;}
+    textarea.form-control{min-height:160px;resize:vertical;}
+
+    /* DESTINATAIRES CHECKBOXES */
+    .dest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+    .dest-card{border:2px solid #e0e3e8;border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;}
+    .dest-card input[type=checkbox]{accent-color:var(--blue);width:16px;height:16px;flex-shrink:0;}
+    .dest-card:has(input:checked){border-color:var(--blue);background:#f0f6ff;}
+    .dest-card-label{font-size:.83rem;font-weight:600;color:var(--dark);}
+    .dest-card-sub{font-size:.72rem;color:var(--gris-dark);}
+
+    /* PRIORITY PILLS */
+    .priority-group{display:flex;gap:10px;flex-wrap:wrap;}
+    .priority-pill{border:2px solid #e0e3e8;border-radius:99px;padding:7px 18px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--gris-dark);transition:all .15s;}
+    .priority-pill input{display:none;}
+    .priority-pill.info:has(input:checked){border-color:var(--blue);background:#e8f0fc;color:var(--blue);}
+    .priority-pill.warning:has(input:checked){border-color:var(--yellow);background:#fff4e0;color:var(--yellow);}
+    .priority-pill.danger:has(input:checked){border-color:var(--red);background:#fdecea;color:var(--red);}
+
+    /* APERÇU */
+    .apercu-box{border:2px dashed #c8cdd5;border-radius:12px;padding:20px;background:#fafbfc;}
+    .apercu-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .apercu-badge{padding:4px 12px;border-radius:99px;font-size:.75rem;font-weight:700;}
+    .apercu-content{font-size:.86rem;color:var(--dark);line-height:1.6;}
+    .apercu-footer{font-size:.75rem;color:var(--gris-dark);margin-top:12px;display:flex;gap:16px;flex-wrap:wrap;}
+
+    /* ACTIONS */
+    .btn-submit{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:11px 28px;font-weight:600;font-size:.9rem;cursor:pointer;transition:background .18s;display:flex;align-items:center;gap:8px;}
+    .btn-submit:hover{background:var(--blue-dark);}
+    .btn-draft{background:#fff;color:var(--gris-dark);border:2px solid #d0d4db;border-radius:10px;padding:11px 22px;font-weight:600;font-size:.9rem;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:8px;}
+    .btn-draft:hover{border-color:var(--gris-dark);color:var(--dark);}
+
+    /* HISTORIQUE MINI */
+    .hist-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--gris-bg);}
+    .hist-item:last-child{border-bottom:none;}
+    .hist-dot{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+    .hist-dot.info{background:#e8f0fc;color:var(--blue);}
+    .hist-dot.warning{background:#fff4e0;color:var(--yellow);}
+    .hist-title{font-size:.84rem;font-weight:600;color:var(--dark);}
+    .hist-meta{font-size:.72rem;color:var(--gris-dark);margin-top:1px;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:575px){.topbar-name{display:none;}#main{padding:12px;}.form-card-body{padding:16px;}.dest-grid{grid-template-columns:1fr 1fr;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="dashboard_directeur.html" class="sidebar-brand">
+    <div class="sidebar-brand-icon">EN</div>
+    <div class="sidebar-brand-text">ENSET Douala<br><small>Direction</small></div>
+  </a>
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Tableau de bord</div>
+    <a href="dashboard_directeur.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sidebar-label">Vue d'ensemble</span></a>
+    <a href="communique_form.html" class="nav-link active"><i class="bi bi-megaphone"></i><span class="sidebar-label">Émettre un communiqué</span></a>
+    <div class="sidebar-section">Gestion</div>
+    <a href="#" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sidebar-label">Diplomation</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-building"></i><span class="sidebar-label">Intégration Ministère</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-people"></i><span class="sidebar-label">Représentants filière</span></a>
+    <a href="home.html" class="nav-link"><i class="bi bi-grid"></i><span class="sidebar-label">Admin général</span></a>
+    <div class="sidebar-section">Rapports</div>
+    <a href="#" class="nav-link"><i class="bi bi-graph-up"></i><span class="sidebar-label">Statistiques</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sidebar-label">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="sidebarToggle"><i class="bi bi-list"></i></button>
+  <nav aria-label="breadcrumb" class="ms-2 d-none d-md-block">
+    <ol class="breadcrumb mb-0" style="font-size:.8rem;">
+      <li class="breadcrumb-item"><a href="dashboard_directeur.html" style="color:var(--blue);text-decoration:none;">Direction</a></li>
+      <li class="breadcrumb-item active" style="color:var(--gris-dark);">Communiqué</li>
+    </ol>
+  </nav>
+  <div class="topbar-right">
+    <a href="notifications.html" class="topbar-icon-btn"><i class="bi bi-bell"></i><span class="badge-dot"></span></a>
+    <a href="#" class="topbar-avatar">
+      <div class="topbar-avatar-fallback">DR</div>
+      <span class="topbar-name d-none d-md-block">Dr. Directeur</span>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="page-title">Émettre un communiqué</h1>
+      <p class="page-subtitle">Rédigez et envoyez une notification officielle aux étudiants</p>
+    </div>
+    <a href="dashboard_directeur.html" class="btn btn-sm btn-light" style="border-radius:8px;font-size:.82rem;border:1px solid #dde;">
+      <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- FORMULAIRE -->
+    <div class="col-12 col-xl-8">
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon"><i class="bi bi-megaphone-fill"></i></div>
+          <div>
+            <div style="font-size:.95rem;font-weight:700;color:var(--dark);">Nouveau communiqué officiel</div>
+            <div style="font-size:.78rem;color:var(--gris-dark);">Ce communiqué sera visible dans l'espace notifications des destinataires</div>
+          </div>
+        </div>
+        <div class="form-card-body">
+          <div class="mb-4">
+            <label class="form-label">Objet du communiqué <span class="req">*</span></label>
+            <input type="text" class="form-control" id="objetInput" placeholder="Ex : Ouverture dépôt dossiers finissants — Promotion 2024-2025" oninput="updateApercu()"/>
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Type de communiqué <span class="req">*</span></label>
+              <select class="form-select" id="typeSelect" onchange="updateApercu()">
+                <option value="">-- Sélectionner --</option>
+                <option value="info">📢 Informationnel</option>
+                <option value="warning">⚠️ Rappel / Avertissement</option>
+                <option value="success">✅ Validation / Confirmation</option>
+                <option value="danger">🚨 Urgent</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Date limite de prise en compte</label>
+              <input type="date" class="form-control" id="dateInput" oninput="updateApercu()"/>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Priorité d'affichage</label>
+            <div class="priority-group">
+              <label class="priority-pill info"><input type="radio" name="priority" value="info" checked onchange="updateApercu()"> Normale</label>
+              <label class="priority-pill warning"><input type="radio" name="priority" value="warning" onchange="updateApercu()"> Importante</label>
+              <label class="priority-pill danger"><input type="radio" name="priority" value="danger" onchange="updateApercu()"> Urgente</label>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Destinataires <span class="req">*</span></label>
+            <div class="dest-grid">
+              <label class="dest-card">
+                <input type="checkbox" checked onchange="updateApercu()">
+                <div><div class="dest-card-label"><i class="bi bi-people me-1" style="color:var(--blue);"></i>Tous les étudiants</div><div class="dest-card-sub">1 240 étudiants</div></div>
+              </label>
+              <label class="dest-card">
+                <input type="checkbox" onchange="updateApercu()">
+                <div><div class="dest-card-label"><i class="bi bi-mortarboard me-1" style="color:var(--blue);"></i>Finissants uniquement</div><div class="dest-card-sub">312 étudiants</div></div>
+              </label>
+              <label class="dest-card">
+                <input type="checkbox" onchange="updateApercu()">
+                <div><div class="dest-card-label"><i class="bi bi-exclamation-circle me-1" style="color:var(--red);"></i>Dossiers incomplets</div><div class="dest-card-sub">45 étudiants</div></div>
+              </label>
+              <label class="dest-card">
+                <input type="checkbox" onchange="updateApercu()">
+                <div><div class="dest-card-label"><i class="bi bi-cpu me-1" style="color:var(--blue);"></i>Génie Informatique</div><div class="dest-card-sub">287 étudiants</div></div>
+              </label>
+              <label class="dest-card">
+                <input type="checkbox" onchange="updateApercu()">
+                <div><div class="dest-card-label"><i class="bi bi-lightning me-1" style="color:var(--yellow);"></i>Génie Électrique</div><div class="dest-card-sub">210 étudiants</div></div>
+              </label>
+              <label class="dest-card">
+                <input type="checkbox" onchange="updateApercu()">
+                <div><div class="dest-card-label"><i class="bi bi-building me-1" style="color:var(--green);"></i>Génie Civil</div><div class="dest-card-sub">198 étudiants</div></div>
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Corps du communiqué <span class="req">*</span></label>
+            <textarea class="form-control" id="corpsInput" placeholder="Rédigez ici le contenu détaillé du communiqué. Soyez précis sur les délais, pièces requises et démarches à suivre..." oninput="updateApercu()"></textarea>
+            <div style="font-size:.73rem;color:var(--gris-dark);margin-top:4px;" id="charCount">0 caractères</div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Pièces jointes <span style="font-weight:400;color:var(--gris-dark);">(optionnel)</span></label>
+            <div style="border:2px dashed #c8cdd5;border-radius:10px;padding:22px;text-align:center;cursor:pointer;background:#fafbfc;transition:border-color .15s;" onclick="document.getElementById('fileInput').click()" id="dropZone">
+              <i class="bi bi-cloud-upload" style="font-size:1.6rem;color:var(--gris-dark);"></i>
+              <div style="font-size:.84rem;color:var(--gris-dark);margin-top:6px;">Cliquez ou glissez vos fichiers ici</div>
+              <div style="font-size:.74rem;color:var(--gris-dark);margin-top:2px;">PDF, DOCX, PNG — max 5 Mo</div>
+              <input type="file" id="fileInput" style="display:none;" multiple accept=".pdf,.docx,.png,.jpg" onchange="handleFiles(this.files)"/>
+            </div>
+            <div id="fileList" class="mt-2"></div>
+          </div>
+
+          <div class="d-flex gap-3 flex-wrap mt-2">
+            <button class="btn-submit" onclick="submitForm()">
+              <i class="bi bi-send-fill"></i> Publier le communiqué
+            </button>
+            <button class="btn-draft" onclick="saveDraft()">
+              <i class="bi bi-floppy"></i> Enregistrer brouillon
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APERÇU + HISTORIQUE -->
+    <div class="col-12 col-xl-4">
+      <!-- Aperçu -->
+      <div class="form-card mb-4">
+        <div class="form-card-header">
+          <div class="form-card-icon" style="background:#e6f5ef;color:var(--green);"><i class="bi bi-eye"></i></div>
+          <div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--dark);">Aperçu</div>
+            <div style="font-size:.76rem;color:var(--gris-dark);">Tel qu'affiché aux étudiants</div>
+          </div>
+        </div>
+        <div class="form-card-body">
+          <div class="apercu-box">
+            <div class="apercu-header">
+              <i class="bi bi-megaphone-fill" id="apercuIcon" style="color:var(--blue);font-size:1rem;"></i>
+              <span class="apercu-badge" id="apercuBadge" style="background:#e8f0fc;color:var(--blue);">Informationnel</span>
+            </div>
+            <div style="font-size:.88rem;font-weight:700;color:var(--dark);margin-bottom:8px;" id="apercuObjet">L'objet s'affichera ici…</div>
+            <div class="apercu-content" id="apercuCorps" style="color:var(--gris-dark);font-style:italic;">Le contenu du communiqué s'affichera ici au fur et à mesure de votre saisie.</div>
+            <div class="apercu-footer">
+              <span><i class="bi bi-calendar3 me-1"></i><span id="apercuDate">Date à définir</span></span>
+              <span><i class="bi bi-person me-1"></i>Dr. Directeur</span>
+              <span><i class="bi bi-people me-1"></i><span id="apercuDest">Tous les étudiants</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historique -->
+      <div class="form-card">
+        <div class="form-card-header">
+          <div class="form-card-icon" style="background:#fff4e0;color:var(--yellow);"><i class="bi bi-clock-history"></i></div>
+          <div>
+            <div style="font-size:.92rem;font-weight:700;color:var(--dark);">Derniers communiqués</div>
+            <div style="font-size:.76rem;color:var(--gris-dark);">Émis par la Direction</div>
+          </div>
+        </div>
+        <div class="form-card-body py-1">
+          <div class="hist-item">
+            <div class="hist-dot info"><i class="bi bi-info-circle"></i></div>
+            <div><div class="hist-title">Clôture des dépôts — 31 jan.</div><div class="hist-meta">22 Jan 2025 · 1 240 destinataires</div></div>
+          </div>
+          <div class="hist-item">
+            <div class="hist-dot warning"><i class="bi bi-exclamation-triangle"></i></div>
+            <div><div class="hist-title">Rappel pièces manquantes</div><div class="hist-meta">20 Jan 2025 · 45 destinataires</div></div>
+          </div>
+          <div class="hist-item">
+            <div class="hist-dot info"><i class="bi bi-megaphone"></i></div>
+            <div><div class="hist-title">Ouverture dépôt dossiers</div><div class="hist-meta">15 Jan 2025 · 1 240 destinataires</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- TOAST FEEDBACK -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+  <div id="feedbackToast" class="toast align-items-center border-0" role="alert" style="border-radius:10px;min-width:280px;">
+    <div class="d-flex">
+      <div class="toast-body" id="toastBody" style="font-size:.86rem;font-weight:600;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Sidebar
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggle=document.getElementById('sidebarToggle'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggle.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sidebar-collapsed');main.classList.toggle('sidebar-collapsed');}});
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+  // Aperçu
+  const typeColors={info:{bg:'#e8f0fc',color:'var(--blue)',label:'Informationnel',icon:'bi-megaphone-fill'},warning:{bg:'#fff4e0',color:'var(--yellow)',label:'Rappel / Avertissement',icon:'bi-exclamation-triangle-fill'},success:{bg:'#e6f5ef',color:'var(--green)',label:'Confirmation',icon:'bi-check-circle-fill'},danger:{bg:'#fdecea',color:'var(--red)',label:'Urgent',icon:'bi-bell-fill'}};
+
+  function updateApercu(){
+    const objet=document.getElementById('objetInput').value||'L\'objet s\'affichera ici…';
+    const corps=document.getElementById('corpsInput').value||'Le contenu du communiqué s\'affichera ici au fur et à mesure de votre saisie.';
+    const type=document.getElementById('typeSelect').value||'info';
+    const date=document.getElementById('dateInput').value;
+    const cfg=typeColors[type]||typeColors.info;
+
+    document.getElementById('apercuObjet').textContent=objet;
+    document.getElementById('apercuCorps').textContent=corps;
+    document.getElementById('apercuCorps').style.fontStyle=corps.includes('affichera')? 'italic':'normal';
+    document.getElementById('apercuBadge').textContent=cfg.label;
+    document.getElementById('apercuBadge').style.background=cfg.bg;
+    document.getElementById('apercuBadge').style.color=cfg.color;
+    document.getElementById('apercuIcon').className='bi '+cfg.icon;
+    document.getElementById('apercuIcon').style.color=cfg.color;
+    document.getElementById('apercuDate').textContent=date? new Date(date).toLocaleDateString('fr-FR'):'Date à définir';
+    document.getElementById('charCount').textContent=corps.length+' caractères';
+
+    const dests=[...document.querySelectorAll('.dest-card input:checked')].map(c=>c.closest('.dest-card').querySelector('.dest-card-label').textContent.trim());
+    document.getElementById('apercuDest').textContent=dests.length? dests.join(', '):'Aucun destinataire';
+  }
+
+  function handleFiles(files){
+    const list=document.getElementById('fileList');
+    list.innerHTML='';
+    [...files].forEach(f=>{
+      const el=document.createElement('div');
+      el.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 10px;background:#f4f7fb;border-radius:7px;margin-top:6px;font-size:.82rem;';
+      el.innerHTML=`<i class="bi bi-file-earmark" style="color:var(--blue);"></i><span style="flex:1;">${f.name}</span><span style="color:var(--gris-dark);">${(f.size/1024).toFixed(0)} Ko</span>`;
+      list.appendChild(el);
+    });
+  }
+
+  function showToast(msg, ok=true){
+    const t=document.getElementById('feedbackToast'),b=document.getElementById('toastBody');
+    t.style.background=ok?'var(--green)':'var(--red)';
+    t.style.color='#fff';
+    b.textContent=msg;
+    new bootstrap.Toast(t,{delay:3500}).show();
+  }
+
+  function submitForm(){
+    const objet=document.getElementById('objetInput').value;
+    const corps=document.getElementById('corpsInput').value;
+    if(!objet||!corps){showToast('Veuillez remplir l\'objet et le corps du communiqué.',false);return;}
+    showToast('✓ Communiqué publié avec succès !');
+    setTimeout(()=>{window.location.href='dashboard_directeur.html';},2000);
+  }
+
+  function saveDraft(){
+    showToast('Brouillon enregistré.');
+  }
+
+  // Drag & drop zone
+  const dz=document.getElementById('dropZone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.style.borderColor='var(--blue)';dz.style.background='#f0f6ff';});
+  dz.addEventListener('dragleave',()=>{dz.style.borderColor='#c8cdd5';dz.style.background='#fafbfc';});
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.style.borderColor='#c8cdd5';dz.style.background='#fafbfc';handleFiles(e.dataTransfer.files);});
+</script>
+</body>
+</html>

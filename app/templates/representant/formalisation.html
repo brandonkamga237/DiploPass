@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Formalisation — #{{ dossier.id_dossier }}{% endblock %}
+{% block page_title %}Formalisation{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-clipboard2-check me-2"></i>Dossier de formalisation</h1>
+  <p>
+    <a href="{{ url_for('representant.detail_dossier', id=dossier.id_dossier) }}"
+       class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour au dossier
+    </a>
+  </p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <span>Pièces de formalisation</span>
+        <span style="font-size:.82rem; color:#64748b">
+          <i class="bi bi-person me-1"></i>{{ dossier.etudiant.nom }} {{ dossier.etudiant.prenom }}
+        </span>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {% set pieces = [
+            ('recu_quitus_cycle', 'Reçu quitus cycle', 'bi-receipt'),
+            ('quitus_non_redevance', 'Quitus de non-redevance', 'bi-file-earmark-check'),
+            ('attestation_depot_memoire', 'Attestation de dépôt mémoire', 'bi-file-text'),
+            ('recu_association_etudiants', 'Reçu association étudiants', 'bi-people'),
+            ('photocopie_cni', 'Photocopie CNI', 'bi-card-text'),
+            ('photocopie_badge_etudiant', 'Photocopie badge étudiant', 'bi-person-badge'),
+            ('quitus_bibliotheque', 'Quitus bibliothèque', 'bi-book'),
+          ] %}
+          {% set f = dossier.formalisation %}
+
+          <div class="d-flex flex-column gap-2 mb-4">
+            {% for champ, label, icon in pieces %}
+            <label class="d-flex align-items-center gap-3 p-3 rounded" style="cursor:pointer; border:1.5px solid #e2e8f0; transition:all .15s">
+              <input type="checkbox" name="{{ champ }}" class="form-check-input mb-0"
+                     id="{{ champ }}" {{ 'checked' if f and f[champ] else '' }}
+                     style="width:18px; height:18px; flex-shrink:0">
+              <i class="bi {{ icon }}" style="color:#64748b; font-size:1rem"></i>
+              <span style="font-size:.875rem">{{ label }}</span>
+            </label>
+            {% endfor %}
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-save me-2"></i>Enregistrer
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ENSET — Finissants</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+  <style>
+    :root {
+      --blue:       #25669e;
+      --blue-dark:  #1a4f7a;
+      --blue-light: #3a7fc1;
+      --gris-bg:    #eeeff1;
+      --gris-dark:  #797a7c;
+      --white-soft: #fefefe;
+      --white-pure: #ffffff;
+      --dark:       #4b4b4b;
+      --sidebar-w:  240px;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gris-bg); color: var(--dark); min-height: 100vh; }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--sidebar-w); height: 100vh;
+      background: var(--blue); z-index: 1040;
+      display: flex; flex-direction: column;
+      transition: transform .28s ease, width .28s ease;
+      overflow: hidden;
+    }
+    #sidebar.collapsed { width: 64px; }
+    #sidebar.collapsed .sidebar-label,
+    #sidebar.collapsed .sidebar-brand-text,
+    #sidebar.collapsed .sidebar-section { display: none; }
+    #sidebar.collapsed .nav-link { justify-content: center; padding: 12px; }
+    #sidebar.collapsed .nav-link i { margin: 0; font-size: 1.25rem; }
+
+    .sidebar-brand { padding: 18px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.12); min-height: 64px; text-decoration: none; }
+    .sidebar-brand-icon { width: 36px; height: 36px; background: var(--white-pure); border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--blue); font-weight: 800; font-size: .85rem; }
+    .sidebar-brand-text { color: var(--white-pure); font-weight: 700; font-size: .95rem; line-height: 1.2; white-space: nowrap; }
+    .sidebar-brand-text small { font-weight: 400; opacity: .75; font-size: .72rem; }
+    .sidebar-nav { flex: 1; overflow-y: auto; padding: 10px 0; }
+    .sidebar-section { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,255,255,.45); padding: 14px 20px 4px; }
+    .sidebar-nav .nav-link { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.78); padding: 10px 20px; font-size: .875rem; transition: background .15s, color .15s; white-space: nowrap; text-decoration: none; }
+    .sidebar-nav .nav-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+    .sidebar-nav .nav-link.active { background: var(--blue-dark); color: #fff; border-left: 3px solid #fff; }
+    .sidebar-nav .nav-link i { font-size: 1rem; flex-shrink: 0; }
+    .sidebar-footer { padding: 14px 16px; border-top: 1px solid rgba(255,255,255,.12); }
+    .sidebar-footer .nav-link { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,.65); font-size: .85rem; text-decoration: none; padding: 6px 4px; }
+    .sidebar-footer .nav-link:hover { color: #fff; }
+
+    /* ── TOPBAR ── */
+    #topbar { position: fixed; top: 0; right: 0; height: 64px; left: var(--sidebar-w); background: var(--white-pure); border-bottom: 1px solid rgba(0,0,0,.08); z-index: 1030; display: flex; align-items: center; padding: 0 24px; gap: 12px; transition: left .28s ease; }
+    #topbar.sidebar-collapsed { left: 64px; }
+    #sidebarToggle { background: none; border: none; color: var(--gris-dark); font-size: 1.35rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background .15s; flex-shrink: 0; }
+    #sidebarToggle:hover { background: var(--gris-bg); }
+    .topbar-search { flex: 1; max-width: 340px; }
+    .topbar-search input { border: 1px solid #e0e1e3; border-radius: 8px; padding: 7px 14px; font-size: .875rem; background: var(--gris-bg); color: var(--dark); width: 100%; }
+    .topbar-search input:focus { outline: none; border-color: var(--blue); background: #fff; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .topbar-icon-btn { position: relative; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: none; border: none; border-radius: 50%; color: var(--gris-dark); font-size: 1.2rem; cursor: pointer; transition: background .15s; text-decoration: none; }
+    .topbar-icon-btn:hover { background: var(--gris-bg); color: var(--dark); }
+    .badge-dot { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; background: #e05252; border-radius: 50%; border: 2px solid #fff; }
+    .topbar-avatar { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: background .15s; text-decoration: none; }
+    .topbar-avatar:hover { background: var(--gris-bg); }
+    .topbar-avatar-fallback { width: 34px; height: 34px; border-radius: 50%; background: var(--blue); color: #fff; font-size: .78rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .topbar-name { font-size: .83rem; font-weight: 600; color: var(--dark); white-space: nowrap; }
+
+    /* ── MAIN ── */
+    #main { margin-left: var(--sidebar-w); margin-top: 64px; padding: 28px; transition: margin-left .28s ease; min-height: calc(100vh - 64px); }
+    #main.sidebar-collapsed { margin-left: 64px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .page-title { font-size: 1.55rem; font-weight: 700; color: var(--dark); margin: 0; }
+    .page-subtitle { font-size: .85rem; color: var(--gris-dark); margin-top: 2px; }
+
+    /* ── PANEL ── */
+    .panel { background: var(--white-pure); border-radius: 12px; box-shadow: 0 1px 6px rgba(0,0,0,.06); overflow: hidden; }
+    .panel-header { padding: 16px 20px; border-bottom: 1px solid var(--gris-bg); display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .panel-title { font-size: .95rem; font-weight: 700; color: var(--dark); margin: 0; }
+    .panel-body { padding: 20px; }
+
+    /* ── DATATABLE OVERRIDES ── */
+    #finissantsTable thead th {
+      font-size: .73rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--gris-dark);
+      background: #f8f9fb;
+      border-bottom: 2px solid var(--gris-bg) !important;
+      white-space: nowrap;
+    }
+    #finissantsTable tbody td {
+      font-size: .86rem;
+      color: var(--dark);
+      vertical-align: middle;
+      border-top: 1px solid var(--gris-bg);
+    }
+    #finissantsTable tbody tr:hover td { background: #f4f7fb; }
+
+    .badge-status { font-size: .72rem; font-weight: 600; padding: 4px 10px; border-radius: 99px; }
+    .badge-complet  { background: #e6f5ef; color: #1f7a52; }
+    .badge-en-cours { background: #fff4e0; color: #a06010; }
+    .badge-manquant { background: #fdecea; color: #a03030; }
+    .badge-transmis { background: #e8f0fc; color: #1a4f9a; }
+
+    .dt-length label, .dt-search label { font-size: .83rem; color: var(--gris-dark); }
+    .dt-length select, .dt-search input {
+      border: 1px solid #ddd !important;
+      border-radius: 6px !important;
+      padding: 5px 10px !important;
+      font-size: .83rem !important;
+    }
+    .dt-search input:focus { border-color: var(--blue) !important; outline: none !important; }
+
+    .dataTables_paginate .paginate_button {
+      border-radius: 6px !important;
+      font-size: .83rem !important;
+    }
+    .dataTables_paginate .paginate_button.current,
+    .dataTables_paginate .paginate_button.current:hover {
+      background: var(--blue) !important;
+      color: #fff !important;
+      border-color: var(--blue) !important;
+    }
+
+    #sidebarOverlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1039; }
+    #sidebarOverlay.show { display: block; }
+
+    @media (max-width: 991px) {
+      #sidebar { transform: translateX(-100%); width: var(--sidebar-w) !important; }
+      #sidebar.mobile-open { transform: translateX(0); }
+      #topbar { left: 0 !important; }
+      #main { margin-left: 0 !important; padding: 18px; }
+    }
+    @media (max-width: 575px) {
+      .topbar-search { display: none; }
+      .topbar-name { display: none; }
+      #main { padding: 14px; }
+      .panel-body { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="sidebarOverlay"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <a href="home.html" class="sidebar-brand">
+    <div class="sidebar-brand-icon">EN</div>
+    <div class="sidebar-brand-text">ENSET Douala<br><small>Scolarité</small></div>
+  </a>
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Interface</div>
+    <a href="home.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sidebar-label">Tableau de bord</span></a>
+    <a href="tables.html" class="nav-link active"><i class="bi bi-table"></i><span class="sidebar-label">Finissants</span></a>
+    <div class="sidebar-section">Modules</div>
+    <a href="#" class="nav-link"><i class="bi bi-person-badge"></i><span class="sidebar-label">Inscriptions</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sidebar-label">Diplomation</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-cash-coin"></i><span class="sidebar-label">Paiements</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-file-earmark-text"></i><span class="sidebar-label">Documents</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-graph-up"></i><span class="sidebar-label">Statistiques</span></a>
+    <div class="sidebar-section">Administration</div>
+    <a href="#" class="nav-link"><i class="bi bi-people"></i><span class="sidebar-label">Utilisateurs</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-gear"></i><span class="sidebar-label">Paramètres</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <a href="login.html" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sidebar-label">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<header id="topbar">
+  <button id="sidebarToggle" title="Réduire/Ouvrir la barre">
+    <i class="bi bi-list"></i>
+  </button>
+  <div class="topbar-search">
+    <input type="text" placeholder="Rechercher un étudiant, dossier…" />
+  </div>
+  <div class="topbar-right">
+    <a href="#" class="topbar-icon-btn"><i class="bi bi-bell"></i><span class="badge-dot"></span></a>
+    <a href="#" class="topbar-icon-btn"><i class="bi bi-envelope"></i><span class="badge-dot"></span></a>
+    <a href="#" class="topbar-avatar">
+      <div class="topbar-avatar-fallback">AD</div>
+      <span class="topbar-name d-none d-md-block">Administrateur</span>
+    </a>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main id="main">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dossiers finissants</h1>
+      <p class="page-subtitle">Gestion et suivi des dossiers de diplomation — Promotion 2024-2025</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:.83rem;">
+        <i class="bi bi-funnel me-1"></i>Filtrer
+      </button>
+      <button class="btn btn-sm" style="background:var(--blue);color:#fff;border-color:var(--blue);border-radius:8px;font-size:.83rem;">
+        <i class="bi bi-plus-lg me-1"></i>Nouveau dossier
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title"><i class="bi bi-mortarboard me-2" style="color:var(--blue);"></i>Liste des finissants</h2>
+      <small class="text-muted">Données DataTables — triables et filtrables</small>
+    </div>
+    <div class="panel-body">
+      <div class="table-responsive">
+        <table id="finissantsTable" class="table table-hover w-100">
+          <thead>
+            <tr>
+              <th>Matricule</th>
+              <th>Nom &amp; Prénoms</th>
+              <th>Filière</th>
+              <th>Niveau</th>
+              <th>Date dépôt</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0001</code></td><td>MBALLA Jean</td><td>Génie Informatique</td><td>Licence 3</td><td>12/01/2025</td><td><span class="badge-status badge-complet">Complet</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0002</code></td><td>FOMO EKOTTO Claire</td><td>Génie Électrique</td><td>Licence 3</td><td>15/01/2025</td><td><span class="badge-status badge-en-cours">En cours</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0003</code></td><td>NGONO Paul</td><td>Génie Civil</td><td>Licence 3</td><td>10/01/2025</td><td><span class="badge-status badge-manquant">Incomplet</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0004</code></td><td>BIYA Sylvie</td><td>Génie Informatique</td><td>Master 2</td><td>08/01/2025</td><td><span class="badge-status badge-transmis">Transmis</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0005</code></td><td>ATEBA Marc</td><td>Sciences Industrielles</td><td>Licence 3</td><td>14/01/2025</td><td><span class="badge-status badge-en-cours">En cours</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0006</code></td><td>NKOULOU Marie</td><td>Génie Mécanique</td><td>Master 2</td><td>11/01/2025</td><td><span class="badge-status badge-complet">Complet</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0007</code></td><td>ESSAMA Roger</td><td>Génie Électrique</td><td>Licence 3</td><td>16/01/2025</td><td><span class="badge-status badge-manquant">Incomplet</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0008</code></td><td>OWONA Hélène</td><td>Génie Civil</td><td>Master 2</td><td>09/01/2025</td><td><span class="badge-status badge-transmis">Transmis</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0009</code></td><td>TABI Claude</td><td>Génie Informatique</td><td>Licence 3</td><td>13/01/2025</td><td><span class="badge-status badge-complet">Complet</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0010</code></td><td>MESSI Bernadette</td><td>Sciences Industrielles</td><td>Licence 3</td><td>17/01/2025</td><td><span class="badge-status badge-en-cours">En cours</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0011</code></td><td>FOUDA Patrick</td><td>Génie Mécanique</td><td>Master 2</td><td>07/01/2025</td><td><span class="badge-status badge-complet">Complet</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0012</code></td><td>ABANDA Victoire</td><td>Génie Électrique</td><td>Licence 3</td><td>18/01/2025</td><td><span class="badge-status badge-manquant">Incomplet</span></td><td><a href="#" class="btn btn-sm btn-outline-primary" style="font-size:.75rem;border-radius:6px;"><i class="bi bi-eye"></i></a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $('#finissantsTable').DataTable({
+      language: {
+        url: 'https://cdn.datatables.net/plug-ins/1.13.8/i18n/fr-FR.json'
+      },
+      pageLength: 10,
+      order: [[0, 'asc']],
+      columnDefs: [{ orderable: false, targets: 6 }]
+    });
+  });
+
+  const sidebar  = document.getElementById('sidebar');
+  const topbar   = document.getElementById('topbar');
+  const main     = document.getElementById('main');
+  const toggle   = document.getElementById('sidebarToggle');
+  const overlay  = document.getElementById('sidebarOverlay');
+  const isMobile = () => window.innerWidth < 992;
+
+  toggle.addEventListener('click', () => {
+    if (isMobile()) {
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('show');
+    } else {
+      sidebar.classList.toggle('collapsed');
+      topbar.classList.toggle('sidebar-collapsed');
+      main.classList.toggle('sidebar-collapsed');
+    }
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  });
+
+  window.addEventListener('resize', () => {
+    if (!isMobile()) {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('show');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% block title %}Dossiers — {{ current_user.filiere_geree }}{% endblock %}
+{% block page_title %}Dossiers de diplomation{% endblock %}
+
+{% block topbar_actions %}
+<span class="badge" style="background:#e8f0fc;color:var(--blue);font-size:.8rem;font-weight:700;padding:6px 14px;border-radius:99px">
+  <i class="bi bi-diagram-3 me-1"></i>{{ current_user.filiere_geree }}
+</span>
+{% endblock %}
+
+{% block content %}
+
+{# ── Filtre statut ── #}
+<div class="panel mb-4">
+  <div class="panel-body" style="padding:14px 20px">
+    <form method="GET" class="d-flex align-items-center gap-3 flex-wrap">
+      <span style="font-size:.78rem;font-weight:700;color:var(--gris-dark);text-transform:uppercase;letter-spacing:.04em">
+        <i class="bi bi-funnel me-1"></i>Filtrer
+      </span>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('representant.liste_dossiers') }}"
+           class="btn btn-sm {% if not statut_filtre %}btn-primary{% endif %}"
+           style="font-size:.78rem;border-radius:20px;{% if not statut_filtre %}{% else %}background:var(--gris-bg);color:var(--dark);border:none{% endif %}">
+          Tous
+        </a>
+        {% for s, label, couleur in [
+            ('DEPOSE',           'Déposés',         'yellow'),
+            ('EN_VERIFICATION',  'En vérification', 'info'),
+            ('INCOMPLET',        'Incomplets',       'red'),
+            ('AUTHENTIFICATION', 'Authentification', 'blue'),
+            ('LISTE_FINISSANTS', 'Liste finissants', 'green'),
+            ('FORMALISATION',    'Formalisation',    'warning'),
+            ('CLOTURE',          'Clôturés',         'success'),
+            ('REJETE',           'Rejetés',          'danger'),
+        ] %}
+        <a href="{{ url_for('representant.liste_dossiers', statut=s) }}"
+           class="btn btn-sm {% if statut_filtre == s %}bg-{{ couleur }} text-white{% endif %}"
+           style="font-size:.78rem;border-radius:20px;{% if statut_filtre != s %}background:var(--gris-bg);color:var(--dark);border:none{% else %}border:none{% endif %}">
+          {{ label }}
+        </a>
+        {% endfor %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Table dossiers ── #}
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title">
+      <i class="bi bi-folder2-open me-2" style="color:var(--blue)"></i>
+      {% if statut_filtre %}{{ statut_filtre.replace('_', ' ') | title }}{% else %}Tous les dossiers{% endif %}
+    </h2>
+    <span style="font-size:.78rem;color:var(--gris-dark)">{{ dossiers|length }} dossier(s)</span>
+  </div>
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table recent-table mb-0">
+        <thead>
+          <tr>
+            <th>Étudiant</th>
+            <th>Matricule</th>
+            <th>Cycle</th>
+            <th>Pièces</th>
+            <th>Statut</th>
+            <th>Dépôt</th>
+            <th style="width:80px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dossiers %}
+          <tr>
+            <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+            <td><code style="color:var(--blue);font-size:.8rem">{{ d.matricule }}</code></td>
+            <td style="font-size:.82rem;color:var(--gris-dark)">
+              {{ d.etudiant.cycle or '—' }}
+              {% if d.etudiant.niveau %}<span class="ms-1">N{{ d.etudiant.niveau }}</span>{% endif %}
+            </td>
+            <td style="font-size:.82rem">
+              {% set nb = d.pieces_jointes | length %}
+              <span style="color:{% if nb > 0 %}var(--green){% else %}var(--gris-dark){% endif %};font-weight:{% if nb > 0 %}700{% else %}400{% endif %}">
+                {{ nb }}
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-{{ d.couleur_statut() }}" style="font-size:.7rem">
+                {{ d.libelle_statut() }}
+              </span>
+            </td>
+            <td style="font-size:.78rem;color:var(--gris-dark)">
+              {{ d.date_depot.strftime('%d/%m/%Y') if d.date_depot else '—' }}
+            </td>
+            <td>
+              <a href="{{ url_for('representant.detail_dossier', id=d.id_dossier) }}"
+                 class="btn btn-sm"
+                 style="font-size:.75rem;background:var(--blue);color:#fff;border-radius:7px;border:none">
+                <i class="bi bi-eye me-1"></i>Voir
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center py-5">
+              <i class="bi bi-folder-x d-block mb-2" style="font-size:2rem;color:var(--gris-dark);opacity:.4"></i>
+              <span style="font-size:.85rem;color:var(--gris-dark)">
+                {{ 'Aucun dossier avec ce statut.' if statut_filtre else 'Aucun dossier déposé pour cette filière.' }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

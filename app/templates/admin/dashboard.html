@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Administration{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Bonjour, {{ current_user.prenom }} 👋</h1>
+    <p class="text-muted mb-0" style="font-size:.85rem">Super Administrateur · DigiPass ENSET de Douala</p>
+  </div>
+</div>
+
+{# ─── Stats ────────────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('admin.liste_etudiants') }}" style="text-decoration:none">
+      <div class="stat-card blue">
+        <div><div class="stat-label">Étudiants importés</div><div class="stat-value">{{ nb_etudiants }}</div></div>
+        <i class="bi bi-mortarboard stat-icon"></i>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('admin.liste_comptes') }}" style="text-decoration:none">
+      <div class="stat-card green">
+        <div><div class="stat-label">Comptes staff</div><div class="stat-value">{{ nb_directeurs + nb_representants + nb_chefs_service }}</div></div>
+        <i class="bi bi-people stat-icon"></i>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('admin.liste_filieres') }}" style="text-decoration:none">
+      <div class="stat-card yellow">
+        <div><div class="stat-label">Filières</div><div class="stat-value">{{ nb_filieres }}</div></div>
+        <i class="bi bi-diagram-3 stat-icon"></i>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-xl-3">
+    <a href="{{ url_for('admin.liste_annees') }}" style="text-decoration:none">
+      <div class="stat-card blue">
+        <div><div class="stat-label">Années diplomation</div><div class="stat-value">{{ nb_annees }}</div></div>
+        <i class="bi bi-calendar-range stat-icon"></i>
+      </div>
+    </a>
+  </div>
+</div>
+
+{# ─── Deux colonnes ────────────────────────────────────────────────────────── #}
+<div class="row g-4">
+
+  {# Colonne gauche : workflow principal #}
+  <div class="col-12 col-lg-6">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-signpost-split me-2" style="color:var(--blue)"></i>Workflow typique</h2>
+      </div>
+      <div class="panel-body d-flex flex-column gap-2">
+
+        <a href="{{ url_for('admin.liste_annees') }}" class="workflow-step">
+          <div class="workflow-step-num">1</div>
+          <div>
+            <div class="workflow-step-title">Créer l'année de diplomation</div>
+            <div class="workflow-step-desc">Ex : 2024-2025 — nécessaire avant tout import</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+
+        <a href="{{ url_for('admin.liste_filieres') }}" class="workflow-step">
+          <div class="workflow-step-num">2</div>
+          <div>
+            <div class="workflow-step-title">Vérifier les filières</div>
+            <div class="workflow-step-desc">Génie Info, Génie Électrique… — base des imports</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+
+        <a href="{{ url_for('admin.importer_etudiants') }}" class="workflow-step"
+           style="border-left:3px solid var(--blue)">
+          <div class="workflow-step-num" style="background:var(--blue)">3</div>
+          <div>
+            <div class="workflow-step-title">Importer les finissants</div>
+            <div class="workflow-step-desc">Fichier JSON — Licence N3 & Master N5</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+
+        <a href="{{ url_for('admin.liste_comptes') }}" class="workflow-step">
+          <div class="workflow-step-num">4</div>
+          <div>
+            <div class="workflow-step-title">Créer les comptes du personnel</div>
+            <div class="workflow-step-desc">Directeur, Chef Service, Représentants, Chef Bureau</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+  {# Colonne droite : raccourcis directs #}
+  <div class="col-12 col-lg-6">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-lightning-charge me-2" style="color:var(--blue)"></i>Accès rapides</h2>
+      </div>
+      <div class="panel-body d-flex flex-column gap-2 pt-0">
+
+        <a href="{{ url_for('admin.importer_etudiants') }}" class="quick-link">
+          <div class="quick-link-icon" style="background:#eff6ff;color:var(--blue)"><i class="bi bi-upload"></i></div>
+          <div>
+            <div class="quick-link-title">Importer des étudiants</div>
+            <div class="quick-link-desc">{{ nb_etudiants }} étudiant(s) dans la base</div>
+          </div>
+        </a>
+
+        <a href="{{ url_for('admin.liste_comptes') }}" class="quick-link">
+          <div class="quick-link-icon" style="background:#ecfdf5;color:var(--green)"><i class="bi bi-person-plus"></i></div>
+          <div>
+            <div class="quick-link-title">Gérer les comptes staff</div>
+            <div class="quick-link-desc">{{ nb_directeurs }} directeur(s) · {{ nb_representants }} représentant(s)</div>
+          </div>
+        </a>
+
+        <a href="{{ url_for('admin.liste_etudiants') }}" class="quick-link">
+          <div class="quick-link-icon" style="background:#f5f3ff;color:#7c3aed"><i class="bi bi-mortarboard-fill"></i></div>
+          <div>
+            <div class="quick-link-title">Liste des étudiants</div>
+            <div class="quick-link-desc">Rechercher et consulter tous les finissants</div>
+          </div>
+        </a>
+
+        <a href="{{ url_for('admin.liste_annees') }}" class="quick-link">
+          <div class="quick-link-icon" style="background:#fffbeb;color:var(--yellow)"><i class="bi bi-calendar-range"></i></div>
+          <div>
+            <div class="quick-link-title">Années de diplomation</div>
+            <div class="quick-link-desc">{{ nb_annees }} année(s) configurée(s)</div>
+          </div>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

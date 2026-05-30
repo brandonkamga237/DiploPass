@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Diplômes à signer{% endblock %}
+{% block page_title %}Diplômes à signer{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-pen me-2"></i>Diplômes en attente de signature</h1>
+  <p>
+    <a href="{{ url_for('directeur.dashboard') }}" class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+    </a>
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span>Liste des dossiers</span>
+    <span class="badge bg-{{ 'red' if dossiers else 'secondary' }}">{{ dossiers|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Étudiant</th>
+          <th>Matricule</th>
+          <th>Filière</th>
+          <th>Date dépôt</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        <tr>
+          <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+          <td><code>{{ d.matricule }}</code></td>
+          <td>{{ d.etudiant.filiere }}</td>
+          <td>{{ d.date_depot.strftime('%d/%m/%Y') if d.date_depot else '—' }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('directeur.signer_dossier', id=d.id_dossier) }}"
+                  onsubmit="return confirm('Confirmer la signature du diplôme ?')">
+              <button type="submit" class="btn btn-success btn-sm">
+                <i class="bi bi-pen-fill me-1"></i>Signer
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <i class="bi bi-check-circle" style="color:#059669 !important; opacity:1"></i>
+              <h6>Aucun diplôme en attente</h6>
+              <p>Tous les diplômes ont été signés.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

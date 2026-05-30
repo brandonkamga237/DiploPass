@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% block title %}Mon espace — {{ current_user.prenom }} {{ current_user.nom }}{% endblock %}
+{% block page_title %}Mon espace{% endblock %}
+
+{% block content %}
+
+{# ── Définition de l'ordre des statuts pour le stepper ── #}
+{% set statuts_order = ['DEPOSE','EN_VERIFICATION','AUTHENTIFICATION','LISTE_FINISSANTS',
+  'IMPRESSION_PROVISOIRE','PRODUCTION_DEFINITIVE','SIGNATURE_DIRECTEUR',
+  'SIGNATURE_RECTEUR','SIGNATURE_MINISTRE','FORMALISATION','CLOTURE'] %}
+
+{# ── Carte profil étudiant ── #}
+<div class="panel mb-4" style="overflow:visible">
+  <div style="height:80px;background:linear-gradient(135deg,var(--blue) 0%,#3a7fc1 100%);border-radius:13px 13px 0 0"></div>
+  <div style="padding:0 24px 20px">
+    <div style="display:flex;align-items:flex-end;gap:16px;margin-top:-28px;flex-wrap:wrap">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--blue-dark);color:#fff;font-size:1.2rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:3px solid #fff;flex-shrink:0">
+        {{ current_user.prenom[0] | upper }}{{ current_user.nom[0] | upper }}
+      </div>
+      <div style="padding-bottom:4px">
+        <div style="font-size:1.1rem;font-weight:800;color:var(--dark)">{{ current_user.prenom }} {{ current_user.nom }}</div>
+        <div style="font-size:.8rem;color:var(--gris-dark)">
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#e8f0fc;color:var(--blue);padding:2px 10px;border-radius:99px;font-weight:700;font-size:.75rem">
+            <i class="bi bi-mortarboard"></i>
+            {{ current_user.cycle or 'Licence' }}
+            {% if current_user.niveau %}N{{ current_user.niveau }}{% endif %}
+          </span>
+        </div>
+      </div>
+      <div class="ms-auto d-flex gap-4 flex-wrap" style="padding-bottom:4px">
+        <div>
+          <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark)">Matricule</div>
+          <code style="color:var(--blue);font-size:.85rem;font-weight:700">{{ current_user.matricule }}</code>
+        </div>
+        <div>
+          <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark)">Filière</div>
+          <div style="font-size:.85rem;font-weight:700;color:var(--dark)">{{ current_user.filiere }}</div>
+        </div>
+        {% if current_user.email %}
+        <div class="d-none d-md-block">
+          <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark)">Email</div>
+          <div style="font-size:.82rem;color:var(--dark)">{{ current_user.email }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# ── CAS 1 : Ancien diplômé (dossier clôturé, processus terminé) ── #}
+{# ══════════════════════════════════════════════════════════════════ #}
+{% if est_ancien_diplome %}
+<div class="panel mb-4" style="border-left:4px solid var(--green)">
+  <div class="panel-body text-center py-5">
+    <div style="width:72px;height:72px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:2rem;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+      <i class="bi bi-award-fill"></i>
+    </div>
+    <h5 style="font-weight:800;color:var(--dark);margin-bottom:6px">Félicitations !</h5>
+    <p style="color:var(--gris-dark);font-size:.88rem;margin-bottom:16px">
+      Votre dossier de diplomation <strong>{{ dossier.annee_academique }}</strong> a été clôturé avec succès.<br>
+      Votre diplôme vous a été remis.
+    </p>
+    <a href="{{ url_for('etudiant.detail_dossier') }}"
+       class="btn btn-sm" style="background:var(--green);color:#fff;border:none;border-radius:9px;font-weight:700;padding:9px 22px">
+      <i class="bi bi-folder2-open me-2"></i>Consulter mon dossier
+    </a>
+  </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# ── CAS 2 : Pas de processus ouvert ── #}
+{# ══════════════════════════════════════════════════════════════════ #}
+{% elif not processus %}
+<div class="panel mb-4">
+  <div class="panel-body text-center py-5">
+    <div style="width:64px;height:64px;border-radius:50%;background:var(--gris-bg);color:var(--gris-dark);font-size:1.8rem;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;opacity:.5">
+      <i class="bi bi-clock-history"></i>
+    </div>
+    <h6 style="color:var(--dark);font-weight:700;margin-bottom:6px">Processus de diplomation non encore ouvert</h6>
+    <p style="color:var(--gris-dark);font-size:.84rem;margin-bottom:0">
+      Le Directeur n'a pas encore lancé le processus pour votre promotion.<br>
+      Revenez consulter cette page régulièrement.
+    </p>
+  </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# ── CAS 3 : Processus ouvert, pas de dossier → CTA déposer ── #}
+{# ══════════════════════════════════════════════════════════════════ #}
+{% elif processus and not dossier %}
+
+{% if communique %}
+<div class="d-flex align-items-flex-start gap-3 p-4 rounded-3 mb-4" style="background:#e8f0fc">
+  <i class="bi bi-megaphone-fill flex-shrink-0 mt-1" style="color:var(--blue);font-size:1.2rem"></i>
+  <div class="flex-grow-1">
+    <div style="font-size:.9rem;font-weight:800;color:var(--dark)">{{ communique.titre }}</div>
+    <div style="font-size:.8rem;color:var(--dark);margin-top:4px">
+      Année : <strong>{{ communique.annee_academique }}</strong>
+      {% if communique.date_limite_depot %}
+      &nbsp;·&nbsp; Date limite : <strong style="color:var(--red)">{{ communique.date_limite_depot.strftime('%d/%m/%Y') }}</strong>
+      {% endif %}
+    </div>
+    {% if communique.contenu %}
+    <div style="font-size:.8rem;color:var(--gris-dark);margin-top:6px;line-height:1.5">
+      {{ communique.contenu[:200] }}{% if communique.contenu|length > 200 %}…{% endif %}
+    </div>
+    {% endif %}
+    <a href="{{ url_for('etudiant.soumettre_dossier') }}"
+       class="btn btn-sm mt-3" style="background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:.84rem;font-weight:700;padding:9px 20px">
+      <i class="bi bi-send-fill me-2"></i>Déposer mon dossier de diplomation
+    </a>
+  </div>
+</div>
+{% endif %}
+
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title"><i class="bi bi-signpost-2 me-2" style="color:var(--blue)"></i>Étapes du parcours</h2>
+  </div>
+  <div class="panel-body">
+    {# Stepper vertical — aucune étape complétée #}
+    {% set steps = [
+      ('Dépôt du dossier', 'Déposez vos pièces via la plateforme', 'bi-folder2-open', 'active'),
+      ('Vérification représentant', 'Contrôle des pièces par votre représentant de filière', 'bi-search', 'pending'),
+      ('Authentification diplôme', 'Vérification de l\'authenticité du diplôme d\'origine par le Bureau', 'bi-shield-check', 'pending'),
+      ('Liste des finissants', 'Inscription sur la liste officielle des finissants', 'bi-list-check', 'pending'),
+      ('Production du diplôme', 'Impression provisoire puis production définitive', 'bi-printer', 'pending'),
+      ('Signature Directeur', 'Signature du diplôme par le Directeur de l\'ENSET', 'bi-pen', 'pending'),
+      ('Remise du diplôme', 'Formalisation et remise officielle du diplôme', 'bi-mortarboard-fill', 'pending'),
+    ] %}
+    {% include '_macros/parcours_stepper.html' ignore missing %}
+    <div style="display:flex;flex-direction:column;gap:0">
+      {% for label, desc, icon, state in steps %}
+      <div style="display:flex;gap:16px;position:relative{% if not loop.last %};padding-bottom:0{% endif %}">
+        {% if not loop.last %}
+        <div style="position:absolute;left:18px;top:38px;width:2px;height:calc(100% - 8px);background:var(--gris-bg);z-index:0"></div>
+        {% endif %}
+        <div style="flex-shrink:0;z-index:1">
+          <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;border:3px solid;
+            {% if state == 'done' %}background:var(--green);border-color:var(--green);color:#fff
+            {% elif state == 'active' %}background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(37,102,158,.15)
+            {% else %}background:#fff;border-color:#d0d3d8;color:var(--gris-dark){% endif %}">
+            {% if state == 'done' %}<i class="bi bi-check-lg"></i>
+            {% else %}<i class="bi {{ icon }}"></i>{% endif %}
+          </div>
+        </div>
+        <div style="flex:1;background:#fff;border-radius:11px;padding:13px 16px;margin-bottom:14px;box-shadow:0 1px 5px rgba(0,0,0,.05);border:2px solid {% if state == 'active' %}var(--blue){% elif state == 'done' %}#c8ead8{% else %}transparent{% endif %}">
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark)">{{ loop.index }}. {{ label }}</div>
+          <div style="font-size:.78rem;color:var(--gris-dark);margin-top:2px">{{ desc }}</div>
+          <span style="font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:99px;margin-top:6px;display:inline-block;
+            {% if state == 'done' %}background:#e6f5ef;color:#1f7a52
+            {% elif state == 'active' %}background:#e8f0fc;color:var(--blue)
+            {% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+            {% if state == 'done' %}✓ Complété{% elif state == 'active' %}→ À faire{% else %}En attente{% endif %}
+          </span>
+          {% if loop.index == 1 and state == 'active' %}
+          <div class="mt-2">
+            <a href="{{ url_for('etudiant.soumettre_dossier') }}"
+               class="btn btn-sm" style="background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:.78rem;font-weight:700;padding:6px 14px">
+              <i class="bi bi-upload me-1"></i>Déposer mon dossier
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{# ══════════════════════════════════════════════════════════════════ #}
+{# ── CAS 4 : Dossier existant → suivi de progression ── #}
+{# ══════════════════════════════════════════════════════════════════ #}
+{% elif dossier %}
+
+{# Statut actuel #}
+{% set current_idx = statuts_order.index(dossier.statut) if dossier.statut in statuts_order else -1 %}
+{% set nb_etapes = statuts_order | length %}
+{% set pct_avancement = ((current_idx + 1) / nb_etapes * 100) | round | int if current_idx >= 0 else 0 %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Phase</div>
+        <div class="stat-value">{{ current_idx + 1 if current_idx >= 0 else '—' }}<span style="font-size:.9rem;font-weight:400;color:var(--gris-dark)">/{{ nb_etapes }}</span></div>
+        <div class="stat-sub">Étape actuelle</div>
+      </div>
+      <i class="bi bi-signpost-2 stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card {% if dossier.statut == 'CLOTURE' %}green{% elif dossier.statut in ['REJETE','AUTH_REJETEE','INCOMPLET'] %}red{% else %}yellow{% endif %}">
+      <div>
+        <div class="stat-label">Statut</div>
+        <div class="stat-value" style="font-size:.9rem;margin-top:4px">
+          <span class="badge bg-{{ dossier.couleur_statut() }}" style="font-size:.7rem">{{ dossier.libelle_statut() }}</span>
+        </div>
+        <div class="stat-sub">État du dossier</div>
+      </div>
+      <i class="bi bi-{% if dossier.statut == 'CLOTURE' %}mortarboard-fill{% elif dossier.statut in ['REJETE','AUTH_REJETEE'] %}x-circle{% elif dossier.statut == 'INCOMPLET' %}exclamation-circle{% else %}hourglass-split{% endif %} stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Avancement</div>
+        <div class="stat-value">{{ pct_avancement }}%</div>
+        <div class="stat-sub">Parcours accompli</div>
+      </div>
+      <i class="bi bi-graph-up stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Promotion</div>
+        <div class="stat-value" style="font-size:1.05rem">{{ dossier.annee_academique }}</div>
+        <div class="stat-sub">Année académique</div>
+      </div>
+      <i class="bi bi-calendar3 stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# Alerte si INCOMPLET #}
+{% if dossier.statut == 'INCOMPLET' %}
+<div class="d-flex align-items-flex-start gap-3 p-3 rounded-3 mb-4" style="background:#fdecea">
+  <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" style="color:var(--red)"></i>
+  <div class="flex-grow-1">
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark)">Votre dossier est incomplet</div>
+    <div style="font-size:.8rem;color:var(--dark);margin-top:4px">
+      Votre représentant de filière a signalé des pièces manquantes ou non conformes.
+      {% if dossier.observations %}<br><em>Motif : {{ dossier.observations }}</em>{% endif %}
+    </div>
+    <a href="{{ url_for('etudiant.detail_dossier') }}"
+       class="btn btn-sm mt-2" style="background:var(--red);color:#fff;border:none;border-radius:7px;font-size:.78rem;font-weight:700">
+      <i class="bi bi-eye me-1"></i>Consulter le détail
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{# Parcours stepper vertical #}
+<div class="row g-4">
+  <div class="col-12 col-lg-8">
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-signpost-2 me-2" style="color:var(--blue)"></i>Mon parcours de diplomation</h2>
+        <a href="{{ url_for('etudiant.detail_dossier') }}"
+           style="font-size:.8rem;color:var(--blue);text-decoration:none">Voir le détail →</a>
+      </div>
+      <div class="panel-body">
+
+        {% set phases_info = [
+          ('DEPOSE', 'Dépôt du dossier', 'Votre dossier a été déposé sur la plateforme', 'bi-folder2-open'),
+          ('EN_VERIFICATION', 'Vérification représentant', 'Contrôle des pièces par votre représentant', 'bi-search'),
+          ('AUTHENTIFICATION', 'Authentification diplôme', 'Vérification d\'authenticité par le Bureau de Diplomation', 'bi-shield-check'),
+          ('LISTE_FINISSANTS', 'Liste des finissants', 'Inscription sur la liste officielle des finissants', 'bi-list-check'),
+          ('IMPRESSION_PROVISOIRE', 'Impression provisoire', 'Impression provisoire du diplôme lancée', 'bi-printer'),
+          ('PRODUCTION_DEFINITIVE', 'Production définitive', 'Diplôme produit de façon définitive', 'bi-file-earmark-text'),
+          ('SIGNATURE_DIRECTEUR', 'Signature Directeur', 'Signature du diplôme par le Directeur de l\'ENSET', 'bi-pen'),
+          ('SIGNATURE_RECTEUR', 'Signature Recteur', 'Signature du diplôme par le Recteur', 'bi-pen-fill'),
+          ('SIGNATURE_MINISTRE', 'Signature Ministre', 'Signature par le Ministère de tutelle', 'bi-award'),
+          ('FORMALISATION', 'Formalisation', 'Dossier post-soutenance complété', 'bi-clipboard2-check'),
+          ('CLOTURE', 'Diplôme remis', 'Votre diplôme vous a été officiellement remis', 'bi-mortarboard-fill'),
+        ] %}
+
+        <div style="display:flex;flex-direction:column;gap:0">
+          {% for statut_key, label, desc, icon in phases_info %}
+          {% set idx = loop.index0 %}
+          {% set state = 'done' if idx < current_idx else ('active' if idx == current_idx else 'pending') %}
+          <div style="display:flex;gap:16px;position:relative">
+            {% if not loop.last %}
+            <div style="position:absolute;left:18px;top:38px;width:2px;height:calc(100% - 8px);background:{% if state == 'done' %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            {% endif %}
+            <div style="flex-shrink:0;z-index:1">
+              <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;border:3px solid;
+                {% if state == 'done' %}background:var(--green);border-color:var(--green);color:#fff
+                {% elif state == 'active' %}background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(37,102,158,.15)
+                {% else %}background:#f8f9fa;border-color:#d0d3d8;color:#bbb{% endif %}">
+                {% if state == 'done' %}<i class="bi bi-check-lg"></i>
+                {% else %}<i class="bi {{ icon }}"></i>{% endif %}
+              </div>
+            </div>
+            <div style="flex:1;border-radius:11px;padding:13px 16px;margin-bottom:12px;
+              {% if state == 'active' %}background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.05);border:2px solid var(--blue)
+              {% elif state == 'done' %}background:#f7fdf9;border:2px solid #c8ead8
+              {% else %}background:#f8f9fa;border:2px solid transparent{% endif %}">
+              <div style="font-size:.88rem;font-weight:700;color:{% if state == 'pending' %}var(--gris-dark){% else %}var(--dark){% endif %}">{{ label }}</div>
+              {% if state != 'pending' %}
+              <div style="font-size:.76rem;color:var(--gris-dark);margin-top:2px">{{ desc }}</div>
+              {% endif %}
+              <span style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;margin-top:5px;display:inline-block;
+                {% if state == 'done' %}background:#e6f5ef;color:#1f7a52
+                {% elif state == 'active' %}background:#e8f0fc;color:var(--blue)
+                {% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+                {% if state == 'done' %}✓ Complété{% elif state == 'active' %}→ En cours{% else %}En attente{% endif %}
+              </span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+
+    {# Récapitulatif #}
+    <div class="panel mb-4">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-info-circle me-2" style="color:var(--blue)"></i>Récapitulatif</h2>
+      </div>
+      <div class="panel-body">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:2rem;font-weight:900;color:var(--blue)">{{ current_idx + 1 if current_idx >= 0 else 0 }}/{{ nb_etapes }}</div>
+          <div style="font-size:.8rem;color:var(--gris-dark)">étapes complétées</div>
+        </div>
+        <div style="height:10px;border-radius:99px;background:var(--gris-bg);margin-bottom:16px;overflow:hidden">
+          <div style="height:100%;border-radius:99px;background:var(--blue);width:{{ pct_avancement }}%"></div>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          <div class="d-flex justify-content-between" style="font-size:.82rem">
+            <span>Statut actuel</span>
+            <strong style="color:var(--blue)">{{ dossier.libelle_statut() }}</strong>
+          </div>
+          <div class="d-flex justify-content-between" style="font-size:.82rem">
+            <span>Matricule</span>
+            <code style="color:var(--blue)">{{ dossier.matricule }}</code>
+          </div>
+          <div class="d-flex justify-content-between" style="font-size:.82rem">
+            <span>Dépôt</span>
+            <strong>{{ dossier.date_depot.strftime('%d/%m/%Y') if dossier.date_depot else '—' }}</strong>
+          </div>
+        </div>
+        <div class="mt-3 pt-3" style="border-top:1px solid var(--gris-bg)">
+          <a href="{{ url_for('etudiant.detail_dossier') }}"
+             class="btn btn-sm w-100" style="background:var(--blue);color:#fff;border:none;border-radius:9px;font-weight:700;padding:9px">
+            <i class="bi bi-folder2-open me-2"></i>Voir mon dossier complet
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {# Info nom sur diplôme #}
+    {% if dossier.nom_sur_diplome %}
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-award me-2" style="color:var(--green)"></i>Identité sur le diplôme</h2>
+      </div>
+      <div class="panel-body">
+        <div class="d-flex flex-column gap-2">
+          <div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark)">Nom</div>
+            <div style="font-size:.9rem;font-weight:700;color:var(--dark)">{{ dossier.nom_sur_diplome }}</div>
+          </div>
+          <div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark)">Prénom(s)</div>
+            <div style="font-size:.9rem;font-weight:700;color:var(--dark)">{{ dossier.prenom_sur_diplome or '—' }}</div>
+          </div>
+          {% if dossier.ddn_sur_diplome %}
+          <div>
+            <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark)">Date de naissance</div>
+            <div style="font-size:.88rem;color:var(--dark)">{{ dossier.ddn_sur_diplome }}</div>
+          </div>
+          {% endif %}
+        </div>
+        <div class="mt-3" style="font-size:.73rem;color:var(--gris-dark);background:var(--gris-bg);border-radius:7px;padding:8px 10px">
+          <i class="bi bi-info-circle me-1"></i>
+          Ces informations figureront sur votre diplôme officiel. Contactez votre représentant en cas d'erreur.
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

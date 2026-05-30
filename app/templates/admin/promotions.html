@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Promotions{% endblock %}
+{% block page_title %}Gestion des promotions{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('admin.nouvelle_promotion') }}" class="btn btn-primary btn-sm">
+  <i class="bi bi-plus-circle me-1"></i> Nouvelle promotion
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-mortarboard me-2"></i>Promotions</h1>
+  <p>Une promotion = une filière + un niveau (3 Licence / 5 Master) + une année académique.</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span>{{ promotions|length }} promotion(s)</span>
+  </div>
+  {% if promotions %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Filière</th>
+          <th>Niveau</th>
+          <th>Année académique</th>
+          <th>Étudiants</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in promotions %}
+        <tr>
+          <td>
+            <span class="fw-500">{{ p.code_filiere }}</span>
+            {% if p.filiere %}<span class="text-muted ms-1" style="font-size:.85rem">— {{ p.filiere.nom }}</span>{% endif %}
+          </td>
+          <td>
+            {% if p.niveau == 3 %}
+            <span class="badge bg-primary">Licence (niv. 3)</span>
+            {% elif p.niveau == 5 %}
+            <span class="badge bg-success">Master (niv. 5)</span>
+            {% else %}
+            <span class="badge bg-secondary">Niv. {{ p.niveau }}</span>
+            {% endif %}
+          </td>
+          <td>{{ p.annee_academique }}</td>
+          <td>
+            <span class="badge bg-secondary">{{ p.etudiants|length }}</span>
+          </td>
+          <td>
+            {% if p.actif %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+            {% else %}
+            <span class="badge bg-secondary">Inactive</span>
+            {% endif %}
+          </td>
+          <td class="text-end">
+            <form method="POST" action="{{ url_for('admin.toggle_promotion', id=p.id_promotion) }}" class="d-inline">
+              <button type="submit" class="btn btn-sm {{ 'btn-outline-warning' if p.actif else 'btn-outline-success' }}">
+                {{ 'Désactiver' if p.actif else 'Activer' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="card-body empty-state">
+    <i class="bi bi-mortarboard"></i>
+    <h6>Aucune promotion configurée</h6>
+    <p>Créez la première promotion avant d'importer des étudiants.</p>
+    <a href="{{ url_for('admin.nouvelle_promotion') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-circle me-1"></i> Nouvelle promotion
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Saisie résultats authentification</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.2rem;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .np{background:#e05252;color:#fff;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:auto;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.15rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-circle{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--green));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+
+    /* BREADCRUMB */
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+    .bc i{font-size:.7rem;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* STAT MINI */
+    .stat-mini{background:var(--white);border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.06);padding:16px 18px;border-left:4px solid transparent;display:flex;align-items:center;justify-content:space-between;}
+    .stat-mini.blue{border-color:var(--blue);}
+    .stat-mini.green{border-color:var(--green);}
+    .stat-mini.red{border-color:var(--red);}
+    .stat-mini.yellow{border-color:var(--yellow);}
+    .sm-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);}
+    .sm-val{font-size:1.55rem;font-weight:800;color:var(--dark);margin-top:3px;}
+    .sm-icon{font-size:1.7rem;opacity:.18;}
+    .stat-mini.blue .sm-icon{color:var(--blue);}
+    .stat-mini.green .sm-icon{color:var(--green);}
+    .stat-mini.red .sm-icon{color:var(--red);}
+    .stat-mini.yellow .sm-icon{color:var(--yellow);}
+
+    /* SEARCH BAR */
+    .search-bar{background:var(--white);border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.06);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+    .search-input{flex:1;min-width:180px;border:1px solid var(--gris-border);border-radius:9px;padding:8px 14px;font-size:.86rem;color:var(--dark);}
+    .search-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,102,158,.1);}
+    .filter-chip{border:2px solid var(--gris-border);border-radius:99px;padding:6px 14px;font-size:.78rem;font-weight:700;color:var(--gris-dark);background:#fff;cursor:pointer;transition:all .15s;}
+    .filter-chip:hover{border-color:var(--blue);color:var(--blue);}
+    .filter-chip.active-all{border-color:var(--blue);background:var(--blue);color:#fff;}
+    .filter-chip.active-pending{border-color:var(--yellow);background:var(--yellow);color:#fff;}
+    .filter-chip.active-authentic{border-color:var(--green);background:var(--green);color:#fff;}
+    .filter-chip.active-fake{border-color:var(--red);background:var(--red);color:#fff;}
+    .batch-import{display:flex;align-items:center;gap:8px;margin-left:auto;}
+
+    /* TABLEAU SAISIE */
+    #authTable thead th{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border:none;padding:10px 14px;white-space:nowrap;}
+    #authTable tbody td{font-size:.85rem;color:var(--dark);border:none;padding:0;border-top:1px solid var(--gris-bg);}
+    #authTable tbody tr:hover{background:#f6f8fb;}
+    #authTable tbody tr.row-authentic td{background:rgba(45,160,110,.04);}
+    #authTable tbody tr.row-fake td{background:rgba(224,82,82,.04);}
+
+    .td-inner{padding:10px 14px;display:flex;align-items:center;height:100%;}
+
+    /* MENTION PILLS */
+    .mention-group{display:flex;gap:6px;padding:8px 14px;}
+    .mention-pill{border:2px solid var(--gris-border);border-radius:99px;padding:5px 14px;font-size:.76rem;font-weight:700;color:var(--gris-dark);background:#fff;cursor:pointer;transition:all .15s;white-space:nowrap;display:flex;align-items:center;gap:5px;}
+    .mention-pill:hover{border-color:var(--blue);color:var(--blue);}
+    .mention-pill.authentic{border-color:var(--green)!important;background:var(--green-bg)!important;color:var(--green)!important;}
+    .mention-pill.fake{border-color:var(--red)!important;background:var(--red-bg)!important;color:var(--red)!important;}
+    .mention-pill.douteux{border-color:var(--yellow)!important;background:var(--yellow-bg)!important;color:var(--yellow)!important;}
+
+    /* CHAMPS COMPLÉMENTAIRES */
+    .ref-input{border:1px solid var(--gris-border);border-radius:7px;padding:5px 9px;font-size:.8rem;color:var(--dark);width:100%;}
+    .ref-input:focus{outline:none;border-color:var(--blue);}
+    .obs-input{border:1px solid var(--gris-border);border-radius:7px;padding:5px 9px;font-size:.8rem;color:var(--dark);width:100%;min-width:140px;}
+    .obs-input:focus{outline:none;border-color:var(--blue);}
+
+    /* STATUS BADGE */
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-red{background:var(--red-bg);color:var(--red);}
+    .bs-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .bs-gray{background:var(--gris-bg);color:var(--gris-dark);}
+    .bs-teal{background:var(--teal-bg);color:var(--teal);}
+
+    /* ACTIONS RAPIDES LIGNE */
+    .row-actions{display:flex;gap:6px;padding:8px 14px;align-items:center;}
+    .btn-row{border:none;border-radius:7px;padding:5px 10px;font-size:.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;}
+    .btn-save{background:var(--blue);color:#fff;}
+    .btn-save:hover{background:var(--blue-dark);}
+    .btn-reset{background:var(--gris-bg);color:var(--gris-dark);}
+    .btn-reset:hover{background:var(--gris-border);}
+
+    /* BARRE SOUMISSION */
+    .submit-bar{background:var(--white);border-radius:13px;box-shadow:0 2px 12px rgba(0,0,0,.1);padding:18px 22px;position:sticky;bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:2px solid var(--gris-border);}
+    .sb-left{display:flex;flex-direction:column;gap:2px;}
+    .sb-left strong{font-size:.9rem;color:var(--dark);}
+    .sb-left span{font-size:.78rem;color:var(--gris-dark);}
+    .btn-submit-all{background:var(--teal);color:#fff;border:none;border-radius:11px;padding:12px 26px;font-size:.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .18s;}
+    .btn-submit-all:hover{background:#147070;}
+    .btn-export{background:var(--gris-bg);color:var(--dark);border:none;border-radius:11px;padding:12px 18px;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .18s;}
+    .btn-export:hover{background:var(--gris-border);}
+
+    /* IMPORT MODAL */
+    .drop-zone{border:2px dashed var(--gris-border);border-radius:11px;padding:28px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s;}
+    .drop-zone:hover,.drop-zone.drag{border-color:var(--blue);background:#f4f8fe;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}.submit-bar{flex-direction:column;align-items:stretch;}.mention-group{flex-wrap:wrap;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="chef_diplomation.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Bureau Diplomation</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Tableau de bord</div>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Vue d'ensemble</span></a>
+    <div class="ss">Production</div>
+    <a href="#" class="nav-link"><i class="bi bi-mortarboard-fill"></i><span class="sl">Produire des diplômes</span></a>
+    <a href="authentification_saisie.html" class="nav-link active"><i class="bi bi-shield-check"></i><span class="sl">Saisie authentification</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-pen"></i><span class="sl">File de signature</span></a>
+    <div class="ss">Dossiers</div>
+    <a href="tables.html" class="nav-link"><i class="bi bi-folder2-open"></i><span class="sl">Tous les dossiers</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle"></i><span class="sl">Non conformes</span><span class="np">23</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-send"></i><span class="sl">Transmissions Ministère</span></a>
+    <div class="ss">Liens</div>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-arrow-left-right"></i><span class="sl">Scolarité</span></a>
+    <a href="dashboard_directeur.html" class="nav-link"><i class="bi bi-building"></i><span class="sl">Direction</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Saisie résultats d'authentification</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Promotion 2024-2025 · Office du Baccalauréat</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-circle">BD</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Bureau</div><div class="av-role">Bureau Diplomation</div></div>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="bc">
+    <a href="chef_diplomation.html">Bureau Diplomation</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Saisie authentification</span>
+  </div>
+
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="stat-mini blue">
+        <div><div class="sm-label">Total à traiter</div><div class="sm-val" id="statTotal">612</div></div>
+        <i class="bi bi-folder2-open sm-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-mini green">
+        <div><div class="sm-label">Authentiques</div><div class="sm-val" id="statAuth">0</div></div>
+        <i class="bi bi-patch-check-fill sm-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-mini red">
+        <div><div class="sm-label">Faux / douteux</div><div class="sm-val" id="statFake">0</div></div>
+        <i class="bi bi-shield-x sm-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-mini yellow">
+        <div><div class="sm-label">En attente saisie</div><div class="sm-val" id="statPending">12</div></div>
+        <i class="bi bi-hourglass-split sm-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO BANNER -->
+  <div class="alert mb-4" style="background:var(--teal-bg);border:none;border-radius:11px;font-size:.83rem;display:flex;align-items:flex-start;gap:10px;">
+    <i class="bi bi-shield-check-fill mt-1" style="color:var(--teal);font-size:1rem;flex-shrink:0;"></i>
+    <div>
+      <strong style="color:var(--teal);">Saisie des résultats d'authentification des diplômes.</strong><br>
+      Pour chaque étudiant, sélectionnez la mention reçue de l'Office du Baccalauréat (<strong>Authentique</strong>, <strong>Faux/suspect</strong> ou <strong>Douteux</strong>), renseignez le numéro de référence officiel, puis validez. Le statut du dossier est mis à jour automatiquement et l'étudiant est notifié en cas de suspicion.
+    </div>
+  </div>
+
+  <!-- FILTRES + RECHERCHE -->
+  <div class="search-bar">
+    <input type="text" class="search-input" placeholder="Rechercher par matricule, nom, filière…" id="searchInp" oninput="applyFilter()"/>
+    <button class="filter-chip active-all" id="fc-all" onclick="setFilter('all',this)">Tous</button>
+    <button class="filter-chip" id="fc-pending" onclick="setFilter('pending',this)"><i class="bi bi-hourglass-split me-1"></i>À saisir</button>
+    <button class="filter-chip" id="fc-authentic" onclick="setFilter('authentic',this)"><i class="bi bi-patch-check me-1"></i>Authentiques</button>
+    <button class="filter-chip" id="fc-fake" onclick="setFilter('fake',this)"><i class="bi bi-shield-x me-1"></i>Faux/douteux</button>
+    <div class="batch-import d-none d-md-flex">
+      <button class="btn btn-sm" style="border-radius:8px;font-size:.78rem;border:1px solid var(--gris-border);background:#fff;" data-bs-toggle="modal" data-bs-target="#importModal">
+        <i class="bi bi-cloud-upload me-1"></i>Import CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- TABLEAU DE SAISIE -->
+  <div class="panel">
+    <div class="panel-hd">
+      <span class="panel-title"><i class="bi bi-table me-2" style="color:var(--teal);"></i>Saisie par étudiant</span>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="lignesLabel" style="font-size:.75rem;color:var(--gris-dark);">Affichage de 12 étudiants</span>
+        <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;border:1px solid var(--gris-border);background:#fff;" onclick="validerTous()">
+          <i class="bi bi-check2-all me-1" style="color:var(--green);"></i>Tout marquer authentique
+        </button>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table id="authTable" class="table w-100 mb-0">
+        <thead>
+          <tr>
+            <th style="width:30px;"><input type="checkbox" id="selectAll" onchange="toggleAll(this)"/></th>
+            <th>Matricule</th>
+            <th>Étudiant</th>
+            <th>Filière</th>
+            <th>Diplôme vérifié</th>
+            <th>Mention Office BAC</th>
+            <th>N° Référence officiel</th>
+            <th>Observations</th>
+            <th>Statut dossier</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BARRE SOUMISSION -->
+  <div class="submit-bar">
+    <div class="sb-left">
+      <strong><span id="saisiesCount">0</span> / 12 résultats saisis</strong>
+      <span>Les dossiers seront mis à jour automatiquement. Les étudiants suspects seront notifiés.</span>
+    </div>
+    <div class="d-flex gap-3 flex-wrap">
+      <button class="btn-export" onclick="exporterCSV()"><i class="bi bi-download"></i>Exporter état</button>
+      <button class="btn-submit-all" onclick="soumettreResultats()"><i class="bi bi-send-check-fill"></i>Enregistrer tous les résultats</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL IMPORT CSV -->
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title" style="font-weight:800;font-size:1rem;color:var(--teal);"><i class="bi bi-cloud-upload me-2"></i>Import CSV — Résultats d'authentification</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFile').click()">
+          <i class="bi bi-file-earmark-spreadsheet" style="font-size:2rem;color:var(--gris-dark);"></i>
+          <div style="font-size:.88rem;color:var(--gris-dark);margin-top:8px;">Cliquez ou déposez votre fichier CSV ici</div>
+          <div style="font-size:.76rem;color:var(--gris-dark);margin-top:4px;">Format attendu : matricule, mention, référence_officielle</div>
+          <input type="file" id="csvFile" accept=".csv,.xlsx" style="display:none;"/>
+        </div>
+        <div class="mt-3 p-3" style="background:var(--gris-bg);border-radius:9px;">
+          <div style="font-size:.78rem;font-weight:700;color:var(--dark);margin-bottom:6px;">Format du fichier CSV attendu :</div>
+          <code style="font-size:.74rem;color:var(--blue);">matricule,mention,reference,observations<br>21G0042,authentique,REF-2025-BAC-04712,RAS<br>21G0043,faux,,,Signature suspecte</code>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" style="background:var(--teal);color:#fff;border:none;border-radius:8px;font-weight:700;" data-bs-dismiss="modal" onclick="alert('✓ Import CSV simulé. Les données ont été chargées.')">
+          <i class="bi bi-upload me-1"></i>Importer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST FEEDBACK -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+  <div id="fbToast" class="toast align-items-center border-0" style="border-radius:10px;min-width:260px;">
+    <div class="d-flex">
+      <div class="toast-body" id="fbToastBody" style="font-size:.85rem;font-weight:600;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ══ DONNÉES ══ */
+const etudiants = [
+  { id:1, mat:'21G0042', nom:'MBALLA Jean-Baptiste',  filiere:'Génie Info',      diplome:'Baccalauréat C', mention:'authentic', ref:'REF-2025-BAC-04712', obs:'', saved:true },
+  { id:2, mat:'21G0043', nom:'FOMO EKOTTO Claire',    filiere:'Génie Élec.',     diplome:'Baccalauréat D', mention:'',          ref:'',                  obs:'', saved:false },
+  { id:3, mat:'21G0044', nom:'NGONO Paul Rodrigue',   filiere:'Génie Civil',     diplome:'Baccalauréat C', mention:'fake',      ref:'',                  obs:'Signature photocopiée', saved:true },
+  { id:4, mat:'21G0045', nom:'BIYA Sylvie Carole',    filiere:'Génie Info',      diplome:'Baccalauréat A4',mention:'authentic', ref:'REF-2025-BAC-04801', obs:'', saved:true },
+  { id:5, mat:'21G0046', nom:'ATEBA Marc Fabrice',    filiere:'Sci. Ind.',       diplome:'Baccalauréat F4',mention:'',          ref:'',                  obs:'', saved:false },
+  { id:6, mat:'21G0047', nom:'KOAGNE Bernard',        filiere:'Génie Civil',     diplome:'Baccalauréat C', mention:'douteux',   ref:'',                  obs:'En cours de vérification Office', saved:false },
+  { id:7, mat:'21G0048', nom:'NKOULOU Marie-José',    filiere:'Génie Méca.',     diplome:'Baccalauréat F2',mention:'authentic', ref:'REF-2025-BAC-04950', obs:'', saved:true },
+  { id:8, mat:'21G0049', nom:'ESSAMA Roger Thierry',  filiere:'Génie Élec.',     diplome:'Baccalauréat D', mention:'',          ref:'',                  obs:'', saved:false },
+  { id:9, mat:'21G0050', nom:'OWONA Hélène Pascale',  filiere:'Génie Civil',     diplome:'Baccalauréat A', mention:'authentic', ref:'REF-2025-BAC-05012', obs:'', saved:true },
+  { id:10,mat:'21G0051', nom:'TABI Claude Aurelien',  filiere:'Génie Info',      diplome:'Baccalauréat C', mention:'',          ref:'',                  obs:'', saved:false },
+  { id:11,mat:'21G0052', nom:'FOUDA Patrick Francis', filiere:'Sci. Ind.',       diplome:'Baccalauréat F1',mention:'authentic', ref:'REF-2025-BAC-05134', obs:'', saved:true },
+  { id:12,mat:'21G0053', nom:'ABANDA Victoire Aline', filiere:'Génie Élec.',     diplome:'Baccalauréat D', mention:'',          ref:'',                  obs:'', saved:false },
+];
+
+let currentFilter = 'all';
+
+const mentionConfig = {
+  authentic:{ label:'Authentique',   cls:'authentic', icon:'bi-patch-check-fill',  color:'var(--green)' },
+  fake:     { label:'Faux/Suspect',  cls:'fake',      icon:'bi-shield-x-fill',     color:'var(--red)' },
+  douteux:  { label:'Douteux',       cls:'douteux',   icon:'bi-question-circle-fill', color:'var(--yellow)' },
+};
+
+/* ══ RENDU ══ */
+function render(){
+  const search = document.getElementById('searchInp').value.toLowerCase();
+  const tbody = document.getElementById('tableBody');
+
+  const filtered = etudiants.filter(e => {
+    const matchSearch = e.mat.toLowerCase().includes(search)||e.nom.toLowerCase().includes(search)||e.filiere.toLowerCase().includes(search);
+    const matchFilter = currentFilter==='all'
+      || (currentFilter==='pending' && !e.saved)
+      || (currentFilter==='authentic' && e.mention==='authentic' && e.saved)
+      || (currentFilter==='fake' && (e.mention==='fake'||e.mention==='douteux') && e.saved);
+    return matchSearch && matchFilter;
+  });
+
+  tbody.innerHTML = filtered.map(e => {
+    const mc = mentionConfig[e.mention];
+    const rowCls = e.mention==='authentic'&&e.saved?'row-authentic':e.mention==='fake'&&e.saved?'row-fake':'';
+    const statusBadge = e.saved
+      ? e.mention==='authentic'?'<span class="bs bs-green"><i class="bi bi-check-circle-fill me-1"></i>Mis à jour</span>'
+        :e.mention==='fake'?'<span class="bs bs-red"><i class="bi bi-exclamation-circle-fill me-1"></i>Signalé suspect</span>'
+        :'<span class="bs bs-yellow"><i class="bi bi-clock me-1"></i>En vérification</span>'
+      : '<span class="bs bs-gray">En attente</span>';
+
+    return `<tr class="${rowCls}" id="row-${e.id}">
+      <td><div class="td-inner"><input type="checkbox" class="row-cb" data-id="${e.id}"/></div></td>
+      <td><div class="td-inner"><code style="color:var(--blue);font-size:.8rem;">${e.mat}</code></div></td>
+      <td><div class="td-inner" style="font-weight:600;">${e.nom}</div></td>
+      <td><div class="td-inner" style="font-size:.82rem;color:var(--gris-dark);">${e.filiere}</div></td>
+      <td><div class="td-inner" style="font-size:.82rem;">${e.diplome}</div></td>
+      <td>
+        <div class="mention-group">
+          <button class="mention-pill ${e.mention==='authentic'?'authentic':''}" onclick="setMention(${e.id},'authentic')">
+            <i class="bi bi-patch-check-fill"></i>Authentique
+          </button>
+          <button class="mention-pill ${e.mention==='fake'?'fake':''}" onclick="setMention(${e.id},'fake')">
+            <i class="bi bi-shield-x-fill"></i>Faux
+          </button>
+          <button class="mention-pill ${e.mention==='douteux'?'douteux':''}" onclick="setMention(${e.id},'douteux')">
+            <i class="bi bi-question-circle"></i>Douteux
+          </button>
+        </div>
+      </td>
+      <td><div class="td-inner"><input class="ref-input" id="ref-${e.id}" placeholder="REF-2025-BAC-XXXXX" value="${e.ref}" style="width:170px;" onchange="updateField(${e.id},'ref',this.value)"/></div></td>
+      <td><div class="td-inner"><input class="obs-input" id="obs-${e.id}" placeholder="Observations…" value="${e.obs}" onchange="updateField(${e.id},'obs',this.value)"/></div></td>
+      <td><div class="td-inner">${statusBadge}</div></td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-row btn-save" onclick="sauvegarderLigne(${e.id})"><i class="bi bi-floppy"></i>Enr.</button>
+          ${e.mention?`<button class="btn-row btn-reset" onclick="resetLigne(${e.id})"><i class="bi bi-arrow-counterclockwise"></i></button>`:''}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('lignesLabel').textContent = `Affichage de ${filtered.length} étudiant(s)`;
+  updateStats();
+}
+
+function setMention(id, mention){
+  const e = etudiants.find(x=>x.id===id);
+  if(e){ e.mention=mention; e.saved=false; render(); }
+}
+
+function updateField(id, field, val){
+  const e = etudiants.find(x=>x.id===id);
+  if(e){ e[field]=val; }
+}
+
+function sauvegarderLigne(id){
+  const e = etudiants.find(x=>x.id===id);
+  if(!e) return;
+  if(!e.mention){ showToast('Sélectionnez une mention avant d\'enregistrer.', false); return; }
+  e.ref = document.getElementById(`ref-${id}`)?.value||e.ref;
+  e.obs = document.getElementById(`obs-${id}`)?.value||e.obs;
+  e.saved = true;
+  render();
+  const label = mentionConfig[e.mention]?.label||'';
+  showToast(`✓ Résultat enregistré pour ${e.nom} : ${label}`);
+  if(e.mention==='fake'||e.mention==='douteux'){
+    setTimeout(()=>showToast(`⚠ Notification envoyée à ${e.nom} pour suspicion de diplôme.`, false), 1500);
+  }
+}
+
+function resetLigne(id){
+  const e = etudiants.find(x=>x.id===id);
+  if(e){ e.mention=''; e.ref=''; e.obs=''; e.saved=false; render(); }
+}
+
+function validerTous(){
+  const visible = Array.from(document.querySelectorAll('.row-cb')).map(cb=>parseInt(cb.dataset.id));
+  visible.forEach(id=>{
+    const e=etudiants.find(x=>x.id===id);
+    if(e&&!e.saved){e.mention='authentic';}
+  });
+  render();
+}
+
+function toggleAll(master){
+  document.querySelectorAll('.row-cb').forEach(cb=>cb.checked=master.checked);
+}
+
+function setFilter(f, btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-chip').forEach(b=>{
+    b.className='filter-chip';
+  });
+  btn.classList.add(`active-${f}`);
+  render();
+}
+
+function applyFilter(){ render(); }
+
+function updateStats(){
+  const saved = etudiants.filter(e=>e.saved);
+  const auth = saved.filter(e=>e.mention==='authentic').length;
+  const fake = saved.filter(e=>e.mention==='fake'||e.mention==='douteux').length;
+  const pending = etudiants.filter(e=>!e.saved).length;
+  document.getElementById('statAuth').textContent = auth;
+  document.getElementById('statFake').textContent = fake;
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('saisiesCount').textContent = saved.length;
+}
+
+function soumettreResultats(){
+  const pending = etudiants.filter(e=>!e.saved).length;
+  if(pending>0){
+    if(!confirm(`${pending} résultat(s) non encore enregistré(s). Soumettre quand même les résultats saisis ?`)) return;
+  }
+  showToast('✓ Résultats soumis avec succès. Les dossiers ont été mis à jour.');
+  setTimeout(()=>{window.location.href='chef_diplomation.html';},2000);
+}
+
+function exporterCSV(){
+  const rows=[['Matricule','Nom','Filière','Diplôme','Mention','Référence','Observations','Statut']];
+  etudiants.forEach(e=>{
+    rows.push([e.mat,e.nom,e.filiere,e.diplome,e.mention,e.ref,e.obs,e.saved?'Enregistré':'En attente']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='authentification_2025.csv';a.click();
+}
+
+function showToast(msg, ok=true){
+  const t=document.getElementById('fbToast');
+  const b=document.getElementById('fbToastBody');
+  t.style.background=ok?'var(--green)':'var(--red)';
+  t.style.color='#fff';
+  b.textContent=msg;
+  new bootstrap.Toast(t,{delay:3200}).show();
+}
+
+/* SIDEBAR */
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+/* DROP ZONE */
+const dz=document.getElementById('dropZone');
+if(dz){
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');alert('Fichier reçu — import simulé.');});
+}
+
+render();
+</script>
+</body>
+</html>

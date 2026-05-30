@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block title %}Directeur — Tableau de bord{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('directeur.nouveau_communique') }}" class="btn btn-sm"
+   style="background:var(--blue);color:#fff;border-radius:8px">
+  <i class="bi bi-megaphone me-1"></i>Nouveau communiqué
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><i class="bi bi-building me-2"></i>Directeur de l'ENSET</h1>
+    <p class="text-muted mb-0" style="font-size:.85rem">Supervision générale du processus de diplomation.</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-12 col-sm-6">
+    <div class="stat-card red">
+      <div>
+        <div class="stat-label">En attente de signature</div>
+        <div class="stat-value">{{ nb_dossiers_signature }}</div>
+      </div>
+      <i class="bi bi-pen stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-12 col-sm-6">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Communiqués</div>
+        <div class="stat-value">{{ communiques|length }}</div>
+      </div>
+      <i class="bi bi-megaphone stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <div class="col-12 col-md-5">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-lightning-charge me-2" style="color:var(--blue)"></i>Actions rapides</h2>
+      </div>
+      <div class="panel-body d-flex flex-column gap-2">
+        <a href="{{ url_for('directeur.dossiers_a_signer') }}"
+           class="btn d-flex align-items-center justify-content-between"
+           style="background:#fdecea;color:#a03030;border:none;border-radius:8px;padding:10px 14px">
+          <span><i class="bi bi-pen me-2"></i>Dossiers à signer</span>
+          {% if nb_dossiers_signature > 0 %}
+          <span class="badge" style="background:#e05252;color:#fff">{{ nb_dossiers_signature }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('directeur.liste_communiques') }}"
+           class="btn d-flex align-items-center"
+           style="background:#eff6ff;color:var(--blue);border:none;border-radius:8px;padding:10px 14px">
+          <i class="bi bi-list-ul me-2"></i>Gérer les communiqués
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-7">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-megaphone me-2" style="color:var(--blue)"></i>Derniers communiqués</h2>
+        <a href="{{ url_for('directeur.liste_communiques') }}"
+           class="btn btn-sm" style="font-size:.78rem;color:var(--blue)">Voir tout →</a>
+      </div>
+      <div class="panel-body p-0">
+        <table class="table recent-table mb-0">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Date</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in communiques %}
+            <tr>
+              <td>{{ c.titre[:45] }}{% if c.titre|length > 45 %}…{% endif %}</td>
+              <td>{{ c.date_emission.strftime('%d/%m/%Y') }}</td>
+              <td>
+                <span class="badge-status {% if c.statut == 'PUBLIE' %}badge-complet{% else %}badge-en-cours{% endif %}">
+                  {{ c.statut }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center py-4 text-muted" style="font-size:.85rem">
+                Aucun communiqué publié.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Changer mon mot de passe{% endblock %}
+{% block page_title %}Mot de passe{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-shield-lock me-2"></i>Changer mon mot de passe</h1>
+  <p>
+    <a href="{{ url_for('etudiant.profil') }}" class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour au profil
+    </a>
+  </p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">Nouveau mot de passe</div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="mb-4">
+            <label class="form-label">Ancien mot de passe</label>
+            <input type="password" name="ancien_mot_de_passe" class="form-control" required>
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Nouveau mot de passe</label>
+            <input type="password" name="nouveau_mot_de_passe" class="form-control" required minlength="6">
+          </div>
+          <div class="mb-5">
+            <label class="form-label">Confirmer le nouveau mot de passe</label>
+            <input type="password" name="confirmation" class="form-control" required minlength="6">
+          </div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-lock me-2"></i>Modifier le mot de passe
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

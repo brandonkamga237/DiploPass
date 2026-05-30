@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord — {{ filiere }}{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block topbar_actions %}
+<span class="badge" style="background:#e8f0fc;color:var(--blue);font-size:.8rem;font-weight:700;padding:6px 14px;border-radius:99px">
+  <i class="bi bi-diagram-3 me-1"></i>{{ filiere }}
+</span>
+{% endblock %}
+
+{% block content %}
+
+{# ── Calculs pour le donut ── #}
+{% set total = stats.total %}
+{% if total > 0 %}
+  {% set arc_valides   = (stats.valides   / total * 314) | round(1) %}
+  {% set arc_en_cours  = (stats.en_verification / total * 314) | round(1) %}
+  {% set arc_incomplet = (stats.incomplets / total * 314) | round(1) %}
+  {% set rot_en_cours  = (-90 + stats.valides / total * 360) | round(1) %}
+  {% set rot_incomplet = (-90 + (stats.valides + stats.en_verification) / total * 360) | round(1) %}
+  {% set pct           = (stats.valides / total * 100) | round %}
+{% else %}
+  {% set arc_valides = 0 %}{% set arc_en_cours = 0 %}{% set arc_incomplet = 0 %}
+  {% set rot_en_cours = -90 %}{% set rot_incomplet = -90 %}{% set pct = 0 %}
+{% endif %}
+
+{# ── Stats ── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Ma filière</div>
+        <div class="stat-value">{{ nb_etudiants }}</div>
+        <div class="stat-sub">Étudiants inscrits</div>
+      </div>
+      <i class="bi bi-people-fill stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card yellow">
+      <div>
+        <div class="stat-label">À traiter</div>
+        <div class="stat-value">{{ stats.deposes }}</div>
+        <div class="stat-sub">Dossiers déposés</div>
+      </div>
+      <i class="bi bi-hourglass stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card red">
+      <div>
+        <div class="stat-label">Incomplets</div>
+        <div class="stat-value">{{ stats.incomplets }}</div>
+        <div class="stat-sub">Pièces manquantes</div>
+      </div>
+      <i class="bi bi-exclamation-circle-fill stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Avancés</div>
+        <div class="stat-value">{{ stats.valides }}</div>
+        <div class="stat-sub">Validés / en cours</div>
+      </div>
+      <i class="bi bi-check2-all stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# ── Avancement + Priorités ── #}
+<div class="row g-4 mb-4">
+
+  {# Donut avancement #}
+  <div class="col-12 col-md-5 col-xl-4">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-pie-chart me-2" style="color:var(--blue)"></i>Avancement filière</h2>
+      </div>
+      <div class="panel-body">
+        <div class="d-flex align-items-center justify-content-center" style="position:relative;height:160px;margin-bottom:16px">
+          <svg viewBox="0 0 120 120" width="160" height="160">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gris-bg)" stroke-width="14"/>
+            {% if arc_valides > 0 %}
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--green)" stroke-width="14"
+              stroke-dasharray="{{ arc_valides }} 314" stroke-linecap="round"
+              transform="rotate(-90 60 60)"/>
+            {% endif %}
+            {% if arc_en_cours > 0 %}
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--yellow)" stroke-width="14"
+              stroke-dasharray="{{ arc_en_cours }} 314" stroke-linecap="round"
+              transform="rotate({{ rot_en_cours }} 60 60)"/>
+            {% endif %}
+            {% if arc_incomplet > 0 %}
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--red)" stroke-width="14"
+              stroke-dasharray="{{ arc_incomplet }} 314" stroke-linecap="round"
+              transform="rotate({{ rot_incomplet }} 60 60)" style="opacity:.8"/>
+            {% endif %}
+          </svg>
+          <div style="position:absolute;text-align:center">
+            <div style="font-size:1.7rem;font-weight:800;color:var(--dark)">{{ pct }}%</div>
+            <div style="font-size:.72rem;color:var(--gris-dark)">avancé</div>
+          </div>
+        </div>
+        <div class="d-flex flex-column gap-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block"></span>Avancés
+            </span>
+            <strong style="font-size:.85rem">{{ stats.valides }}</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--yellow);display:inline-block"></span>En vérification
+            </span>
+            <strong style="font-size:.85rem">{{ stats.en_verification }}</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block"></span>Incomplets
+            </span>
+            <strong style="font-size:.85rem">{{ stats.incomplets }}</strong>
+          </div>
+          <div class="d-flex justify-content-between align-items-center">
+            <span style="font-size:.8rem;display:flex;align-items:center;gap:6px">
+              <span style="width:10px;height:10px;border-radius:50%;background:var(--gris-bg);border:1px solid #ccc;display:inline-block"></span>Déposés
+            </span>
+            <strong style="font-size:.85rem">{{ stats.deposes }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# Actions prioritaires #}
+  <div class="col-12 col-md-7 col-xl-8">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-list-task me-2" style="color:var(--blue)"></i>Actions prioritaires</h2>
+      </div>
+      <div class="panel-body d-flex flex-column gap-3">
+
+        {% if stats.incomplets > 0 %}
+        <div class="d-flex align-items-flex-start gap-3 p-3 rounded-3" style="background:#fdecea">
+          <i class="bi bi-exclamation-triangle-fill mt-1 flex-shrink-0" style="color:var(--red)"></i>
+          <div class="flex-grow-1">
+            <div style="font-size:.85rem;font-weight:700;color:var(--dark)">
+              {{ stats.incomplets }} dossier(s) incomplet(s)
+            </div>
+            <div style="font-size:.78rem;color:var(--dark);margin-top:3px">
+              Ces étudiants doivent compléter leurs pièces avant la clôture.
+            </div>
+            <a href="{{ url_for('representant.liste_dossiers', statut='INCOMPLET') }}"
+               class="btn btn-sm mt-2" style="background:var(--red);color:#fff;border-radius:7px;font-size:.78rem;border:none">
+              <i class="bi bi-funnel me-1"></i>Voir les incomplets
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if stats.deposes > 0 %}
+        <div class="d-flex align-items-flex-start gap-3 p-3 rounded-3" style="background:#fff4e0">
+          <i class="bi bi-clock-fill mt-1 flex-shrink-0" style="color:var(--yellow)"></i>
+          <div class="flex-grow-1">
+            <div style="font-size:.85rem;font-weight:700;color:var(--dark)">
+              {{ stats.deposes }} dossier(s) en attente de vérification
+            </div>
+            <div style="font-size:.78rem;color:var(--dark);margin-top:3px">
+              Ces dossiers ont été déposés et attendent votre prise en charge.
+            </div>
+            <a href="{{ url_for('representant.liste_dossiers', statut='DEPOSE') }}"
+               class="btn btn-sm mt-2" style="background:var(--yellow);color:#fff;border-radius:7px;font-size:.78rem;border:none">
+              <i class="bi bi-eye me-1"></i>Traiter les dossiers
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if stats.valides > 0 %}
+        <div class="d-flex align-items-flex-start gap-3 p-3 rounded-3" style="background:#e6f5ef">
+          <i class="bi bi-check-circle-fill mt-1 flex-shrink-0" style="color:var(--green)"></i>
+          <div class="flex-grow-1">
+            <div style="font-size:.85rem;font-weight:700;color:var(--dark)">
+              {{ stats.valides }} dossier(s) validés et transmis
+            </div>
+            <div style="font-size:.78rem;color:var(--dark);margin-top:3px">
+              Ces dossiers sont en cours de traitement par le Bureau Diplomation.
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if stats.total == 0 %}
+        <div class="text-center py-4 text-muted">
+          <i class="bi bi-folder-x d-block mb-2" style="font-size:2rem;opacity:.3"></i>
+          <div style="font-size:.85rem">Aucun dossier déposé pour l'instant.</div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ── Liste des dossiers récents ── #}
+<div class="panel">
+  <div class="panel-header" style="flex-wrap:wrap;gap:8px">
+    <h2 class="panel-title"><i class="bi bi-folder2-open me-2" style="color:var(--blue)"></i>Dossiers récents</h2>
+    <div class="d-flex gap-2 ms-auto flex-wrap">
+      <a href="{{ url_for('representant.liste_dossiers') }}"
+         class="btn btn-sm btn-outline-secondary" style="font-size:.78rem">Tous</a>
+      <a href="{{ url_for('representant.liste_dossiers', statut='INCOMPLET') }}"
+         class="btn btn-sm" style="background:#fdecea;color:var(--red);border:none;font-size:.78rem">Incomplets</a>
+      <a href="{{ url_for('representant.liste_dossiers', statut='DEPOSE') }}"
+         class="btn btn-sm" style="background:#fff4e0;color:var(--yellow);border:none;font-size:.78rem">À traiter</a>
+      <a href="{{ url_for('representant.liste_dossiers', statut='EN_VERIFICATION') }}"
+         class="btn btn-sm" style="background:#e6f5ef;color:var(--green);border:none;font-size:.78rem">Validés</a>
+    </div>
+  </div>
+  <div class="panel-body p-0">
+    <div class="table-responsive">
+      <table class="table recent-table mb-0">
+        <thead>
+          <tr>
+            <th>Étudiant</th>
+            <th>Matricule</th>
+            <th>Niveau</th>
+            <th>Statut</th>
+            <th>Dépôt</th>
+            <th style="width:80px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dossiers %}
+          <tr>
+            <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+            <td><code style="color:var(--blue);font-size:.8rem">{{ d.matricule }}</code></td>
+            <td style="font-size:.82rem">
+              {{ d.etudiant.cycle or '—' }}
+              {% if d.etudiant.niveau %}<span class="text-muted ms-1">N{{ d.etudiant.niveau }}</span>{% endif %}
+            </td>
+            <td>
+              <span class="badge bg-{{ d.couleur_statut() }}" style="font-size:.7rem">
+                {{ d.libelle_statut() }}
+              </span>
+            </td>
+            <td style="font-size:.78rem;color:var(--gris-dark)">
+              {{ d.date_depot.strftime('%d/%m/%Y') if d.date_depot else '—' }}
+            </td>
+            <td>
+              <a href="{{ url_for('representant.detail_dossier', id=d.id_dossier) }}"
+                 class="btn btn-sm"
+                 style="font-size:.75rem;background:var(--blue);color:#fff;border-radius:7px;border:none">
+                <i class="bi bi-eye me-1"></i>Voir
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center py-5 text-muted">
+              <i class="bi bi-folder-x d-block mb-2" style="font-size:2rem;opacity:.3"></i>
+              Aucun dossier déposé pour cette filière.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if dossiers %}
+    <div class="px-4 py-2" style="border-top:1px solid var(--gris-bg)">
+      <a href="{{ url_for('representant.liste_dossiers') }}"
+         style="font-size:.8rem;color:var(--blue);text-decoration:none">
+        Voir tous les dossiers →
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

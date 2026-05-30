@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Mon profil{% endblock %}
+{% block page_title %}Mon profil{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-person-circle me-2"></i>Mon profil</h1>
+</div>
+
+<div class="row g-3">
+  <div class="col-md-5">
+    <div class="card text-center" style="padding:32px 20px">
+      <div class="sidebar-avatar mx-auto mb-3" style="width:72px; height:72px; font-size:1.6rem">
+        {{ current_user.prenom[0]|upper }}{{ current_user.nom[0]|upper }}
+      </div>
+      <h5 class="fw-700 mb-1">{{ current_user.prenom }} {{ current_user.nom }}</h5>
+      <p class="mb-0" style="color:#64748b; font-size:.84rem">{{ current_user.filiere }}</p>
+      <div class="mt-3">
+        <code style="font-size:.9rem">{{ current_user.matricule }}</code>
+      </div>
+      <div class="mt-4">
+        <a href="{{ url_for('etudiant.changer_mot_de_passe') }}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-shield-lock me-2"></i>Changer le mot de passe
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="card h-100">
+      <div class="card-header">Informations personnelles</div>
+      <div class="card-body">
+        <table class="table table-sm mb-0" style="font-size:.84rem">
+          <tbody>
+            <tr><td style="color:#64748b; width:40%">Matricule</td><td><code>{{ current_user.matricule }}</code></td></tr>
+            <tr><td style="color:#64748b">Nom</td><td>{{ current_user.nom }}</td></tr>
+            <tr><td style="color:#64748b">Prénom</td><td>{{ current_user.prenom }}</td></tr>
+            <tr><td style="color:#64748b">Filière</td><td>{{ current_user.filiere }}</td></tr>
+            <tr><td style="color:#64748b">Cycle</td><td>{{ current_user.cycle or '—' }}</td></tr>
+            <tr><td style="color:#64748b">Date de naissance</td>
+                <td>{{ current_user.date_naissance.strftime('%d/%m/%Y') if current_user.date_naissance else '—' }}</td></tr>
+            <tr><td style="color:#64748b">Email</td><td>{{ current_user.email or '—' }}</td></tr>
+            <tr><td style="color:#64748b">Téléphone</td><td>{{ current_user.telephone or '—' }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

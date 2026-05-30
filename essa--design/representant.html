@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Représentant filière</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css"/>
+  <style>
+    :root{--blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--gris-bg:#eeeff1;--gris-dark:#797a7c;--white-pure:#ffffff;--dark:#4b4b4b;--sidebar-w:240px;--green:#2da06e;--yellow:#e8a020;--red:#e05252;}
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue);z-index:1040;display:flex;flex-direction:column;transition:transform .28s ease,width .28s ease;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sidebar-label,#sidebar.collapsed .sidebar-brand-text,#sidebar.collapsed .sidebar-section{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.25rem;}
+    .sidebar-brand{padding:18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.12);min-height:64px;text-decoration:none;}
+    .sidebar-brand-icon{width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--blue);font-weight:800;font-size:.85rem;}
+    .sidebar-brand-text{color:#fff;font-weight:700;font-size:.95rem;line-height:1.2;white-space:nowrap;}
+    .sidebar-brand-text small{font-weight:400;opacity:.75;font-size:.72rem;}
+    .sidebar-nav{flex:1;overflow-y:auto;padding:10px 0;}
+    .sidebar-section{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:14px 20px 4px;}
+    .sidebar-nav .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.78);padding:10px 20px;font-size:.875rem;transition:background .15s,color .15s;white-space:nowrap;text-decoration:none;}
+    .sidebar-nav .nav-link:hover{background:rgba(255,255,255,.1);color:#fff;}
+    .sidebar-nav .nav-link.active{background:var(--blue-dark);color:#fff;border-left:3px solid #fff;}
+    .sidebar-nav .nav-link i{font-size:1rem;flex-shrink:0;}
+    .sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.12);}
+    .sidebar-footer .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.65);font-size:.85rem;text-decoration:none;padding:6px 4px;}
+    .sidebar-footer .nav-link:hover{color:#fff;}
+    #topbar{position:fixed;top:0;right:0;height:64px;left:var(--sidebar-w);background:#fff;border-bottom:1px solid rgba(0,0,0,.08);z-index:1030;display:flex;align-items:center;padding:0 24px;gap:12px;transition:left .28s ease;}
+    #topbar.sidebar-collapsed{left:64px;}
+    #sidebarToggle{background:none;border:none;color:var(--gris-dark);font-size:1.35rem;cursor:pointer;padding:4px 8px;border-radius:6px;flex-shrink:0;}
+    #sidebarToggle:hover{background:var(--gris-bg);}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .topbar-icon-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.2rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .topbar-icon-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .badge-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;background:#e05252;border-radius:50%;border:2px solid #fff;}
+    .topbar-avatar{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background .15s;text-decoration:none;}
+    .topbar-avatar-fallback{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .topbar-name{font-size:.83rem;font-weight:600;color:var(--dark);white-space:nowrap;}
+    #main{margin-left:var(--sidebar-w);margin-top:64px;padding:28px;transition:margin-left .28s ease;min-height:calc(100vh - 64px);}
+    #main.sidebar-collapsed{margin-left:64px;}
+    .page-title{font-size:1.4rem;font-weight:700;color:var(--dark);margin:0;}
+    .page-subtitle{font-size:.83rem;color:var(--gris-dark);margin-top:3px;}
+
+    /* STAT CARDS */
+    .stat-card{background:#fff;border-radius:12px;padding:18px 20px;border-left:4px solid transparent;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;transition:box-shadow .2s;}
+    .stat-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.1);}
+    .stat-card.blue{border-color:var(--blue);}.stat-card.green{border-color:var(--green);}.stat-card.yellow{border-color:var(--yellow);}.stat-card.red{border-color:var(--red);}
+    .stat-label{font-size:.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);}
+    .stat-value{font-size:1.55rem;font-weight:700;color:var(--dark);margin-top:2px;}
+    .stat-sub{font-size:.75rem;color:var(--gris-dark);margin-top:2px;}
+    .stat-icon{font-size:1.9rem;opacity:.18;}
+    .stat-card.blue .stat-icon{color:var(--blue);}.stat-card.green .stat-icon{color:var(--green);}.stat-card.yellow .stat-icon{color:var(--yellow);}.stat-card.red .stat-icon{color:var(--red);}
+
+    /* PANEL */
+    .panel{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;}
+    .panel-header{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.92rem;font-weight:700;color:var(--dark);margin:0;}
+    .panel-body{padding:20px;}
+
+    /* FILIÈRE BADGE */
+    .filiere-badge{display:inline-flex;align-items:center;gap:8px;background:#e8f0fc;color:var(--blue);padding:6px 14px;border-radius:99px;font-size:.82rem;font-weight:700;}
+
+    /* TABS */
+    .nav-tabs-custom{border-bottom:2px solid var(--gris-bg);}
+    .nav-tabs-custom .nav-link{border:none;color:var(--gris-dark);font-size:.85rem;font-weight:600;padding:10px 18px;border-radius:0;transition:color .15s;}
+    .nav-tabs-custom .nav-link:hover{color:var(--dark);}
+    .nav-tabs-custom .nav-link.active{color:var(--blue);border-bottom:2px solid var(--blue);margin-bottom:-2px;}
+
+    /* TABLE */
+    #dossiersTable thead th{font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gris-dark);background:#f8f9fb;border-bottom:2px solid var(--gris-bg)!important;white-space:nowrap;}
+    #dossiersTable tbody td{font-size:.85rem;color:var(--dark);vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    #dossiersTable tbody tr:hover td{background:#f4f7fb;}
+
+    .badge-status{font-size:.7rem;font-weight:600;padding:3px 9px;border-radius:99px;}
+    .badge-complet{background:#e6f5ef;color:#1f7a52;}.badge-en-cours{background:#fff4e0;color:#a06010;}
+    .badge-manquant{background:#fdecea;color:#a03030;}.badge-transmis{background:#e8f0fc;color:#1a4f9a;}
+    .badge-valide{background:#e6f5ef;color:#1f7a52;}
+
+    /* DOSSIER MODAL */
+    .piece-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--gris-bg);}
+    .piece-item:last-child{border-bottom:none;}
+    .piece-check{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
+    .piece-check.ok{background:#e6f5ef;color:#1f7a52;}
+    .piece-check.ko{background:#fdecea;color:#a03030;}
+    .piece-name{font-size:.85rem;color:var(--dark);flex:1;}
+    .piece-action{font-size:.78rem;}
+
+    .dt-length label,.dt-search label{font-size:.83rem;color:var(--gris-dark);}
+    .dt-length select,.dt-search input{border:1px solid #ddd!important;border-radius:6px!important;padding:5px 10px!important;font-size:.83rem!important;}
+    .dataTables_paginate .paginate_button{border-radius:6px!important;font-size:.83rem!important;}
+    .dataTables_paginate .paginate_button.current,.dataTables_paginate .paginate_button.current:hover{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:575px){.topbar-name{display:none;}#main{padding:12px;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="#" class="sidebar-brand">
+    <div class="sidebar-brand-icon">EN</div>
+    <div class="sidebar-brand-text">ENSET Douala<br><small>Représentant filière</small></div>
+  </a>
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Mon espace</div>
+    <a href="representant.html" class="nav-link active"><i class="bi bi-speedometer2"></i><span class="sidebar-label">Tableau de bord</span></a>
+    <a href="#" class="nav-link" onclick="showTab('liste')"><i class="bi bi-folder2-open"></i><span class="sidebar-label">Mes dossiers</span></a>
+    <a href="notifications.html" class="nav-link"><i class="bi bi-bell"></i><span class="sidebar-label">Notifications</span></a>
+    <div class="sidebar-section">Outils</div>
+    <a href="#" class="nav-link"><i class="bi bi-graph-up"></i><span class="sidebar-label">Statistiques</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-file-earmark-pdf"></i><span class="sidebar-label">Rapports filière</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sidebar-label">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="sidebarToggle"><i class="bi bi-list"></i></button>
+  <div class="ms-2 d-none d-md-flex align-items-center gap-2">
+    <span class="filiere-badge"><i class="bi bi-cpu-fill"></i> Génie Informatique</span>
+  </div>
+  <div class="topbar-right">
+    <a href="notifications.html" class="topbar-icon-btn"><i class="bi bi-bell"></i><span class="badge-dot"></span></a>
+    <a href="#" class="topbar-avatar">
+      <div class="topbar-avatar-fallback">RF</div>
+      <span class="topbar-name d-none d-md-block">M. Représentant</span>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+  <div class="d-flex align-items-flex-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="page-title">Tableau de bord — Représentant filière</h1>
+      <p class="page-subtitle">Génie Informatique · Promotion 2024-2025 · <strong>287 étudiants</strong></p>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="stat-card blue">
+        <div><div class="stat-label">Ma filière</div><div class="stat-value">287</div><div class="stat-sub">Étudiants totaux</div></div>
+        <i class="bi bi-people-fill stat-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card green">
+        <div><div class="stat-label">Dossiers traités</div><div class="stat-value">198</div><div class="stat-sub">69% de ma filière</div></div>
+        <i class="bi bi-check2-all stat-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card yellow">
+        <div><div class="stat-label">À traiter</div><div class="stat-value">54</div><div class="stat-sub">En attente de vérification</div></div>
+        <i class="bi bi-hourglass stat-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card red">
+        <div><div class="stat-label">Incomplets</div><div class="stat-value">35</div><div class="stat-sub">Pièces manquantes</div></div>
+        <i class="bi bi-exclamation-circle-fill stat-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- AVANCEMENT -->
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-md-6 col-xl-4">
+      <div class="panel h-100">
+        <div class="panel-header"><h2 class="panel-title"><i class="bi bi-pie-chart me-2" style="color:var(--blue);"></i>Avancement filière</h2></div>
+        <div class="panel-body">
+          <div class="d-flex align-items-center justify-content-center" style="position:relative;height:150px;margin-bottom:16px;">
+            <svg viewBox="0 0 120 120" width="150" height="150">
+              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--gris-bg)" stroke-width="14"/>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--green)" stroke-width="14"
+                stroke-dasharray="314" stroke-dashoffset="97" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--yellow)" stroke-width="14"
+                stroke-dasharray="314" stroke-dashoffset="204" stroke-linecap="round" transform="rotate(-90 60 60)" style="opacity:.7"/>
+            </svg>
+            <div style="position:absolute;text-align:center;">
+              <div style="font-size:1.5rem;font-weight:800;color:var(--dark);">69%</div>
+              <div style="font-size:.72rem;color:var(--gris-dark);">traité</div>
+            </div>
+          </div>
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span style="font-size:.8rem;display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--green);display:inline-block;"></span>Traités</span>
+              <strong style="font-size:.85rem;">198</strong>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span style="font-size:.8rem;display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--yellow);display:inline-block;"></span>En cours</span>
+              <strong style="font-size:.85rem;">54</strong>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span style="font-size:.8rem;display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--red);display:inline-block;"></span>Incomplets</span>
+              <strong style="font-size:.85rem;">35</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-8">
+      <div class="panel h-100">
+        <div class="panel-header">
+          <h2 class="panel-title"><i class="bi bi-list-task me-2" style="color:var(--blue);"></i>Actions prioritaires</h2>
+        </div>
+        <div class="panel-body d-flex flex-column gap-3">
+          <div class="alert mb-0" style="background:#fdecea;border:none;border-radius:10px;display:flex;align-items:flex-start;gap:12px;">
+            <i class="bi bi-exclamation-triangle-fill mt-1" style="color:var(--red);flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.85rem;font-weight:700;color:var(--dark);">35 dossiers avec pièces manquantes</div>
+              <div style="font-size:.78rem;color:var(--dark);margin-top:3px;">Ces étudiants doivent être contactés pour régulariser leur situation avant la clôture du <strong>31 janvier 2025</strong>.</div>
+              <button class="btn btn-sm mt-2" style="background:var(--red);color:#fff;border-radius:7px;font-size:.78rem;" onclick="filterTable('manquant')">
+                <i class="bi bi-funnel me-1"></i>Voir les dossiers incomplets
+              </button>
+            </div>
+          </div>
+          <div class="alert mb-0" style="background:#fff4e0;border:none;border-radius:10px;display:flex;align-items:flex-start;gap:12px;">
+            <i class="bi bi-clock-fill mt-1" style="color:var(--yellow);flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.85rem;font-weight:700;color:var(--dark);">54 dossiers en cours de vérification</div>
+              <div style="font-size:.78rem;color:var(--dark);margin-top:3px;">Ces dossiers ont été déposés et sont en attente de votre validation.</div>
+              <button class="btn btn-sm mt-2" style="background:var(--yellow);color:#fff;border-radius:7px;font-size:.78rem;" onclick="filterTable('en-cours')">
+                <i class="bi bi-eye me-1"></i>Traiter les dossiers
+              </button>
+            </div>
+          </div>
+          <div class="alert mb-0" style="background:#e6f5ef;border:none;border-radius:10px;display:flex;align-items:flex-start;gap:12px;">
+            <i class="bi bi-check-circle-fill mt-1" style="color:var(--green);flex-shrink:0;"></i>
+            <div>
+              <div style="font-size:.85rem;font-weight:700;color:var(--dark);">198 dossiers prêts pour validation direction</div>
+              <div style="font-size:.78rem;color:var(--dark);margin-top:3px;">Ces dossiers ont été vérifiés et peuvent être transmis à la Direction.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LISTE DOSSIERS -->
+  <div class="panel">
+    <div class="panel-header">
+      <h2 class="panel-title"><i class="bi bi-folder2-open me-2" style="color:var(--blue);"></i>Dossiers de ma filière</h2>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-sm btn-outline-secondary" style="border-radius:7px;font-size:.78rem;" onclick="filterTable('')">Tous</button>
+        <button class="btn btn-sm" style="background:#fdecea;color:var(--red);border:none;border-radius:7px;font-size:.78rem;" onclick="filterTable('Incomplet')">Incomplets</button>
+        <button class="btn btn-sm" style="background:#fff4e0;color:var(--yellow);border:none;border-radius:7px;font-size:.78rem;" onclick="filterTable('En cours')">En cours</button>
+        <button class="btn btn-sm" style="background:#e6f5ef;color:var(--green);border:none;border-radius:7px;font-size:.78rem;" onclick="filterTable('Validé')">Validés</button>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="table-responsive">
+        <table id="dossiersTable" class="table table-hover w-100">
+          <thead>
+            <tr>
+              <th>Matricule</th><th>Nom & Prénoms</th><th>Niveau</th><th>Pièces fournies</th><th>Statut</th><th>Dernière MàJ</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0001</code></td><td>MBALLA Jean</td><td>Licence 3</td><td><span style="font-size:.82rem;"><i class="bi bi-file-check text-success me-1"></i>8/8</span></td><td><span class="badge-status badge-valide">Validé</span></td><td style="font-size:.78rem;color:var(--gris-dark);">23/01/2025</td><td><button class="btn btn-sm" style="background:var(--blue);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0001','MBALLA Jean','valide')"><i class="bi bi-eye me-1"></i>Voir</button></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0002</code></td><td>FOMO Claire</td><td>Licence 3</td><td><span style="font-size:.82rem;"><i class="bi bi-file-check text-warning me-1"></i>6/8</span></td><td><span class="badge-status badge-en-cours">En cours</span></td><td style="font-size:.78rem;color:var(--gris-dark);">21/01/2025</td><td><button class="btn btn-sm" style="background:var(--yellow);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0002','FOMO Claire','cours')"><i class="bi bi-pencil me-1"></i>Traiter</button></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0003</code></td><td>NGONO Paul</td><td>Master 2</td><td><span style="font-size:.82rem;"><i class="bi bi-file-x text-danger me-1"></i>4/8</span></td><td><span class="badge-status badge-manquant">Incomplet</span></td><td style="font-size:.78rem;color:var(--gris-dark);">20/01/2025</td><td><button class="btn btn-sm" style="background:var(--red);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0003','NGONO Paul','incomplet')"><i class="bi bi-pencil me-1"></i>Traiter</button></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0004</code></td><td>TABI Claude</td><td>Licence 3</td><td><span style="font-size:.82rem;"><i class="bi bi-file-check text-success me-1"></i>8/8</span></td><td><span class="badge-status badge-valide">Validé</span></td><td style="font-size:.78rem;color:var(--gris-dark);">22/01/2025</td><td><button class="btn btn-sm" style="background:var(--blue);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0004','TABI Claude','valide')"><i class="bi bi-eye me-1"></i>Voir</button></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0005</code></td><td>ESSAMA Roger</td><td>Master 2</td><td><span style="font-size:.82rem;"><i class="bi bi-file-x text-danger me-1"></i>5/8</span></td><td><span class="badge-status badge-manquant">Incomplet</span></td><td style="font-size:.78rem;color:var(--gris-dark);">19/01/2025</td><td><button class="btn btn-sm" style="background:var(--red);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0005','ESSAMA Roger','incomplet')"><i class="bi bi-pencil me-1"></i>Traiter</button></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0006</code></td><td>OWONA Hélène</td><td>Licence 3</td><td><span style="font-size:.82rem;"><i class="bi bi-file-check text-warning me-1"></i>7/8</span></td><td><span class="badge-status badge-en-cours">En cours</span></td><td style="font-size:.78rem;color:var(--gris-dark);">21/01/2025</td><td><button class="btn btn-sm" style="background:var(--yellow);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0006','OWONA Hélène','cours')"><i class="bi bi-pencil me-1"></i>Traiter</button></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0007</code></td><td>FOUDA Patrick</td><td>Licence 3</td><td><span style="font-size:.82rem;"><i class="bi bi-file-check text-success me-1"></i>8/8</span></td><td><span class="badge-status badge-valide">Validé</span></td><td style="font-size:.78rem;color:var(--gris-dark);">20/01/2025</td><td><button class="btn btn-sm" style="background:var(--blue);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0007','FOUDA Patrick','valide')"><i class="bi bi-eye me-1"></i>Voir</button></td></tr>
+            <tr><td><code style="color:var(--blue);font-size:.8rem;">21G0008</code></td><td>ABANDA Victoire</td><td>Master 2</td><td><span style="font-size:.82rem;"><i class="bi bi-file-x text-danger me-1"></i>3/8</span></td><td><span class="badge-status badge-manquant">Incomplet</span></td><td style="font-size:.78rem;color:var(--gris-dark);">18/01/2025</td><td><button class="btn btn-sm" style="background:var(--red);color:#fff;font-size:.75rem;border-radius:7px;border:none;" onclick="openDossier('21G0008','ABANDA Victoire','incomplet')"><i class="bi bi-pencil me-1"></i>Traiter</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL TRAITEMENT DOSSIER -->
+<div class="modal fade" id="dossierModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <div>
+          <h5 class="modal-title" id="modalTitle" style="font-weight:700;font-size:1.05rem;"></h5>
+          <div id="modalSubtitle" style="font-size:.8rem;color:var(--gris-dark);margin-top:2px;"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4">
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);margin-bottom:10px;">Pièces du dossier</div>
+        <div id="piecesContainer"></div>
+        <div class="mt-4">
+          <label style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:5px;display:block;">Observations du représentant</label>
+          <textarea class="form-control" rows="3" placeholder="Notez vos observations sur le dossier…" style="border:1px solid #dde0e5;border-radius:9px;font-size:.86rem;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Fermer</button>
+        <button class="btn" id="btnRejeter" style="background:#fdecea;color:var(--red);border:2px solid var(--red);border-radius:8px;font-weight:600;" onclick="actionDossier('rejeter')">
+          <i class="bi bi-x-circle me-1"></i>Signaler incomplet
+        </button>
+        <button class="btn" id="btnValider" style="background:var(--green);color:#fff;border:none;border-radius:8px;font-weight:600;" onclick="actionDossier('valider')">
+          <i class="bi bi-check-circle me-1"></i>Valider le dossier
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  let dt;
+  $(document).ready(function(){
+    dt=$('#dossiersTable').DataTable({
+      language:{url:'https://cdn.datatables.net/plug-ins/1.13.8/i18n/fr-FR.json'},
+      pageLength:10,order:[[0,'asc']],columnDefs:[{orderable:false,targets:6}]
+    });
+  });
+
+  function filterTable(term){
+    dt.search(term).draw();
+  }
+
+  // Sidebar
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggle=document.getElementById('sidebarToggle'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggle.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sidebar-collapsed');main.classList.toggle('sidebar-collapsed');}});
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+  const pieces=[
+    {name:'Fiche d\'inscription (signée)',statut:'ok'},
+    {name:'Acte de naissance (copie certifiée)',statut:'ok'},
+    {name:'Carte Nationale d\'Identité',statut:'ok'},
+    {name:'Diplôme du Baccalauréat (original)',statut:'ok'},
+    {name:'Reçu de paiement (toutes années)',statut:null},
+    {name:'4 photos d\'identité récentes',statut:null},
+    {name:'Certificat médical (validité 3 mois)',statut:null},
+    {name:'Fiche de fin d\'études signée (Directeur)',statut:null},
+  ];
+
+  function openDossier(matricule, nom, type){
+    document.getElementById('modalTitle').textContent='Dossier — '+nom;
+    document.getElementById('modalSubtitle').textContent='Matricule : '+matricule+' · Génie Informatique';
+    const container=document.getElementById('piecesContainer');
+    const ok=type==='valide'?8:type==='cours'?6:type==='incomplet'?4:4;
+    container.innerHTML=pieces.map((p,i)=>`
+      <div class="piece-item">
+        <div class="piece-check ${i<ok?'ok':'ko'}">${i<ok?'<i class="bi bi-check-lg"></i>':'<i class="bi bi-x-lg"></i>'}</div>
+        <div class="piece-name">${p.name}</div>
+        ${i<ok?'<span class="piece-action" style="color:var(--green);font-size:.78rem;"><i class="bi bi-eye me-1"></i>Voir</span>':'<span class="piece-action" style="color:var(--red);font-size:.78rem;">Manquant</span>'}
+      </div>
+    `).join('');
+    new bootstrap.Modal(document.getElementById('dossierModal')).show();
+  }
+
+  function actionDossier(action){
+    bootstrap.Modal.getInstance(document.getElementById('dossierModal')).hide();
+    alert(action==='valider'? '✓ Dossier validé avec succès !' : '⚠ Dossier signalé incomplet. L\'étudiant sera notifié.');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% block title %}Chef Bureau — Tableau de bord{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block topbar_actions %}
+<div class="d-flex gap-2">
+  <a href="{{ url_for('chef_bureau.dossiers_authentification') }}"
+     class="btn btn-sm"
+     style="background:#e2f5f5;color:#1a9090;border:none;border-radius:8px;font-size:.78rem;font-weight:700;padding:6px 13px">
+    <i class="bi bi-shield-check me-1"></i>Authentifier
+  </a>
+  <a href="{{ url_for('chef_bureau.impressions') }}"
+     class="btn btn-sm"
+     style="background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:.78rem;font-weight:700;padding:6px 13px">
+    <i class="bi bi-printer me-1"></i>Impressions
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{# ── Calculs ── #}
+{% set total_traites = stats.authentifies + stats.liste_finissants + stats.imp_provisoire + stats.prod_definitive + stats.a_signer %}
+{% set total_global = stats.a_authentifier + total_traites %}
+
+{# ── Alertes ── #}
+{% if stats.a_authentifier > 0 %}
+<div class="d-flex align-items-flex-start gap-3 p-3 rounded-3 mb-3" style="background:#fff4e0">
+  <i class="bi bi-hourglass-split flex-shrink-0 mt-1" style="color:var(--yellow)"></i>
+  <div class="flex-grow-1">
+    <div style="font-size:.85rem;font-weight:700;color:var(--dark)">
+      {{ stats.a_authentifier }} dossier(s) en attente d'authentification
+    </div>
+    <div style="font-size:.78rem;color:var(--dark);margin-top:2px">
+      Ces dossiers ont été vérifiés par les représentants et attendent votre contrôle de conformité du diplôme d'origine.
+    </div>
+    <a href="{{ url_for('chef_bureau.dossiers_authentification') }}"
+       class="btn btn-sm mt-2"
+       style="background:var(--yellow);color:#fff;border:none;border-radius:7px;font-size:.78rem">
+      <i class="bi bi-shield-check me-1"></i>Traiter maintenant
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{% if stats.a_signer > 0 %}
+<div class="d-flex align-items-flex-start gap-3 p-3 rounded-3 mb-3" style="background:#fdf0e0">
+  <i class="bi bi-pen-fill flex-shrink-0 mt-1" style="color:#c96a1a"></i>
+  <div class="flex-grow-1">
+    <div style="font-size:.85rem;font-weight:700;color:var(--dark)">
+      {{ stats.a_signer }} dossier(s) envoyé(s) au Directeur pour signature
+    </div>
+    <div style="font-size:.78rem;color:var(--dark);margin-top:2px">
+      Ces diplômes produits attendent la signature du Directeur de l'ENSET.
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Stat cards ── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-2">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">À authentifier</div>
+        <div class="stat-value">{{ stats.a_authentifier }}</div>
+        <div class="stat-sub">EN_VERIFICATION</div>
+      </div>
+      <i class="bi bi-shield-half stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2">
+    <div class="stat-card cyan">
+      <div>
+        <div class="stat-label">Authentifiés</div>
+        <div class="stat-value">{{ stats.authentifies }}</div>
+        <div class="stat-sub">Diplôme conforme</div>
+      </div>
+      <i class="bi bi-shield-check stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Liste finissants</div>
+        <div class="stat-value">{{ stats.liste_finissants }}</div>
+        <div class="stat-sub">Confirmés</div>
+      </div>
+      <i class="bi bi-list-check stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2">
+    <div class="stat-card yellow">
+      <div>
+        <div class="stat-label">Imp. provisoire</div>
+        <div class="stat-value">{{ stats.imp_provisoire }}</div>
+        <div class="stat-sub">En cours</div>
+      </div>
+      <i class="bi bi-printer stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2">
+    <div class="stat-card purple">
+      <div>
+        <div class="stat-label">Prod. définitive</div>
+        <div class="stat-value">{{ stats.prod_definitive }}</div>
+        <div class="stat-sub">Diplôme produit</div>
+      </div>
+      <i class="bi bi-file-earmark-text stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-2">
+    <div class="stat-card red">
+      <div>
+        <div class="stat-label">En signature</div>
+        <div class="stat-value">{{ stats.a_signer }}</div>
+        <div class="stat-sub">Directeur</div>
+      </div>
+      <i class="bi bi-pen stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# ── Pipeline + Actions ── #}
+<div class="row g-4 mb-4">
+
+  {# Pipeline de production #}
+  <div class="col-12 col-lg-8">
+    <div class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <i class="bi bi-arrow-right-circle me-2" style="color:#1a9090"></i>Pipeline de production des diplômes
+        </h2>
+        {% if total_global > 0 %}
+        <span style="font-size:.75rem;color:var(--gris-dark)">{{ total_traites }}/{{ total_global }} traités</span>
+        {% endif %}
+      </div>
+      <div class="panel-body">
+
+        {# Steps horizontaux #}
+        <div style="display:flex;gap:0;align-items:flex-start;overflow-x:auto;padding-bottom:8px">
+
+          {# Step 1 — À authentifier #}
+          {% set s1_done = stats.a_authentifier == 0 and total_traites > 0 %}
+          {% set s1_active = stats.a_authentifier > 0 %}
+          <div style="flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;position:relative">
+            <div style="position:absolute;right:0;top:23px;width:50%;height:2px;background:{% if s1_done %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;z-index:1;border:3px solid;
+              {% if s1_done %}background:var(--green);border-color:var(--green);color:#fff
+              {% elif s1_active %}background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 6px rgba(37,102,158,.15)
+              {% else %}background:#fff;border-color:var(--gris-border);color:var(--gris-dark){% endif %}">
+              <i class="bi bi-{% if s1_done %}check-lg{% else %}shield-half{% endif %}"></i>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;text-align:center;margin-top:8px;color:var(--dark);max-width:100px;line-height:1.3">Authentification</div>
+            <div style="font-size:.68rem;color:var(--gris-dark);text-align:center;margin-top:2px">{{ stats.a_authentifier }} en attente</div>
+            <span style="font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:4px;
+              {% if s1_done %}background:var(--green-bg);color:#1f7a52
+              {% elif s1_active %}background:#e8f0fc;color:var(--blue)
+              {% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+              {% if s1_done %}✓ Fait{% elif s1_active %}→ Actif{% else %}En attente{% endif %}
+            </span>
+          </div>
+
+          {# Step 2 — Authentifiés #}
+          {% set s2_active = stats.authentifies > 0 %}
+          <div style="flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;position:relative">
+            <div style="position:absolute;left:0;top:23px;width:50%;height:2px;background:{% if s2_active or stats.liste_finissants > 0 %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="position:absolute;right:0;top:23px;width:50%;height:2px;background:{% if stats.liste_finissants > 0 or stats.imp_provisoire > 0 %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;z-index:1;border:3px solid;
+              {% if s2_active %}background:#0891b2;border-color:#0891b2;color:#fff
+              {% else %}background:#fff;border-color:var(--gris-border);color:var(--gris-dark){% endif %}">
+              <i class="bi bi-shield-check"></i>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;text-align:center;margin-top:8px;color:var(--dark);max-width:100px;line-height:1.3">Conformes</div>
+            <div style="font-size:.68rem;color:var(--gris-dark);text-align:center;margin-top:2px">{{ stats.authentifies }} conformes</div>
+            <span style="font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:4px;
+              {% if s2_active %}background:#e2f5f5;color:#1a9090{% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+              {% if s2_active %}En cours{% else %}En attente{% endif %}
+            </span>
+          </div>
+
+          {# Step 3 — Liste finissants #}
+          {% set s3_active = stats.liste_finissants > 0 %}
+          <div style="flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;position:relative">
+            <div style="position:absolute;left:0;top:23px;width:50%;height:2px;background:{% if s3_active %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="position:absolute;right:0;top:23px;width:50%;height:2px;background:{% if stats.imp_provisoire > 0 %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;z-index:1;border:3px solid;
+              {% if s3_active %}background:var(--green);border-color:var(--green);color:#fff
+              {% else %}background:#fff;border-color:var(--gris-border);color:var(--gris-dark){% endif %}">
+              <i class="bi bi-list-check"></i>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;text-align:center;margin-top:8px;color:var(--dark);max-width:100px;line-height:1.3">Finissants</div>
+            <div style="font-size:.68rem;color:var(--gris-dark);text-align:center;margin-top:2px">{{ stats.liste_finissants }} confirmés</div>
+            <span style="font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:4px;
+              {% if s3_active %}background:var(--green-bg);color:#1f7a52{% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+              {% if s3_active %}Actif{% else %}En attente{% endif %}
+            </span>
+          </div>
+
+          {# Step 4 — Impression provisoire #}
+          {% set s4_active = stats.imp_provisoire > 0 %}
+          <div style="flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;position:relative">
+            <div style="position:absolute;left:0;top:23px;width:50%;height:2px;background:{% if s4_active %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="position:absolute;right:0;top:23px;width:50%;height:2px;background:{% if stats.prod_definitive > 0 %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;z-index:1;border:3px solid;
+              {% if s4_active %}background:var(--yellow);border-color:var(--yellow);color:#fff
+              {% else %}background:#fff;border-color:var(--gris-border);color:var(--gris-dark){% endif %}">
+              <i class="bi bi-printer"></i>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;text-align:center;margin-top:8px;color:var(--dark);max-width:100px;line-height:1.3">Imp. provisoire</div>
+            <div style="font-size:.68rem;color:var(--gris-dark);text-align:center;margin-top:2px">{{ stats.imp_provisoire }} en cours</div>
+            <span style="font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:4px;
+              {% if s4_active %}background:#fff4e0;color:#a06010{% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+              {% if s4_active %}En cours{% else %}En attente{% endif %}
+            </span>
+          </div>
+
+          {# Step 5 — Production définitive #}
+          {% set s5_active = stats.prod_definitive > 0 %}
+          <div style="flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;position:relative">
+            <div style="position:absolute;left:0;top:23px;width:50%;height:2px;background:{% if s5_active %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="position:absolute;right:0;top:23px;width:50%;height:2px;background:{% if stats.a_signer > 0 %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;z-index:1;border:3px solid;
+              {% if s5_active %}background:#7c3aed;border-color:#7c3aed;color:#fff
+              {% else %}background:#fff;border-color:var(--gris-border);color:var(--gris-dark){% endif %}">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;text-align:center;margin-top:8px;color:var(--dark);max-width:100px;line-height:1.3">Prod. définitive</div>
+            <div style="font-size:.68rem;color:var(--gris-dark);text-align:center;margin-top:2px">{{ stats.prod_definitive }} produits</div>
+            <span style="font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:4px;
+              {% if s5_active %}background:#f3e8ff;color:#7c3aed{% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+              {% if s5_active %}Produit{% else %}En attente{% endif %}
+            </span>
+          </div>
+
+          {# Step 6 — Signature Directeur #}
+          {% set s6_active = stats.a_signer > 0 %}
+          <div style="flex:1;min-width:110px;display:flex;flex-direction:column;align-items:center;position:relative">
+            <div style="position:absolute;left:0;top:23px;width:50%;height:2px;background:{% if s6_active %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;z-index:1;border:3px solid;
+              {% if s6_active %}background:#c96a1a;border-color:#c96a1a;color:#fff
+              {% else %}background:#fff;border-color:var(--gris-border);color:var(--gris-dark){% endif %}">
+              <i class="bi bi-pen"></i>
+            </div>
+            <div style="font-size:.72rem;font-weight:700;text-align:center;margin-top:8px;color:var(--dark);max-width:100px;line-height:1.3">Sig. Directeur</div>
+            <div style="font-size:.68rem;color:var(--gris-dark);text-align:center;margin-top:2px">{{ stats.a_signer }} en attente</div>
+            <span style="font-size:.66rem;font-weight:700;padding:2px 7px;border-radius:99px;margin-top:4px;
+              {% if s6_active %}background:#fdf0e0;color:#c96a1a{% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+              {% if s6_active %}En attente{% else %}Pas encore{% endif %}
+            </span>
+          </div>
+
+        </div>{# /pipeline #}
+
+        {# Barre de progression globale #}
+        {% if total_global > 0 %}
+        <div class="mt-4 pt-3" style="border-top:1px solid var(--gris-bg)">
+          <div class="d-flex justify-content-between mb-1">
+            <span style="font-size:.75rem;color:var(--gris-dark);font-weight:600">Avancement global du processus</span>
+            <span style="font-size:.75rem;font-weight:800;color:var(--dark)">{{ (total_traites / total_global * 100) | round | int }}%</span>
+          </div>
+          <div style="height:8px;border-radius:99px;background:var(--gris-bg);overflow:hidden">
+            <div style="height:100%;border-radius:99px;background:var(--blue);width:{{ (total_traites / total_global * 100) | round | int }}%"></div>
+          </div>
+          <div style="font-size:.73rem;color:var(--gris-dark);margin-top:5px">{{ total_traites }} dossier(s) traité(s) sur {{ total_global }} reçus</div>
+        </div>
+        {% else %}
+        <div class="text-center py-3 text-muted">
+          <i class="bi bi-inbox d-block mb-1" style="font-size:1.5rem;opacity:.3"></i>
+          <div style="font-size:.82rem">Aucun dossier reçu pour l'instant.</div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+
+  {# Actions rapides #}
+  <div class="col-12 col-lg-4">
+    <div class="panel h-100">
+      <div class="panel-header">
+        <h2 class="panel-title"><i class="bi bi-lightning-charge me-2" style="color:var(--yellow)"></i>Accès rapide</h2>
+      </div>
+      <div class="panel-body d-flex flex-column gap-3">
+
+        <a href="{{ url_for('chef_bureau.dossiers_authentification') }}" class="action-card">
+          <div class="action-card-icon" style="background:#e2f5f5;color:#1a9090">
+            <i class="bi bi-shield-check"></i>
+          </div>
+          <h6>Authentification diplômes</h6>
+          <p>{{ stats.a_authentifier }} dossier(s) en attente de vérification d'authenticité</p>
+        </a>
+
+        <a href="{{ url_for('chef_bureau.impressions') }}" class="action-card">
+          <div class="action-card-icon" style="background:#eff6ff;color:var(--blue)">
+            <i class="bi bi-printer-fill"></i>
+          </div>
+          <h6>Impressions &amp; production</h6>
+          <p>{{ stats.imp_provisoire + stats.prod_definitive }} dossier(s) en cours d'impression ou de production</p>
+        </a>
+
+        <a href="{{ url_for('chef_bureau.impressions') }}" class="action-card">
+          <div class="action-card-icon" style="background:#fdf0e0;color:#c96a1a">
+            <i class="bi bi-pen-fill"></i>
+          </div>
+          <h6>File de signature</h6>
+          <p>{{ stats.a_signer }} diplôme(s) envoyé(s) au Directeur pour signature</p>
+        </a>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── Répartition par phase ── #}
+{% if total_global > 0 %}
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title"><i class="bi bi-bar-chart me-2" style="color:var(--blue)"></i>Répartition par phase</h2>
+  </div>
+  <div class="panel-body">
+    <div class="row g-3">
+
+      {% set phases = [
+        ('À authentifier', stats.a_authentifier, total_global, 'var(--blue)', 'bi-shield-half'),
+        ('Authentifiés', stats.authentifies, total_global, '#0891b2', 'bi-shield-check'),
+        ('Liste finissants', stats.liste_finissants, total_global, 'var(--green)', 'bi-list-check'),
+        ('Imp. provisoire', stats.imp_provisoire, total_global, 'var(--yellow)', 'bi-printer'),
+        ('Prod. définitive', stats.prod_definitive, total_global, '#7c3aed', 'bi-file-earmark-text'),
+        ('Sig. Directeur', stats.a_signer, total_global, '#c96a1a', 'bi-pen'),
+      ] %}
+
+      {% for label, val, tot, color, icon in phases %}
+      <div class="col-12 col-md-6">
+        <div class="d-flex align-items-center gap-3 p-2 rounded-2" style="background:var(--gris-bg)">
+          <div style="width:34px;height:34px;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="bi {{ icon }}" style="color:{{ color }};font-size:.9rem"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex justify-content-between mb-1">
+              <span style="font-size:.78rem;font-weight:600;color:var(--dark)">{{ label }}</span>
+              <strong style="font-size:.78rem;color:var(--dark)">{{ val }}</strong>
+            </div>
+            <div style="height:5px;border-radius:99px;background:#dde0e5;overflow:hidden">
+              <div style="height:100%;border-radius:99px;background:{{ color }};width:{{ (val / tot * 100) | round | int }}%"></div>
+            </div>
+          </div>
+          <div style="font-size:.7rem;color:var(--gris-dark);width:28px;text-align:right;flex-shrink:0">{{ (val / tot * 100) | round | int }}%</div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

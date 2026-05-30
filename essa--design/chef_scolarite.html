@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Chef Service Scolarité</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root {
+      --blue:#25669e; --blue-dark:#1a4f7a; --blue-light:#3a7fc1; --blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1; --gris-dark:#797a7c; --gris-border:#dde0e5;
+      --white:#ffffff; --dark:#4b4b4b;
+      --green:#2da06e; --green-bg:#e6f5ef;
+      --yellow:#e8a020; --yellow-bg:#fff4e0;
+      --red:#e05252; --red-bg:#fdecea;
+      --purple:#7b5ea7; --purple-bg:#f0ebf8;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* ── SIDEBAR ── */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s ease,width .28s ease;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.2rem;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:var(--white);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text{display:flex;flex-direction:column;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;border-radius:0;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .np{background:#e05252;color:#fff;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:auto;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* ── TOPBAR ── */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s ease;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-title{font-size:.92rem;font-weight:700;color:var(--dark);}
+    .tb-sub{font-size:.74rem;color:var(--gris-dark);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.15rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-circle{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* ── MAIN ── */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s ease;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+
+    /* PAGE HEADER */
+    .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+    .ph-title{font-size:1.45rem;font-weight:800;color:var(--dark);}
+    .ph-sub{font-size:.8rem;color:var(--gris-dark);margin-top:3px;}
+    .ph-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-xlight);color:var(--blue);font-size:.75rem;font-weight:700;padding:5px 12px;border-radius:99px;}
+
+    /* ALERT BANNER */
+    .alert-banner{border-radius:12px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px;border:none;margin-bottom:20px;}
+    .alert-banner.danger{background:var(--red-bg);}
+    .alert-banner.warning{background:var(--yellow-bg);}
+    .alert-banner i{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+    .alert-banner.danger i{color:var(--red);}
+    .alert-banner.warning i{color:var(--yellow);}
+    .ab-title{font-size:.86rem;font-weight:700;color:var(--dark);}
+    .ab-sub{font-size:.78rem;color:var(--dark);margin-top:3px;line-height:1.5;}
+
+    /* STAT CARDS */
+    .scard{background:var(--white);border-radius:13px;padding:18px 20px;box-shadow:0 1px 6px rgba(0,0,0,.06);border-left:4px solid transparent;display:flex;align-items:center;justify-content:space-between;transition:box-shadow .2s,transform .2s;cursor:default;}
+    .scard:hover{box-shadow:0 6px 22px rgba(0,0,0,.1);transform:translateY(-2px);}
+    .scard.blue{border-color:var(--blue);}
+    .scard.green{border-color:var(--green);}
+    .scard.yellow{border-color:var(--yellow);}
+    .scard.red{border-color:var(--red);}
+    .scard.purple{border-color:var(--purple);}
+    .sc-label{font-size:.69rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--gris-dark);}
+    .sc-val{font-size:1.65rem;font-weight:800;color:var(--dark);line-height:1;margin:4px 0 2px;}
+    .sc-sub{font-size:.73rem;color:var(--gris-dark);}
+    .sc-icon{font-size:2rem;opacity:.15;}
+    .scard.blue .sc-icon{color:var(--blue);}
+    .scard.green .sc-icon{color:var(--green);}
+    .scard.yellow .sc-icon{color:var(--yellow);}
+    .scard.red .sc-icon{color:var(--red);}
+    .scard.purple .sc-icon{color:var(--purple);}
+    .sc-trend{font-size:.72rem;font-weight:700;display:flex;align-items:center;gap:3px;margin-top:4px;}
+    .sc-trend.up{color:var(--green);}
+    .sc-trend.down{color:var(--red);}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* PHASE TRACKER */
+    .phase-tracker{display:flex;flex-direction:column;gap:0;}
+    .phase-row{display:flex;align-items:stretch;gap:0;position:relative;}
+    .phase-left{width:48px;display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+    .phase-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;z-index:1;flex-shrink:0;transition:all .2s;}
+    .phase-dot.done{background:var(--green);color:#fff;border:3px solid var(--green);}
+    .phase-dot.active{background:var(--blue);color:#fff;border:3px solid var(--blue);box-shadow:0 0 0 5px rgba(37,102,158,.18);}
+    .phase-dot.pending{background:var(--white);color:var(--gris-dark);border:3px solid var(--gris-border);}
+    .phase-dot.blocked{background:#f3f3f5;color:#ccc;border:3px solid #e8e9eb;}
+    .phase-line{width:2px;background:var(--gris-bg);flex:1;margin:0 auto;}
+    .phase-line.done{background:var(--green);}
+    .phase-row:last-child .phase-line{display:none;}
+    .phase-content{flex:1;padding:0 0 18px 14px;}
+    .phase-name{font-size:.88rem;font-weight:700;color:var(--dark);}
+    .phase-meta{font-size:.75rem;color:var(--gris-dark);margin-top:2px;}
+    .phase-bar-wrap{margin-top:8px;}
+    .phase-bar{height:6px;border-radius:99px;background:var(--gris-bg);overflow:hidden;}
+    .phase-bar-fill{height:100%;border-radius:99px;transition:width .6s;}
+    .phase-nums{display:flex;justify-content:space-between;font-size:.72rem;color:var(--gris-dark);margin-top:3px;}
+    .phase-badge{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:99px;margin-top:5px;}
+    .phase-badge.done{background:var(--green-bg);color:#1f7a52;}
+    .phase-badge.active{background:var(--blue-xlight);color:var(--blue);}
+    .phase-badge.pending{background:var(--gris-bg);color:var(--gris-dark);}
+    .phase-badge.alert{background:var(--red-bg);color:var(--red);}
+
+    /* ALERT TABLE */
+    .atbl th{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border:none;padding:9px 14px;white-space:nowrap;}
+    .atbl td{font-size:.84rem;color:var(--dark);border:none;padding:10px 14px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    .atbl tbody tr:hover td{background:#f5f7fb;}
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:#1f7a52;}
+    .bs-yellow{background:var(--yellow-bg);color:#a06010;}
+    .bs-red{background:var(--red-bg);color:#a03030;}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+    .bs-purple{background:var(--purple-bg);color:var(--purple);}
+
+    /* COORDINATION ACTIONS */
+    .coord-card{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:16px 18px;display:flex;align-items:flex-start;gap:14px;transition:box-shadow .18s,transform .18s;cursor:pointer;border:2px solid transparent;text-decoration:none;}
+    .coord-card:hover{box-shadow:0 6px 22px rgba(0,0,0,.1);transform:translateY(-2px);border-color:var(--gris-border);}
+    .coord-icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;}
+    .coord-title{font-size:.88rem;font-weight:700;color:var(--dark);}
+    .coord-sub{font-size:.76rem;color:var(--gris-dark);margin-top:2px;line-height:1.4;}
+    .coord-arrow{margin-left:auto;color:var(--gris-dark);font-size:1rem;flex-shrink:0;margin-top:2px;transition:transform .15s;}
+    .coord-card:hover .coord-arrow{transform:translateX(3px);color:var(--blue);}
+
+    /* DONUT MINI */
+    .donut-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;}
+    .donut-center{position:absolute;text-align:center;}
+    .donut-val{font-size:1.3rem;font-weight:800;color:var(--dark);}
+    .donut-lbl{font-size:.65rem;color:var(--gris-dark);}
+
+    /* FILIERE PROGRESS */
+    .fp-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gris-bg);}
+    .fp-row:last-child{border-bottom:none;}
+    .fp-name{font-size:.82rem;font-weight:600;color:var(--dark);width:140px;flex-shrink:0;}
+    .fp-bar{flex:1;height:8px;border-radius:99px;background:var(--gris-bg);overflow:hidden;}
+    .fp-fill{height:100%;border-radius:99px;transition:width .6s;}
+    .fp-pct{font-size:.75rem;font-weight:700;width:36px;text-align:right;flex-shrink:0;}
+    .fp-count{font-size:.72rem;color:var(--gris-dark);width:50px;text-align:right;flex-shrink:0;}
+
+    /* TIMELINE ACTIVITÉ */
+    .tl-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-bg);}
+    .tl-item:last-child{border-bottom:none;}
+    .tl-dot{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;}
+    .tl-dot.g{background:var(--green-bg);color:var(--green);}
+    .tl-dot.b{background:var(--blue-xlight);color:var(--blue);}
+    .tl-dot.y{background:var(--yellow-bg);color:var(--yellow);}
+    .tl-dot.r{background:var(--red-bg);color:var(--red);}
+    .tl-body{flex:1;}
+    .tl-text{font-size:.83rem;color:var(--dark);line-height:1.4;}
+    .tl-time{font-size:.71rem;color:var(--gris-dark);margin-top:2px;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:767px){.ph{flex-direction:column;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <a href="#" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Chef Svc Scolarité</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Tableau de bord</div>
+    <a href="chef_scolarite.html" class="nav-link active"><i class="bi bi-speedometer2"></i><span class="sl">Vue d'ensemble</span></a>
+    <a href="notifications.html" class="nav-link"><i class="bi bi-bell"></i><span class="sl">Notifications</span><span class="np">5</span></a>
+    <div class="ss">Coordination</div>
+    <a href="representant.html" class="nav-link"><i class="bi bi-people"></i><span class="sl">Représentants filière</span></a>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sl">Bureau Diplomation</span></a>
+    <a href="tables.html" class="nav-link"><i class="bi bi-folder2-open"></i><span class="sl">Tous les dossiers</span></a>
+    <div class="ss">Processus</div>
+    <a href="#" class="nav-link"><i class="bi bi-diagram-3"></i><span class="sl">Suivi phases</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-send"></i><span class="sl">Transmissions Ministère</span></a>
+    <a href="communique_form.html" class="nav-link"><i class="bi bi-megaphone"></i><span class="sl">Communiqués</span></a>
+    <div class="ss">Rapports</div>
+    <a href="#" class="nav-link"><i class="bi bi-graph-up"></i><span class="sl">Statistiques</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-file-earmark-pdf"></i><span class="sl">Exports & rapports</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-gear"></i><span class="sl">Paramètres</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div class="tb-title">Service de la Scolarité</div>
+    <div class="tb-sub">Promotion 2024-2025 · Mise à jour : aujourd'hui 08h30</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-circle">CS</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Scolarité</div><div class="av-role">Service Scolarité</div></div>
+    </a>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  <!-- PAGE HEADER -->
+  <div class="ph">
+    <div>
+      <div class="ph-title">Tableau de bord — Coordination Scolarité</div>
+      <div class="ph-sub">Vue synthétique des phases de diplomation · Année académique 2024-2025</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="ph-badge"><i class="bi bi-circle-fill" style="font-size:.55rem;"></i> Phase 3 en cours</span>
+      <button class="btn btn-sm" style="background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:.8rem;font-weight:600;padding:7px 16px;" onclick="document.getElementById('exportModal').style.display='flex'">
+        <i class="bi bi-download me-1"></i>Exporter rapport
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERTES CRITIQUES -->
+  <div class="alert-banner danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div>
+      <div class="ab-title">35 dossiers en situation critique — Clôture dans 8 jours</div>
+      <div class="ab-sub">Des étudiants présentent des pièces manquantes et n'ont pas encore agi. Une relance ciblée est recommandée avant le 31 jan. 2025. <a href="#" style="color:var(--red);font-weight:700;">Voir les dossiers concernés →</a></div>
+    </div>
+  </div>
+  <div class="alert-banner warning">
+    <i class="bi bi-clock-fill"></i>
+    <div>
+      <div class="ab-title">Phase 4 (Validation Direction) non démarrée — En attente de 3 filières</div>
+      <div class="ab-sub">Génie Civil, Génie Mécanique et Sciences Industrielles n'ont pas encore soumis leurs dossiers vérifiés à la Direction. Relancer les représentants concernés.</div>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-2-4" style="flex:0 0 auto;width:20%;">
+      <div class="scard blue">
+        <div><div class="sc-label">Total dossiers</div><div class="sc-val">1 240</div><div class="sc-sub">Promotion 2024-2025</div></div>
+        <i class="bi bi-people-fill sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-2-4" style="flex:0 0 auto;width:20%;">
+      <div class="scard green">
+        <div><div class="sc-label">Dossiers complets</div><div class="sc-val">612</div><div class="sc-sub sc-trend up"><i class="bi bi-arrow-up-short"></i>+48 cette semaine</div></div>
+        <i class="bi bi-folder-check sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-2-4" style="flex:0 0 auto;width:20%;">
+      <div class="scard yellow">
+        <div><div class="sc-label">En vérification</div><div class="sc-val">279</div><div class="sc-sub">Chez les représentants</div></div>
+        <i class="bi bi-hourglass-split sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-2-4" style="flex:0 0 auto;width:20%;">
+      <div class="scard red">
+        <div><div class="sc-label">Incomplets</div><div class="sc-val">314</div><div class="sc-sub sc-trend down"><i class="bi bi-arrow-down-short"></i>−12 depuis hier</div></div>
+        <i class="bi bi-exclamation-circle-fill sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-2-4" style="flex:0 0 auto;width:20%;">
+      <div class="scard purple">
+        <div><div class="sc-label">Transmis Ministère</div><div class="sc-val">35</div><div class="sc-sub">Vague 1 — 05 Fév.</div></div>
+        <i class="bi bi-send-fill sc-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+
+    <!-- SUIVI PHASES -->
+    <div class="col-12 col-lg-5">
+      <div class="panel h-100">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-diagram-3 me-2" style="color:var(--blue);"></i>Suivi des phases</span>
+          <span style="font-size:.75rem;color:var(--gris-dark);">Mise à jour en continu</span>
+        </div>
+        <div class="panel-bd">
+          <div class="phase-tracker">
+
+            <div class="phase-row">
+              <div class="phase-left">
+                <div class="phase-dot done"><i class="bi bi-check-lg"></i></div>
+                <div class="phase-line done"></div>
+              </div>
+              <div class="phase-content">
+                <div class="phase-name">Phase 1 — Lancement de la diplomation</div>
+                <div class="phase-meta">Ouverture des dépôts · 15 janvier 2025</div>
+                <div class="phase-badge done"><i class="bi bi-check2"></i> Terminée</div>
+              </div>
+            </div>
+
+            <div class="phase-row">
+              <div class="phase-left">
+                <div class="phase-dot done"><i class="bi bi-check-lg"></i></div>
+                <div class="phase-line done"></div>
+              </div>
+              <div class="phase-content">
+                <div class="phase-name">Phase 2 — Dépôt des dossiers étudiants</div>
+                <div class="phase-meta">Deadline : 31 janvier 2025</div>
+                <div class="phase-bar-wrap">
+                  <div class="phase-bar"><div class="phase-bar-fill" style="width:88%;background:var(--green);"></div></div>
+                  <div class="phase-nums"><span>1 091 / 1 240 déposés</span><span style="font-weight:700;color:var(--green);">88%</span></div>
+                </div>
+                <div class="phase-badge alert"><i class="bi bi-exclamation-triangle"></i> 149 dossiers non déposés</div>
+              </div>
+            </div>
+
+            <div class="phase-row">
+              <div class="phase-left">
+                <div class="phase-dot active">3</div>
+                <div class="phase-line"></div>
+              </div>
+              <div class="phase-content">
+                <div class="phase-name">Phase 3 — Vérification par les représentants</div>
+                <div class="phase-meta">En cours · Délai : 28 janvier 2025</div>
+                <div class="phase-bar-wrap">
+                  <div class="phase-bar"><div class="phase-bar-fill" style="width:55%;background:var(--blue);"></div></div>
+                  <div class="phase-nums"><span>612 / 1 091 vérifiés</span><span style="font-weight:700;color:var(--blue);">56%</span></div>
+                </div>
+                <div class="phase-badge active"><i class="bi bi-arrow-repeat"></i> En cours — 3 filières à relancer</div>
+              </div>
+            </div>
+
+            <div class="phase-row">
+              <div class="phase-left">
+                <div class="phase-dot pending">4</div>
+                <div class="phase-line"></div>
+              </div>
+              <div class="phase-content">
+                <div class="phase-name">Phase 4 — Validation Direction</div>
+                <div class="phase-meta">Démarrera après la phase 3</div>
+                <div class="phase-badge pending">En attente</div>
+              </div>
+            </div>
+
+            <div class="phase-row">
+              <div class="phase-left">
+                <div class="phase-dot pending">5</div>
+                <div class="phase-line"></div>
+              </div>
+              <div class="phase-content">
+                <div class="phase-name">Phase 5 — Production des diplômes</div>
+                <div class="phase-meta">Bureau Diplomation</div>
+                <div class="phase-badge pending">En attente</div>
+              </div>
+            </div>
+
+            <div class="phase-row">
+              <div class="phase-left">
+                <div class="phase-dot blocked"><i class="bi bi-lock"></i></div>
+                <div class="phase-line"></div>
+              </div>
+              <div class="phase-content">
+                <div class="phase-name">Phase 6 — Transmission au Ministère</div>
+                <div class="phase-meta">Intégration fonction publique</div>
+                <div class="phase-badge" style="background:#f3f3f5;color:#bbb;">Verrouillée</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVANCEMENT PAR FILIÈRE + DONUT -->
+    <div class="col-12 col-lg-7">
+      <div class="panel mb-4">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-pie-chart me-2" style="color:var(--blue);"></i>Avancement par filière — Phase 3</span>
+          <a href="tables.html" style="font-size:.78rem;color:var(--blue);text-decoration:none;">Détail complet →</a>
+        </div>
+        <div class="panel-bd">
+          <div class="fp-row">
+            <div class="fp-name">Génie Informatique</div>
+            <div class="fp-bar"><div class="fp-fill" style="width:78%;background:var(--blue);"></div></div>
+            <div class="fp-pct" style="color:var(--blue);">78%</div>
+            <div class="fp-count">224/287</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-name">Sciences Industrielles</div>
+            <div class="fp-bar"><div class="fp-fill" style="width:72%;background:var(--green);"></div></div>
+            <div class="fp-pct" style="color:var(--green);">72%</div>
+            <div class="fp-count">166/231</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-name">Génie Électrique</div>
+            <div class="fp-bar"><div class="fp-fill" style="width:63%;background:var(--yellow);"></div></div>
+            <div class="fp-pct" style="color:var(--yellow);">63%</div>
+            <div class="fp-count">132/210</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-name">Génie Civil</div>
+            <div class="fp-bar"><div class="fp-fill" style="width:41%;background:var(--red);"></div></div>
+            <div class="fp-pct" style="color:var(--red);">41%</div>
+            <div class="fp-count">81/198</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-name">Génie Mécanique</div>
+            <div class="fp-bar"><div class="fp-fill" style="width:34%;background:var(--red);"></div></div>
+            <div class="fp-pct" style="color:var(--red);">34%</div>
+            <div class="fp-count">39/114</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONS COORDINATION -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-lightning-charge me-2" style="color:var(--yellow);"></i>Actions de coordination</span>
+        </div>
+        <div class="panel-bd d-flex flex-column gap-2">
+          <a href="communique_form.html" class="coord-card">
+            <div class="coord-icon" style="background:var(--blue-xlight);color:var(--blue);"><i class="bi bi-megaphone-fill"></i></div>
+            <div><div class="coord-title">Émettre un communiqué de relance</div><div class="coord-sub">Notifier les étudiants avec dossiers incomplets</div></div>
+            <i class="bi bi-chevron-right coord-arrow"></i>
+          </a>
+          <a href="representant.html" class="coord-card">
+            <div class="coord-icon" style="background:var(--yellow-bg);color:var(--yellow);"><i class="bi bi-people-fill"></i></div>
+            <div><div class="coord-title">Relancer les représentants en retard</div><div class="coord-sub">Génie Civil · Génie Mécanique · Sci. Ind.</div></div>
+            <i class="bi bi-chevron-right coord-arrow"></i>
+          </a>
+          <a href="chef_diplomation.html" class="coord-card">
+            <div class="coord-icon" style="background:var(--green-bg);color:var(--green);"><i class="bi bi-mortarboard-fill"></i></div>
+            <div><div class="coord-title">Coordonner avec le Bureau Diplomation</div><div class="coord-sub">Synchroniser les dossiers validés pour production</div></div>
+            <i class="bi bi-chevron-right coord-arrow"></i>
+          </a>
+          <a href="#" class="coord-card">
+            <div class="coord-icon" style="background:var(--purple-bg);color:var(--purple);"><i class="bi bi-send-fill"></i></div>
+            <div><div class="coord-title">Préparer la transmission Ministère</div><div class="coord-sub">612 dossiers validés prêts · En attente direction</div></div>
+            <i class="bi bi-chevron-right coord-arrow"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DOSSIERS EN ALERTE + ACTIVITÉ -->
+  <div class="row g-4">
+    <!-- Dossiers prioritaires -->
+    <div class="col-12 col-lg-7">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-exclamation-circle me-2" style="color:var(--red);"></i>Dossiers prioritaires — Intervention requise</span>
+          <a href="tables.html" style="font-size:.78rem;color:var(--blue);text-decoration:none;">Tous les dossiers →</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table mb-0 atbl">
+            <thead>
+              <tr><th>Matricule</th><th>Étudiant</th><th>Filière</th><th>Manquant</th><th>Statut</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code style="color:var(--blue);font-size:.78rem;">21G0047</code></td>
+                <td style="font-weight:600;">KOAGNE Bernard</td>
+                <td>Génie Civil</td>
+                <td><span style="font-size:.78rem;color:var(--red);">Cert. médical, Fiche fin</span></td>
+                <td><span class="bs bs-red">Critique</span></td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;background:var(--blue);color:#fff;border:none;border-radius:7px;padding:3px 10px;">Relancer</button></td>
+              </tr>
+              <tr>
+                <td><code style="color:var(--blue);font-size:.78rem;">21E0023</code></td>
+                <td style="font-weight:600;">AWONO Joëlle</td>
+                <td>Génie Élec.</td>
+                <td><span style="font-size:.78rem;color:var(--yellow);">Reçus paiement (An.2)</span></td>
+                <td><span class="bs bs-yellow">Urgent</span></td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;background:var(--blue);color:#fff;border:none;border-radius:7px;padding:3px 10px;">Relancer</button></td>
+              </tr>
+              <tr>
+                <td><code style="color:var(--blue);font-size:.78rem;">21G0112</code></td>
+                <td style="font-weight:600;">NKOMO Patrick</td>
+                <td>Génie Méca.</td>
+                <td><span style="font-size:.78rem;color:var(--red);">3 pièces manquantes</span></td>
+                <td><span class="bs bs-red">Critique</span></td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;background:var(--blue);color:#fff;border:none;border-radius:7px;padding:3px 10px;">Relancer</button></td>
+              </tr>
+              <tr>
+                <td><code style="color:var(--blue);font-size:.78rem;">21C0089</code></td>
+                <td style="font-weight:600;">BELLO Fatime</td>
+                <td>Génie Civil</td>
+                <td><span style="font-size:.78rem;color:var(--yellow);">Acte naissance expiré</span></td>
+                <td><span class="bs bs-yellow">Urgent</span></td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;background:var(--blue);color:#fff;border:none;border-radius:7px;padding:3px 10px;">Relancer</button></td>
+              </tr>
+              <tr>
+                <td><code style="color:var(--blue);font-size:.78rem;">21I0034</code></td>
+                <td style="font-weight:600;">TALLA Rosine</td>
+                <td>Sci. Ind.</td>
+                <td><span style="font-size:.78rem;color:var(--green);">Dossier complet</span></td>
+                <td><span class="bs bs-green">Validé</span></td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;background:#f3f4f6;color:var(--gris-dark);border:none;border-radius:7px;padding:3px 10px;">Voir</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Activité récente -->
+    <div class="col-12 col-lg-5">
+      <div class="panel h-100">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-activity me-2" style="color:var(--blue);"></i>Journal d'activité</span>
+          <span style="font-size:.73rem;color:var(--gris-dark);">Aujourd'hui</span>
+        </div>
+        <div class="panel-bd py-0">
+          <div class="tl-item">
+            <div class="tl-dot g"><i class="bi bi-check2"></i></div>
+            <div class="tl-body">
+              <div class="tl-text"><strong>48 dossiers</strong> validés par le représentant Génie Info</div>
+              <div class="tl-time">il y a 32 min</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot r"><i class="bi bi-exclamation"></i></div>
+            <div class="tl-body">
+              <div class="tl-text"><strong>12 dossiers</strong> signalés incomplets — Génie Électrique</div>
+              <div class="tl-time">il y a 1h15</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot b"><i class="bi bi-megaphone"></i></div>
+            <div class="tl-body">
+              <div class="tl-text">Communiqué de relance envoyé à <strong>149 étudiants</strong></div>
+              <div class="tl-time">il y a 2h08</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot y"><i class="bi bi-upload"></i></div>
+            <div class="tl-body">
+              <div class="tl-text"><strong>23 nouveaux dépôts</strong> de dossiers reçus ce matin</div>
+              <div class="tl-time">08h30</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot g"><i class="bi bi-send"></i></div>
+            <div class="tl-body">
+              <div class="tl-text">Rapport hebdomadaire transmis à la Direction</div>
+              <div class="tl-time">08h00</div>
+            </div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot b"><i class="bi bi-people"></i></div>
+            <div class="tl-body">
+              <div class="tl-text">Réunion de coordination représentants — 5 filières</div>
+              <div class="tl-time">Hier 15h00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggler.addEventListener('click',()=>{
+    if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}
+    else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}
+  });
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+  window.addEventListener('resize',()=>{if(!isMobile()){sidebar.classList.remove('mobile-open');overlay.classList.remove('show');}});
+</script>
+</body>
+</html>

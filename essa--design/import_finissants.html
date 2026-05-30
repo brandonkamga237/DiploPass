@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Import liste finissants</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* ── SIDEBAR (shared) ── */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* ── TOPBAR ── */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* ── MAIN ── */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+    .bc i{font-size:.7rem;}
+    .ph-title{font-size:1.4rem;font-weight:800;color:var(--dark);}
+    .ph-sub{font-size:.82rem;color:var(--gris-dark);margin-top:3px;}
+
+    /* ── PANEL ── */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:24px;}
+
+    /* ── WIZARD STEPS ── */
+    .wizard{display:flex;align-items:center;gap:0;margin-bottom:28px;}
+    .wz-step{display:flex;align-items:center;gap:10px;flex:1;position:relative;}
+    .wz-step:not(:last-child)::after{content:'';flex:1;height:2px;background:var(--gris-bg);margin:0 10px;}
+    .wz-step.done::after{background:var(--green);}
+    .wz-step.active::after{background:var(--gris-bg);}
+    .wz-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;border:3px solid;flex-shrink:0;transition:all .25s;}
+    .wz-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+    .wz-dot.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(37,102,158,.18);}
+    .wz-dot.pending{background:var(--white);border-color:var(--gris-border);color:var(--gris-dark);}
+    .wz-label{font-size:.78rem;font-weight:700;color:var(--dark);white-space:nowrap;}
+    .wz-sub{font-size:.68rem;color:var(--gris-dark);}
+
+    /* ── STEP PANELS ── */
+    .step-panel{display:none;}.step-panel.active{display:block;}
+
+    /* ── DROPZONE ── */
+    .dropzone{border:2.5px dashed var(--gris-border);border-radius:14px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gris-bg);}
+    .dropzone:hover,.dropzone.drag{border-color:var(--blue);background:var(--blue-xlight);}
+    .dropzone.done{border-color:var(--green);background:var(--green-bg);border-style:solid;}
+    .dz-icon{font-size:2.8rem;color:var(--gris-dark);transition:color .2s;}
+    .dropzone:hover .dz-icon,.dropzone.drag .dz-icon{color:var(--blue);}
+    .dropzone.done .dz-icon{color:var(--green);}
+    .dz-title{font-size:1rem;font-weight:700;color:var(--dark);margin-top:12px;}
+    .dz-sub{font-size:.82rem;color:var(--gris-dark);margin-top:4px;}
+    .dz-formats{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap;}
+    .dz-format{background:var(--white);border:1px solid var(--gris-border);border-radius:7px;padding:4px 12px;font-size:.73rem;font-weight:700;color:var(--gris-dark);}
+
+    /* ── FORMAT ATTENDU ── */
+    .format-card{background:var(--gris-bg);border-radius:11px;padding:16px 18px;}
+    .format-title{font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-bottom:10px;}
+    .col-badge{display:inline-flex;align-items:center;gap:5px;background:var(--white);border:1px solid var(--gris-border);border-radius:7px;padding:5px 10px;font-size:.76rem;font-weight:700;margin:3px;}
+    .col-badge.req{border-color:var(--blue);color:var(--blue);background:var(--blue-xlight);}
+    .col-badge.opt{border-color:var(--gris-border);color:var(--gris-dark);}
+
+    /* ── VALIDATION TABLE ── */
+    .val-table thead th{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border:none;padding:9px 13px;white-space:nowrap;}
+    .val-table tbody td{font-size:.83rem;border:none;padding:9px 13px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    .val-table tbody tr:hover td{background:#f5f7fb;}
+    .val-table tbody tr.row-ok td{background:rgba(45,160,110,.03);}
+    .val-table tbody tr.row-err td{background:rgba(224,82,82,.04);}
+    .val-table tbody tr.row-warn td{background:rgba(232,160,32,.04);}
+    .err-cell{display:flex;flex-direction:column;gap:3px;}
+    .err-tag{font-size:.68rem;font-weight:700;color:var(--red);display:flex;align-items:center;gap:3px;}
+    .warn-tag{font-size:.68rem;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:3px;}
+    .ok-tag{font-size:.68rem;font-weight:700;color:var(--green);}
+
+    /* ── BADGES ── */
+    .bs{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-red{background:var(--red-bg);color:var(--red);}
+    .bs-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .bs-gray{background:var(--gris-bg);color:var(--gris-dark);}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+
+    /* ── RÉSUMÉ VALIDATION ── */
+    .val-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+    .vs-card{background:var(--white);border-radius:11px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.05);border-left:4px solid transparent;text-align:center;}
+    .vs-card.total{border-color:var(--blue);}
+    .vs-card.ok{border-color:var(--green);}
+    .vs-card.err{border-color:var(--red);}
+    .vs-card.warn{border-color:var(--yellow);}
+    .vs-val{font-size:1.6rem;font-weight:900;color:var(--dark);}
+    .vs-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-top:2px;}
+
+    /* ── PROGRESS BAR ANALYSE ── */
+    .analyse-bar{background:var(--gris-bg);border-radius:99px;height:10px;overflow:hidden;margin:8px 0;}
+    .analyse-fill{height:100%;border-radius:99px;background:var(--blue);transition:width .5s ease;}
+
+    /* ── FOOTER ACTIONS ── */
+    .footer-actions{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+    .btn-next{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;}
+    .btn-next:hover{background:var(--blue-dark);}
+    .btn-next:disabled{background:#b0c8e4;cursor:not-allowed;}
+    .btn-prev{background:var(--gris-bg);color:var(--dark);border:none;border-radius:10px;padding:11px 20px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;}
+    .btn-prev:hover{background:var(--gris-border);}
+    .btn-success{background:var(--green);color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;}
+    .btn-success:hover{background:#228a5c;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:767px){.val-summary{grid-template-columns:repeat(2,1fr);}.wizard{overflow-x:auto;padding-bottom:8px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <a href="chef_scolarite.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Cellule Informatique</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Gestion listes</div>
+    <a href="import_finissants.html" class="nav-link active"><i class="bi bi-cloud-upload"></i><span class="sl">Import liste finissants</span></a>
+    <a href="correction_liste.html" class="nav-link"><i class="bi bi-pencil-square"></i><span class="sl">Correction liste</span></a>
+    <a href="liste_validee.html" class="nav-link"><i class="bi bi-check2-square"></i><span class="sl">Liste validée</span></a>
+    <div class="ss">Navigation</div>
+    <a href="tables.html" class="nav-link"><i class="bi bi-folder2-open"></i><span class="sl">Dossiers finissants</span></a>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sl">Bureau Diplomation</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Import liste finissants</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Cellule Informatique · Promotion 2024-2025</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-c">CI</div>
+      <div class="d-none d-md-block"><div class="av-name">Cellule Info</div><div class="av-role">Informatique</div></div>
+    </a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="bc">
+    <a href="chef_scolarite.html">Scolarité</a>
+    <i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Import liste finissants</span>
+  </div>
+
+  <div class="d-flex align-items-flex-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <div class="ph-title">Import de la liste brute des finissants</div>
+      <div class="ph-sub">Chargement et validation automatique du fichier CSV transmis par la Cellule Informatique</div>
+    </div>
+    <a href="correction_liste.html" class="btn btn-sm" style="background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;padding:8px 16px;">
+      <i class="bi bi-pencil-square me-1"></i>Aller à la correction
+    </a>
+  </div>
+
+  <!-- WIZARD -->
+  <div class="wizard mb-4">
+    <div class="wz-step done" id="wz1">
+      <div class="wz-dot done"><i class="bi bi-check-lg"></i></div>
+      <div><div class="wz-label">1. Sélection fichier</div><div class="wz-sub">CSV ou XLSX</div></div>
+    </div>
+    <div class="wz-step" id="wz2">
+      <div class="wz-dot active">2</div>
+      <div><div class="wz-label">2. Analyse & Validation</div><div class="wz-sub">Contrôle automatique</div></div>
+    </div>
+    <div class="wz-step" id="wz3">
+      <div class="wz-dot pending">3</div>
+      <div><div class="wz-label">3. Rapport d'import</div><div class="wz-sub">Résultat final</div></div>
+    </div>
+  </div>
+
+  <!-- STEP 1 : UPLOAD -->
+  <div id="step1" class="step-panel active">
+    <div class="panel">
+      <div class="panel-hd">
+        <span class="panel-title"><i class="bi bi-cloud-upload me-2" style="color:var(--blue);"></i>Chargement du fichier CSV</span>
+      </div>
+      <div class="panel-bd">
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('csvInput').click()">
+          <div class="dz-icon"><i class="bi bi-file-earmark-spreadsheet"></i></div>
+          <div class="dz-title">Glissez votre fichier ici ou cliquez pour parcourir</div>
+          <div class="dz-sub">Fichier CSV ou XLSX transmis par la Cellule Informatique</div>
+          <div class="dz-formats">
+            <span class="dz-format"><i class="bi bi-filetype-csv me-1"></i>CSV</span>
+            <span class="dz-format"><i class="bi bi-filetype-xlsx me-1"></i>XLSX</span>
+            <span class="dz-format">Max 10 Mo</span>
+          </div>
+          <input type="file" id="csvInput" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleFile(this)"/>
+        </div>
+
+        <div id="fileInfo" style="display:none;" class="mt-3 p-3" style="background:var(--green-bg);border-radius:10px;">
+          <!-- filled by JS -->
+        </div>
+
+        <div class="format-card mt-4">
+          <div class="format-title">Format de fichier attendu</div>
+          <div>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>matricule</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>nom</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>prenoms</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>date_naissance</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>lieu_naissance</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>filiere</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>niveau</span>
+            <span class="col-badge opt">sexe</span>
+            <span class="col-badge opt">nationalite</span>
+            <span class="col-badge opt">annee_entree</span>
+          </div>
+          <div style="margin-top:10px;font-size:.76rem;color:var(--gris-dark);">
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Date de naissance :</strong> format JJ/MM/AAAA ou AAAA-MM-JJ · 
+            <strong>Matricule :</strong> format AAXNNNN (ex: 21G0042) · 
+            <span style="color:var(--red);">* champs obligatoires</span>
+          </div>
+          <div class="mt-3">
+            <a href="#" class="btn btn-sm btn-light" style="border-radius:8px;font-size:.78rem;border:1px solid var(--gris-border);" onclick="telechargerModele()">
+              <i class="bi bi-download me-1"></i>Télécharger le modèle CSV vide
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <span style="font-size:.8rem;color:var(--gris-dark);">Sélectionnez un fichier pour continuer.</span>
+      <button class="btn-next" id="btnStep1" disabled onclick="goStep(2)">
+        Analyser le fichier <i class="bi bi-arrow-right-short"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 2 : VALIDATION -->
+  <div id="step2" class="step-panel">
+    <!-- Barre de progression analyse -->
+    <div id="analyseProgress" class="panel mb-4">
+      <div class="panel-bd">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark);" id="analyseLabel">Analyse en cours…</div>
+          <span id="analysePct" style="font-size:.82rem;font-weight:800;color:var(--blue);margin-left:auto;">0%</span>
+        </div>
+        <div class="analyse-bar"><div class="analyse-fill" id="analyseBarFill" style="width:0%;"></div></div>
+        <div style="font-size:.76rem;color:var(--gris-dark);margin-top:4px;" id="analyseDetail">Initialisation…</div>
+      </div>
+    </div>
+
+    <!-- Résumé validation -->
+    <div class="val-summary" id="valSummary" style="display:none;">
+      <div class="vs-card total"><div class="vs-val" id="vs-total">0</div><div class="vs-label">Lignes importées</div></div>
+      <div class="vs-card ok"><div class="vs-val" id="vs-ok" style="color:var(--green);">0</div><div class="vs-label">Lignes valides</div></div>
+      <div class="vs-card err"><div class="vs-val" id="vs-err" style="color:var(--red);">0</div><div class="vs-label">Erreurs critiques</div></div>
+      <div class="vs-card warn"><div class="vs-val" id="vs-warn" style="color:var(--yellow);">0</div><div class="vs-label">Avertissements</div></div>
+    </div>
+
+    <!-- Tableau résultats -->
+    <div class="panel" id="valTablePanel" style="display:none;">
+      <div class="panel-hd">
+        <span class="panel-title"><i class="bi bi-table me-2" style="color:var(--blue);"></i>Résultats de la validation automatique</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="filterBtns">
+          <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;border:1px solid var(--gris-border);" onclick="filtrerLignes('all')">Tous</button>
+          <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;background:var(--red-bg);color:var(--red);border:none;" onclick="filtrerLignes('err')">Erreurs seules</button>
+          <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;background:var(--yellow-bg);color:var(--yellow);border:none;" onclick="filtrerLignes('warn')">Avertissements</button>
+          <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;background:var(--green-bg);color:var(--green);border:none;" onclick="filtrerLignes('ok')">Valides</button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0 val-table" id="valTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Matricule</th>
+              <th>Nom</th>
+              <th>Prénoms</th>
+              <th>Date naissance</th>
+              <th>Lieu naissance</th>
+              <th>Filière</th>
+              <th>Niveau</th>
+              <th>Résultat</th>
+              <th>Détail</th>
+            </tr>
+          </thead>
+          <tbody id="valTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footer-actions" id="step2Footer" style="display:none;">
+      <button class="btn-prev" onclick="goStep(1)"><i class="bi bi-arrow-left-short"></i>Retour</button>
+      <div class="d-flex gap-3 flex-wrap">
+        <button class="btn-prev" onclick="exporterRapport()"><i class="bi bi-download me-1"></i>Exporter rapport</button>
+        <button class="btn-next" id="btnStep2" onclick="goStep(3)">
+          Confirmer l'import <i class="bi bi-arrow-right-short"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 : RAPPORT FINAL -->
+  <div id="step3" class="step-panel">
+    <div class="panel">
+      <div class="panel-bd text-center" style="padding:40px;">
+        <div id="step3Icon" style="font-size:3.5rem;margin-bottom:16px;"></div>
+        <div id="step3Title" style="font-size:1.3rem;font-weight:800;color:var(--dark);margin-bottom:8px;"></div>
+        <div id="step3Sub" style="font-size:.87rem;color:var(--gris-dark);max-width:480px;margin:0 auto 24px;line-height:1.6;"></div>
+        <div id="step3Actions" class="d-flex gap-3 justify-content-center flex-wrap"></div>
+      </div>
+    </div>
+    <div class="panel" id="step3Details">
+      <div class="panel-hd"><span class="panel-title"><i class="bi bi-clipboard-data me-2" style="color:var(--blue);"></i>Récapitulatif de l'import</span></div>
+      <div class="panel-bd" id="step3Summary"></div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ══ DONNÉES SIMULÉES ══ */
+const mockData = [
+  {n:1,mat:'21G0042',nom:'MBALLA',prenoms:'Jean-Baptiste',dob:'14/03/2000',lieu:'Yaoundé',filiere:'Génie Informatique',niveau:'Licence 3',status:'ok',errors:[],warns:[]},
+  {n:2,mat:'21G0043',nom:'FOMO EKOTTO',prenoms:'Claire',dob:'22/07/1999',lieu:'Douala',filiere:'Génie Électrique',niveau:'Licence 3',status:'ok',errors:[],warns:[]},
+  {n:3,mat:'21G-044',nom:'NGONO',prenoms:'Paul Rodrigue',dob:'08/13/2000',lieu:'Bafoussam',filiere:'Génie Civil',niveau:'Master 2',status:'err',errors:['Matricule invalide (format attendu: 21G0044)','Date de naissance invalide (mois=13)'],warns:[]},
+  {n:4,mat:'21G0045',nom:'biya',prenoms:'Sylvie Carole',dob:'01/11/1999',lieu:'Yaoundé',filiere:'Génie Informatique',niveau:'Master 2',status:'warn',errors:[],warns:['Nom en minuscule — sera normalisé en BIYA']},
+  {n:5,mat:'21G0046',nom:'ATEBA',prenoms:'Marc Fabrice',dob:'30/02/2001',lieu:'Bertoua',filiere:'Sciences Industrielles',niveau:'Licence 3',status:'err',errors:['Date de naissance invalide (30/02 inexistant)'],warns:[]},
+  {n:6,mat:'21G0047',nom:'KOAGNE',prenoms:'Bernard',dob:'17/05/2000',lieu:'',filiere:'Génie Civil',niveau:'Licence 3',status:'warn',errors:[],warns:['Lieu de naissance vide — champ obligatoire à compléter']},
+  {n:7,mat:'21G0048',nom:'NKOULOU',prenoms:'Marie-José',dob:'03/09/1998',lieu:'Kribi',filiere:'Génie Mécanique',niveau:'Master 2',status:'ok',errors:[],warns:[]},
+  {n:8,mat:'21G0049',nom:'ESSAMA',prenoms:'Roger Thierry',dob:'11/12/2000',lieu:'Ngaoundéré',filiere:'Génie Électrique',niveau:'Licence 3',status:'ok',errors:[],warns:[]},
+  {n:9,mat:'21G0042',nom:'OWONA',prenoms:'Hélène Pascale',dob:'25/04/1999',lieu:'Edéa',filiere:'Génie Civil',niveau:'Master 2',status:'err',errors:['Matricule 21G0042 en doublon (ligne 1)'],warns:[]},
+  {n:10,mat:'21G0051',nom:'TABI',prenoms:'Claude Aurélien',dob:'09/06/2001',lieu:'Douala',filiere:'Génie Informatique',niveau:'Licence 3',status:'ok',errors:[],warns:[]},
+  {n:11,mat:'21G0052',nom:'FOUDA',prenoms:'Patrick Francis',dob:'14/08/1999',lieu:'Yaoundé',filiere:'Sciences Industrielles',niveau:'Licence 3',status:'ok',errors:[],warns:[]},
+  {n:12,mat:'21G0053',nom:'ABANDA',prenoms:'Victoire Aline',dob:'22/10/2000',lieu:'Limbé',filiere:'Génie Électrique',niveau:'Licence 3',status:'warn',errors:[],warns:['Prénom contient des chiffres — vérifier la saisie']},
+];
+
+let currentStep = 1;
+let selectedFileName = '';
+
+/* ══ SIDEBAR ══ */
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+/* ══ FILE HANDLING ══ */
+function handleFile(input){
+  if(!input.files.length) return;
+  const f = input.files[0];
+  selectedFileName = f.name;
+  const dz = document.getElementById('dropzone');
+  dz.classList.add('done');
+  dz.innerHTML = `<div class="dz-icon"><i class="bi bi-check-circle-fill" style="color:var(--green);"></i></div>
+    <div class="dz-title" style="color:var(--green);">Fichier sélectionné</div>
+    <div class="dz-sub">${f.name} · ${(f.size/1024).toFixed(0)} Ko</div>`;
+
+  const fi = document.getElementById('fileInfo');
+  fi.style.display='block';
+  fi.style.background='var(--green-bg)';
+  fi.style.borderRadius='10px';
+  fi.style.padding='12px 16px';
+  fi.innerHTML=`<div style="display:flex;align-items:center;gap:10px;">
+    <i class="bi bi-file-earmark-spreadsheet-fill" style="color:var(--green);font-size:1.3rem;"></i>
+    <div><div style="font-size:.86rem;font-weight:700;color:var(--dark);">${f.name}</div>
+    <div style="font-size:.76rem;color:var(--gris-dark);">Taille : ${(f.size/1024).toFixed(0)} Ko · Type : ${f.type||'text/csv'}</div></div>
+    <button onclick="resetFile()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--gris-dark);font-size:1rem;"><i class="bi bi-x-circle"></i></button>
+  </div>`;
+  document.getElementById('btnStep1').disabled = false;
+}
+
+function resetFile(){
+  document.getElementById('csvInput').value='';
+  selectedFileName='';
+  const dz=document.getElementById('dropzone');
+  dz.className='dropzone';
+  dz.innerHTML=`<div class="dz-icon"><i class="bi bi-file-earmark-spreadsheet"></i></div>
+    <div class="dz-title">Glissez votre fichier ici ou cliquez pour parcourir</div>
+    <div class="dz-sub">Fichier CSV ou XLSX transmis par la Cellule Informatique</div>
+    <div class="dz-formats"><span class="dz-format"><i class="bi bi-filetype-csv me-1"></i>CSV</span><span class="dz-format"><i class="bi bi-filetype-xlsx me-1"></i>XLSX</span><span class="dz-format">Max 10 Mo</span></div>
+    <input type="file" id="csvInput" accept=".csv,.xlsx,.xls" style="display:none;" onchange="handleFile(this)"/>`;
+  document.getElementById('fileInfo').style.display='none';
+  document.getElementById('btnStep1').disabled=true;
+}
+
+/* Drag-drop */
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('drag');
+  if(e.dataTransfer.files.length){
+    const dt=new DataTransfer();dt.items.add(e.dataTransfer.files[0]);
+    const inp=document.getElementById('csvInput');inp.files=dt.files;handleFile(inp);
+  }
+});
+
+/* ══ WIZARD ══ */
+function goStep(step){
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`step${step}`).classList.add('active');
+  currentStep=step;
+  updateWizard(step);
+  if(step===2) lancerAnalyse();
+  if(step===3) afficherRapport();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateWizard(step){
+  for(let i=1;i<=3;i++){
+    const dot=document.querySelector(`#wz${i} .wz-dot`);
+    if(i<step){dot.className='wz-dot done';dot.innerHTML='<i class="bi bi-check-lg"></i>';}
+    else if(i===step){dot.className='wz-dot active';dot.textContent=i;}
+    else{dot.className='wz-dot pending';dot.textContent=i;}
+    const s=document.getElementById(`wz${i}`);
+    if(i<step) s.className='wz-step done';
+    else if(i===step) s.className='wz-step active';
+    else s.className='wz-step';
+  }
+}
+
+/* ══ ANALYSE SIMULÉE ══ */
+function lancerAnalyse(){
+  const steps=[
+    {pct:15,label:'Lecture du fichier…',detail:'Décodage CSV, détection de l\'encodage (UTF-8)'},
+    {pct:35,label:'Vérification des colonnes…',detail:'Colonnes obligatoires présentes ✓'},
+    {pct:55,label:'Validation des matricules…',detail:'Format AAXNNNN · Recherche de doublons'},
+    {pct:72,label:'Validation des dates de naissance…',detail:'Format JJ/MM/AAAA · Dates cohérentes'},
+    {pct:88,label:'Normalisation des noms…',detail:'Détection de casse, caractères spéciaux'},
+    {pct:100,label:'Analyse terminée',detail:'Rapport de validation généré'},
+  ];
+  let i=0;
+  const interval=setInterval(()=>{
+    if(i>=steps.length){clearInterval(interval);afficherResultats();return;}
+    const s=steps[i];
+    document.getElementById('analyseBarFill').style.width=s.pct+'%';
+    document.getElementById('analysePct').textContent=s.pct+'%';
+    document.getElementById('analyseLabel').textContent=s.label;
+    document.getElementById('analyseDetail').textContent=s.detail;
+    if(s.pct===100){document.getElementById('analyseBarFill').style.background='var(--green)';document.getElementById('analyseLabel').style.color='var(--green)';}
+    i++;
+  },600);
+}
+
+function afficherResultats(){
+  setTimeout(()=>{
+    document.getElementById('analyseProgress').style.display='none';
+    document.getElementById('valSummary').style.display='grid';
+    document.getElementById('valTablePanel').style.display='block';
+    document.getElementById('step2Footer').style.display='flex';
+
+    const ok=mockData.filter(r=>r.status==='ok').length;
+    const err=mockData.filter(r=>r.status==='err').length;
+    const warn=mockData.filter(r=>r.status==='warn').length;
+    document.getElementById('vs-total').textContent=mockData.length;
+    document.getElementById('vs-ok').textContent=ok;
+    document.getElementById('vs-err').textContent=err;
+    document.getElementById('vs-warn').textContent=warn;
+
+    renderTable(mockData);
+
+    const btn=document.getElementById('btnStep2');
+    if(err>0){
+      btn.textContent='Importer malgré les erreurs';
+      btn.style.background='var(--yellow)';
+    }
+  },400);
+}
+
+function renderTable(data){
+  const tbody=document.getElementById('valTableBody');
+  tbody.innerHTML=data.map(r=>{
+    const rowCls=r.status==='ok'?'row-ok':r.status==='err'?'row-err':'row-warn';
+    const badge=r.status==='ok'?'<span class="bs bs-green"><i class="bi bi-check-circle-fill me-1"></i>Valide</span>':r.status==='err'?'<span class="bs bs-red"><i class="bi bi-x-circle-fill me-1"></i>Erreur</span>':'<span class="bs bs-yellow"><i class="bi bi-exclamation-triangle-fill me-1"></i>Alerte</span>';
+    const details=r.errors.map(e=>`<div class="err-tag"><i class="bi bi-x-circle-fill"></i>${e}</div>`).join('')
+      + r.warns.map(w=>`<div class="warn-tag"><i class="bi bi-exclamation-triangle-fill"></i>${w}</div>`).join('');
+    return `<tr class="${rowCls}">
+      <td style="color:var(--gris-dark);font-size:.78rem;">${r.n}</td>
+      <td><code style="color:var(--blue);font-size:.78rem;">${r.mat}</code></td>
+      <td style="font-weight:600;">${r.nom}</td>
+      <td>${r.prenoms}</td>
+      <td>${r.dob}</td>
+      <td>${r.lieu||'<em style="color:var(--red);">Vide</em>'}</td>
+      <td style="font-size:.8rem;">${r.filiere}</td>
+      <td><span class="bs bs-blue" style="font-size:.68rem;">${r.niveau}</span></td>
+      <td>${badge}</td>
+      <td><div class="err-cell">${details||'<span class="ok-tag"><i class="bi bi-check2"></i> RAS</span>'}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filtrerLignes(type){
+  const data=type==='all'?mockData:mockData.filter(r=>r.status===type||(type==='err'&&r.errors.length));
+  renderTable(data);
+}
+
+/* ══ RAPPORT FINAL ══ */
+function afficherRapport(){
+  const err=mockData.filter(r=>r.status==='err').length;
+  const warn=mockData.filter(r=>r.status==='warn').length;
+  const ok=mockData.filter(r=>r.status==='ok').length;
+
+  const icon=err>0?'⚠️':'✅';
+  document.getElementById('step3Icon').textContent=icon;
+  document.getElementById('step3Title').textContent=err>0?`Import effectué — ${err} erreur(s) à corriger`:'Import réussi — Aucune erreur critique';
+  document.getElementById('step3Sub').textContent=`${ok} lignes valides importées. ${err} ligne(s) avec erreurs critiques et ${warn} avertissement(s) ont été signalés. La liste brute est disponible pour correction.`;
+
+  const actions=document.getElementById('step3Actions');
+  actions.innerHTML=`
+    <a href="correction_liste.html" class="btn-success d-flex align-items-center gap-2" style="text-decoration:none;">
+      <i class="bi bi-pencil-square"></i>Aller à la correction des erreurs
+    </a>
+    <button class="btn-prev" onclick="exporterRapport()"><i class="bi bi-download me-1"></i>Exporter le rapport CSV</button>
+    <button class="btn-prev" onclick="goStep(1)"><i class="bi bi-arrow-counterclockwise me-1"></i>Nouvel import</button>`;
+
+  const summary=document.getElementById('step3Summary');
+  summary.innerHTML=`<div class="row g-3">
+    <div class="col-6 col-md-3"><div style="padding:12px;background:var(--gris-bg);border-radius:9px;text-align:center;"><div style="font-size:1.4rem;font-weight:900;color:var(--dark);">${mockData.length}</div><div style="font-size:.73rem;color:var(--gris-dark);">Lignes totales</div></div></div>
+    <div class="col-6 col-md-3"><div style="padding:12px;background:var(--green-bg);border-radius:9px;text-align:center;"><div style="font-size:1.4rem;font-weight:900;color:var(--green);">${ok}</div><div style="font-size:.73rem;color:var(--gris-dark);">Valides</div></div></div>
+    <div class="col-6 col-md-3"><div style="padding:12px;background:var(--red-bg);border-radius:9px;text-align:center;"><div style="font-size:1.4rem;font-weight:900;color:var(--red);">${err}</div><div style="font-size:.73rem;color:var(--gris-dark);">Erreurs critiques</div></div></div>
+    <div class="col-6 col-md-3"><div style="padding:12px;background:var(--yellow-bg);border-radius:9px;text-align:center;"><div style="font-size:1.4rem;font-weight:900;color:var(--yellow);">${warn}</div><div style="font-size:.73rem;color:var(--gris-dark);">Avertissements</div></div></div>
+  </div>
+  <div class="mt-3" style="font-size:.8rem;color:var(--gris-dark);">
+    <i class="bi bi-calendar3 me-1"></i>Import effectué le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})} ·
+    <i class="bi bi-person me-1"></i>Cellule Informatique ·
+    <i class="bi bi-file-earmark me-1"></i>${selectedFileName||'liste_finissants_2025.csv'}
+  </div>`;
+}
+
+function exporterRapport(){
+  alert('Export du rapport de validation en cours de génération…');
+}
+
+function telechargerModele(){
+  const csv='matricule,nom,prenoms,date_naissance,lieu_naissance,filiere,niveau,sexe,nationalite\n21G0001,NOM,Prénom,01/01/2000,Douala,Génie Informatique,Licence 3,M,Camerounais';
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='modele_liste_finissants.csv';a.click();
+}
+
+// Simuler fichier déjà sélectionné au chargement
+setTimeout(()=>{
+  const fi=document.getElementById('fileInfo');
+  fi.style.display='block';
+  fi.style.background='var(--green-bg)';
+  fi.style.borderRadius='10px';
+  fi.style.padding='12px 16px';
+  fi.innerHTML=`<div style="display:flex;align-items:center;gap:10px;">
+    <i class="bi bi-file-earmark-spreadsheet-fill" style="color:var(--green);font-size:1.3rem;"></i>
+    <div><div style="font-size:.86rem;font-weight:700;color:var(--dark);">liste_finissants_2025.csv</div>
+    <div style="font-size:.76rem;color:var(--gris-dark);">Taille : 48 Ko · 612 lignes détectées</div></div>
+    <button onclick="resetFile()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--gris-dark);font-size:1rem;"><i class="bi bi-x-circle"></i></button>
+  </div>`;
+  const dz=document.getElementById('dropzone');
+  dz.classList.add('done');
+  dz.innerHTML=`<div class="dz-icon"><i class="bi bi-check-circle-fill" style="color:var(--green);"></i></div>
+    <div class="dz-title" style="color:var(--green);">Fichier sélectionné</div>
+    <div class="dz-sub">liste_finissants_2025.csv · 48 Ko</div>`;
+  document.getElementById('btnStep1').disabled=false;
+  selectedFileName='liste_finissants_2025.csv';
+},300);
+</script>
+</body>
+</html>

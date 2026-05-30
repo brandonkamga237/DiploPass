@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Production diplômes officiels</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --gold:#b8860b;--gold-bg:#fdf6e3;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .tb-btn:hover{background:var(--gris-bg);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--yellow));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:14px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* PHASE TRACKER HORIZONTAL */
+    .phase-track{display:flex;align-items:flex-start;gap:0;}
+    .phase-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+    .phase-step::after{content:'';position:absolute;right:0;top:20px;width:50%;height:2px;background:var(--gris-bg);z-index:0;}
+    .phase-step::before{content:'';position:absolute;left:0;top:20px;width:50%;height:2px;background:var(--gris-bg);z-index:0;}
+    .phase-step:first-child::before,.phase-step:last-child::after{display:none;}
+    .phase-step.done::after,.phase-step.done::before{background:var(--green);}
+    .phase-step.active::before{background:var(--green);}
+    .phase-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:800;border:3px solid;z-index:1;transition:all .2s;}
+    .phase-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+    .phase-dot.active{background:var(--gold);border-color:var(--gold);color:#fff;box-shadow:0 0 0 6px rgba(184,134,11,.18);}
+    .phase-dot.pending{background:var(--white);border-color:var(--gris-border);color:var(--gris-dark);}
+    .phase-lbl{font-size:.72rem;font-weight:700;text-align:center;margin-top:8px;color:var(--dark);max-width:90px;line-height:1.3;}
+    .phase-sub-lbl{font-size:.64rem;color:var(--gris-dark);text-align:center;margin-top:1px;}
+
+    /* IMPORT ZONE */
+    .dz{border:2.5px dashed var(--gris-border);border-radius:13px;padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gris-bg);}
+    .dz:hover,.dz.drag{border-color:var(--gold);background:var(--gold-bg);}
+    .dz.loaded{border-color:var(--green);background:var(--green-bg);border-style:solid;}
+    .dz-icon{font-size:2.4rem;color:var(--gris-dark);transition:color .2s;}
+    .dz:hover .dz-icon,.dz.drag .dz-icon{color:var(--gold);}
+    .dz.loaded .dz-icon{color:var(--green);}
+
+    /* DIFF TABLE */
+    .diff-tbl thead th{font-size:.67rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border:none;padding:9px 12px;white-space:nowrap;}
+    .diff-tbl tbody td{font-size:.83rem;border:none;padding:9px 12px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    .diff-tbl tbody tr.new-row td{background:rgba(45,160,110,.05);}
+    .diff-tbl tbody tr.excl-row td{background:rgba(224,82,82,.04);text-decoration:line-through;color:var(--gris-dark);}
+    .diff-tbl tbody tr.change-row td{background:rgba(232,160,32,.04);}
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-red{background:var(--red-bg);color:var(--red);}
+    .bs-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+    .bs-gold{background:var(--gold-bg);color:var(--gold);}
+
+    /* STAT MINI */
+    .sm{background:var(--white);border-radius:11px;box-shadow:0 1px 5px rgba(0,0,0,.06);padding:14px 16px;border-left:4px solid transparent;display:flex;align-items:center;justify-content:space-between;}
+    .sm.green{border-color:var(--green);}.sm.blue{border-color:var(--blue);}.sm.yellow{border-color:var(--yellow);}.sm.gold{border-color:var(--gold);}
+    .sm-val{font-size:1.5rem;font-weight:900;color:var(--dark);}
+    .sm-lbl{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-top:2px;}
+    .sm-icon{font-size:1.8rem;opacity:.15;}
+    .sm.green .sm-icon{color:var(--green);}.sm.blue .sm-icon{color:var(--blue);}.sm.yellow .sm-icon{color:var(--yellow);}.sm.gold .sm-icon{color:var(--gold);}
+
+    /* CHECKLIST */
+    .check-item{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--gris-bg);}
+    .check-item:last-child{border-bottom:none;}
+    .ci-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+    .ci-icon.ok{background:var(--green-bg);color:var(--green);}
+    .ci-icon.warn{background:var(--yellow-bg);color:var(--yellow);}
+    .ci-icon.new{background:var(--gold-bg);color:var(--gold);}
+    .ci-lbl{font-size:.86rem;font-weight:700;color:var(--dark);}
+    .ci-sub{font-size:.75rem;color:var(--gris-dark);margin-top:2px;}
+    .ci-badge{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;flex-shrink:0;}
+    .cib-ok{background:var(--green-bg);color:var(--green);}
+    .cib-new{background:var(--gold-bg);color:var(--gold);}
+    .cib-warn{background:var(--yellow-bg);color:var(--yellow);}
+
+    /* LAUNCH BUTTON */
+    .btn-launch-official{background:linear-gradient(135deg,var(--gold),#d4a020);color:#fff;border:none;border-radius:12px;padding:16px 36px;font-size:1rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .18s;box-shadow:0 4px 20px rgba(184,134,11,.35);}
+    .btn-launch-official:hover{box-shadow:0 6px 28px rgba(184,134,11,.5);transform:translateY(-2px);}
+    .btn-launch-official:disabled{background:#d4c090;box-shadow:none;cursor:not-allowed;transform:none;}
+
+    /* GEN PROGRESS */
+    .gbar{height:12px;background:var(--gris-bg);border-radius:99px;overflow:hidden;margin:10px 0;}
+    .gfill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .4s;}
+    .gstep{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-bg);}
+    .gstep:last-child{border-bottom:none;}
+    .gd{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
+    .gd.done{background:var(--green);color:#fff;}
+    .gd.run{background:var(--gold);color:#fff;}
+    .gd.wait{background:var(--gris-bg);color:var(--gris-dark);}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}.phase-track{overflow-x:auto;padding-bottom:8px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}.btn-launch-official{padding:13px 22px;font-size:.9rem;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="chef_diplomation.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Bureau Diplomation</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Production</div>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Vue d'ensemble</span></a>
+    <a href="lancement_premier_jet.html" class="nav-link"><i class="bi bi-play-circle"></i><span class="sl">Lancement premier jet</span></a>
+    <a href="verification_premier_jet.html" class="nav-link"><i class="bi bi-eye-fill"></i><span class="sl">Vérification premier jet</span></a>
+    <a href="production_officielle.html" class="nav-link active"><i class="bi bi-mortarboard-fill"></i><span class="sl">Production officielle</span></a>
+    <a href="suivi_signatures.html" class="nav-link"><i class="bi bi-pen-fill"></i><span class="sl">Suivi signatures</span></a>
+    <div class="ss">Navigation</div>
+    <a href="liste_validee.html" class="nav-link"><i class="bi bi-check2-square"></i><span class="sl">Liste validée</span></a>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Production des diplômes officiels</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Bureau Diplomation · Édition définitive sur modèle officiel</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-c">BD</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Bureau</div><div class="av-role">Bureau Diplomation</div></div>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+  <div class="bc">
+    <a href="chef_diplomation.html">Bureau Diplomation</a><i class="bi bi-chevron-right"></i>
+    <a href="lancement_premier_jet.html">Premier jet</a><i class="bi bi-chevron-right"></i>
+    <a href="verification_premier_jet.html">Vérification</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Production officielle</span>
+  </div>
+
+  <!-- PHASE TRACKER -->
+  <div class="panel mb-4">
+    <div class="panel-bd">
+      <div class="phase-track">
+        <div class="phase-step done"><div class="phase-dot done"><i class="bi bi-check-lg"></i></div><div class="phase-lbl">Liste validée</div><div class="phase-sub-lbl">609 finissants</div></div>
+        <div class="phase-step done"><div class="phase-dot done"><i class="bi bi-check-lg"></i></div><div class="phase-lbl">Premier jet</div><div class="phase-sub-lbl">Vérifié OK</div></div>
+        <div class="phase-step active"><div class="phase-dot active"><i class="bi bi-mortarboard-fill"></i></div><div class="phase-lbl">Production officielle</div><div class="phase-sub-lbl" style="color:var(--gold);font-weight:700;">En cours</div></div>
+        <div class="phase-step pending"><div class="phase-dot pending">4</div><div class="phase-lbl">Signatures</div><div class="phase-sub-lbl">En attente</div></div>
+        <div class="phase-step pending"><div class="phase-dot pending">5</div><div class="phase-lbl">Transmission Ministère</div><div class="phase-sub-lbl">En attente</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS RÉCAPITULATIVES -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="sm green"><div><div class="sm-lbl">Premier jet validé</div><div class="sm-val">586</div></div><i class="bi bi-check-circle-fill sm-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sm gold"><div><div class="sm-lbl">Liste admission reçue</div><div class="sm-val">592</div></div><i class="bi bi-file-earmark-check-fill sm-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sm yellow"><div><div class="sm-lbl">Différences détectées</div><div class="sm-val">14</div></div><i class="bi bi-exclamation-circle-fill sm-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sm blue"><div><div class="sm-lbl">À produire</div><div class="sm-val">592</div></div><i class="bi bi-mortarboard-fill sm-icon"></i></div></div>
+  </div>
+
+  <div class="row g-4">
+    <!-- IMPORT + CONFIG -->
+    <div class="col-12 col-lg-5">
+
+      <!-- IMPORT LISTE DÉFINITIVE -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-cloud-upload me-2" style="color:var(--gold);"></i>Import de la liste d'admission définitive</span></div>
+        <div class="panel-bd">
+          <div class="dz loaded" id="dzAdm" onclick="document.getElementById('admFile').click()">
+            <div class="dz-icon"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div style="font-size:.9rem;font-weight:700;color:var(--green);margin-top:8px;">Fichier chargé avec succès</div>
+            <div style="font-size:.78rem;color:var(--gris-dark);margin-top:3px;">liste_admission_def_2025.csv · 592 lignes · 48 Ko</div>
+            <div style="font-size:.74rem;color:var(--blue);margin-top:6px;cursor:pointer;" onclick="event.stopPropagation();document.getElementById('admFile').click()">
+              <i class="bi bi-arrow-repeat me-1"></i>Remplacer le fichier
+            </div>
+            <input type="file" id="admFile" accept=".csv,.xlsx" style="display:none;"/>
+          </div>
+
+          <div style="margin-top:14px;background:var(--gold-bg);border-radius:10px;padding:12px 14px;border:1px solid #e0c870;">
+            <div style="font-size:.8rem;font-weight:800;color:var(--gold);margin-bottom:6px;"><i class="bi bi-info-circle-fill me-1"></i>Données de la liste définitive</div>
+            <div style="font-size:.78rem;color:var(--dark);display:flex;flex-direction:column;gap:4px;">
+              <div><strong>Date de délibération :</strong> 10 février 2025</div>
+              <div><strong>Présidée par :</strong> Prof. MFOU Emmanuel — Président du jury</div>
+              <div><strong>Réf. PV :</strong> PV-JURY-ENSET-2025-001</div>
+              <div><strong>Admis définitifs :</strong> 592 sur 609 candidats</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRÉ-REQUIS PRODUCTION -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-clipboard2-check me-2" style="color:var(--blue);"></i>Pré-requis production officielle</span></div>
+        <div class="panel-bd py-0">
+          <div class="check-item">
+            <div class="ci-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="flex-1"><div class="ci-lbl">Premier jet vérifié et corrigé</div><div class="ci-sub">586 diplômes validés par les représentants</div></div>
+            <span class="ci-badge cib-ok">✓ OK</span>
+          </div>
+          <div class="check-item">
+            <div class="ci-icon new"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div style="flex:1;"><div class="ci-lbl">Liste d'admission définitive importée</div><div class="ci-sub">592 admis · PV jury reçu</div></div>
+            <span class="ci-badge cib-new">Nouveau</span>
+          </div>
+          <div class="check-item">
+            <div class="ci-icon warn"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div style="flex:1;"><div class="ci-lbl">14 différences à confirmer</div><div class="ci-sub">6 exclus, 5 mentions modifiées, 3 ajouts</div></div>
+            <span class="ci-badge cib-warn">Vérifier</span>
+          </div>
+          <div class="check-item">
+            <div class="ci-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+            <div style="flex:1;"><div class="ci-lbl">Modèle diplôme officiel v4.0</div><div class="ci-sub">Armoiries officielles + signature numérique</div></div>
+            <span class="ci-badge cib-ok">✓ OK</span>
+          </div>
+          <div class="check-item">
+            <div class="ci-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+            <div style="flex:1;"><div class="ci-lbl">Numérotation série officielle</div><div class="ci-sub">ENSET-DIP-2025-0001 à ENSET-DIP-2025-0592</div></div>
+            <span class="ci-badge cib-ok">✓ OK</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOUTON LANCEMENT -->
+      <div class="panel">
+        <div class="panel-bd">
+          <div class="alert mb-3" style="background:var(--gold-bg);border:1px solid #e0c870;border-radius:10px;font-size:.8rem;">
+            <i class="bi bi-exclamation-diamond-fill me-2" style="color:var(--gold);"></i>
+            <strong>Production finale irréversible.</strong> Les diplômes officiels générés ne peuvent pas être modifiés après production. Les numéros de série sont définitivement attribués. Assurez-vous que toutes les différences ont été vérifiées.
+          </div>
+          <div class="d-flex justify-content-center pt-2">
+            <button class="btn-launch-official" id="btnOfficial" onclick="lancerProduction()">
+              <i class="bi bi-mortarboard-fill" style="font-size:1.2rem;"></i>
+              Lancer la production officielle
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIFFÉRENCES + PROGRESSION -->
+    <div class="col-12 col-lg-7">
+
+      <!-- TABLEAU DES DIFFÉRENCES -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-arrow-left-right me-2" style="color:var(--yellow);"></i>Différences entre premier jet et liste définitive</span>
+          <span style="font-size:.75rem;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:99px;font-weight:700;">14 à confirmer</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table mb-0 diff-tbl">
+            <thead>
+              <tr><th>N° Diplôme</th><th>Étudiant</th><th>Type changement</th><th>Avant</th><th>Après</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr class="excl-row">
+                <td><code style="font-size:.77rem;">DIP-2025-0044</code></td>
+                <td>NGONO Paul</td>
+                <td><span class="bs bs-red">Exclu</span></td>
+                <td style="font-size:.78rem;">Admis</td>
+                <td style="font-size:.78rem;color:var(--red);">Non admis</td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;border-radius:7px;background:var(--red-bg);color:var(--red);border:none;" onclick="confirmerDiff(this,'excl')">Confirmer</button></td>
+              </tr>
+              <tr class="change-row">
+                <td><code style="font-size:.77rem;">DIP-2025-0046</code></td>
+                <td>ATEBA Marc</td>
+                <td><span class="bs bs-yellow">Mention</span></td>
+                <td style="font-size:.78rem;">Passable</td>
+                <td style="font-size:.78rem;color:var(--green);font-weight:700;">Assez Bien</td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;border-radius:7px;background:var(--yellow-bg);color:var(--yellow);border:none;" onclick="confirmerDiff(this,'change')">Confirmer</button></td>
+              </tr>
+              <tr class="change-row">
+                <td><code style="font-size:.77rem;">DIP-2025-0052</code></td>
+                <td>FOUDA Patrick</td>
+                <td><span class="bs bs-yellow">Mention</span></td>
+                <td style="font-size:.78rem;">Très Bien</td>
+                <td style="font-size:.78rem;color:var(--green);font-weight:700;">Bien</td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;border-radius:7px;background:var(--yellow-bg);color:var(--yellow);border:none;" onclick="confirmerDiff(this,'change')">Confirmer</button></td>
+              </tr>
+              <tr class="new-row">
+                <td><code style="font-size:.77rem;">DIP-2025-0610</code></td>
+                <td>BELLA Joël (Ajout)</td>
+                <td><span class="bs bs-green">Ajouté</span></td>
+                <td style="font-size:.78rem;color:var(--gris-dark);">—</td>
+                <td style="font-size:.78rem;color:var(--green);font-weight:700;">Admis</td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;border-radius:7px;background:var(--green-bg);color:var(--green);border:none;" onclick="confirmerDiff(this,'new')">Intégrer</button></td>
+              </tr>
+              <tr class="excl-row">
+                <td><code style="font-size:.77rem;">DIP-2025-0047</code></td>
+                <td>KOAGNE Bernard</td>
+                <td><span class="bs bs-red">Exclu</span></td>
+                <td style="font-size:.78rem;">Admis</td>
+                <td style="font-size:.78rem;color:var(--red);">Non admis</td>
+                <td><button class="btn btn-sm" style="font-size:.72rem;border-radius:7px;background:var(--red-bg);color:var(--red);border:none;" onclick="confirmerDiff(this,'excl')">Confirmer</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 16px;background:var(--gris-bg);font-size:.76rem;color:var(--gris-dark);">
+          <i class="bi bi-info-circle me-1"></i>
+          Confirmez chaque différence avant de lancer la production. Les exclus ne seront pas produits. Les ajouts et modifications seront intégrés.
+          <strong style="color:var(--blue);margin-left:6px;cursor:pointer;" onclick="confirmerTout()">Confirmer toutes →</strong>
+        </div>
+      </div>
+
+      <!-- PROGRESSION GÉNÉRATION -->
+      <div class="panel" id="prodProgress" style="display:none;">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-gear-wide-connected me-2" style="color:var(--gold);"></i>Production officielle en cours…</span>
+          <span id="prodPct" style="font-size:.85rem;font-weight:800;color:var(--gold);">0%</span>
+        </div>
+        <div class="panel-bd">
+          <div class="gbar"><div class="gfill" id="prodBar" style="width:0%;"></div></div>
+          <div id="prodSteps">
+            <div class="gstep"><div class="gd wait" id="pd1">1</div><div><div style="font-size:.85rem;font-weight:700;color:var(--dark);">Application liste définitive + corrections</div><div style="font-size:.74rem;color:var(--gris-dark);" id="ps1">En attente…</div></div><div id="pc1" style="font-size:.78rem;font-weight:800;color:var(--gris-dark);margin-left:auto;">—</div></div>
+            <div class="gstep"><div class="gd wait" id="pd2">2</div><div><div style="font-size:.85rem;font-weight:700;color:var(--dark);">Génération diplômes sur modèle officiel v4.0</div><div style="font-size:.74rem;color:var(--gris-dark);">Sans filigrane — édition définitive</div></div><div id="pc2" style="font-size:.78rem;font-weight:800;color:var(--gris-dark);margin-left:auto;">—</div></div>
+            <div class="gstep"><div class="gd wait" id="pd3">3</div><div><div style="font-size:.85rem;font-weight:700;color:var(--dark);">Attribution numérotation officielle</div><div style="font-size:.74rem;color:var(--gris-dark);">ENSET-DIP-2025-XXXX + QR sécurisé</div></div><div id="pc3" style="font-size:.78rem;font-weight:800;color:var(--gris-dark);margin-left:auto;">—</div></div>
+            <div class="gstep"><div class="gd wait" id="pd4">4</div><div><div style="font-size:.85rem;font-weight:700;color:var(--dark);">Préparation des lots par filière</div><div style="font-size:.74rem;color:var(--gris-dark);">5 lots · Archivage sécurisé</div></div><div id="pc4" style="font-size:.78rem;font-weight:800;color:var(--gris-dark);margin-left:auto;">—</div></div>
+            <div class="gstep"><div class="gd wait" id="pd5">5</div><div><div style="font-size:.85rem;font-weight:700;color:var(--dark);">Envoi en file de signature</div><div style="font-size:.74rem;color:var(--gris-dark);">Transmission au circuit de signatures</div></div><div id="pc5" style="font-size:.78rem;font-weight:800;color:var(--gris-dark);margin-left:auto;">—</div></div>
+          </div>
+          <div id="prodDone" style="display:none;margin-top:16px;background:var(--green-bg);border-radius:11px;padding:16px;">
+            <div style="font-size:.95rem;font-weight:800;color:var(--green);display:flex;align-items:center;gap:8px;">
+              <i class="bi bi-patch-check-fill"></i>592 diplômes officiels produits avec succès
+            </div>
+            <div style="font-size:.78rem;color:var(--dark);margin-top:6px;">Ils sont désormais en file d'attente pour signature. Les autorités compétentes ont été notifiées.</div>
+            <a href="suivi_signatures.html" class="d-inline-flex align-items-center gap-2 mt-3" style="background:var(--blue);color:#fff;border-radius:10px;padding:10px 20px;font-size:.86rem;font-weight:800;text-decoration:none;transition:background .15s;">
+              <i class="bi bi-pen-fill"></i>Suivre les signatures →
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+  function confirmerDiff(btn,type){
+    const row=btn.closest('tr');
+    btn.textContent='✓ Confirmé';
+    btn.disabled=true;
+    btn.style.background='var(--green-bg)';
+    btn.style.color='var(--green)';
+    if(type==='excl') row.style.opacity='.5';
+  }
+  function confirmerTout(){
+    document.querySelectorAll('.diff-tbl button:not(:disabled)').forEach(b=>{
+      const row=b.closest('tr');
+      const type=row.classList.contains('excl-row')?'excl':row.classList.contains('new-row')?'new':'change';
+      confirmerDiff(b,type);
+    });
+  }
+
+  function lancerProduction(){
+    document.getElementById('prodProgress').style.display='block';
+    document.getElementById('prodProgress').scrollIntoView({behavior:'smooth'});
+    document.getElementById('btnOfficial').disabled=true;
+
+    const steps=[
+      {id:1,pct:18,dur:1000,count:'592 lignes'},
+      {id:2,pct:48,dur:1500,count:'592 diplômes'},
+      {id:3,pct:68,dur:900,count:'592 numéros'},
+      {id:4,pct:88,dur:800,count:'5 lots'},
+      {id:5,pct:100,dur:600,count:'Transmis'},
+    ];
+    let i=0;
+    function next(){
+      if(i>=steps.length){
+        setTimeout(()=>{document.getElementById('prodDone').style.display='block';},400);
+        return;
+      }
+      const s=steps[i];
+      if(i>0){
+        const p=steps[i-1];
+        document.getElementById(`pd${p.id}`).className='gd done';
+        document.getElementById(`pd${p.id}`).innerHTML='<i class="bi bi-check-lg"></i>';
+        document.getElementById(`pc${p.id}`).textContent=p.count;
+        document.getElementById(`pc${p.id}`).style.color='var(--green)';
+      }
+      document.getElementById(`pd${s.id}`).className='gd run';
+      document.getElementById(`pd${s.id}`).innerHTML='<i class="bi bi-hourglass-split"></i>';
+      document.getElementById('prodBar').style.width=s.pct+'%';
+      document.getElementById('prodPct').textContent=s.pct+'%';
+      i++;
+      setTimeout(next,s.dur);
+    }
+    next();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% block title %}Mon dossier{% endblock %}
+{% block page_title %}Mon dossier de diplomation{% endblock %}
+
+{% block content %}
+
+{# ── En-tête statut ── #}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card {% if dossier.statut == 'CLOTURE' %}green{% elif dossier.statut in ['INCOMPLET','REJETE','AUTH_REJETEE'] %}red{% else %}blue{% endif %}">
+      <div>
+        <div class="stat-label">Statut actuel</div>
+        <div class="stat-value" style="font-size:.95rem;margin-top:6px">
+          <span class="badge bg-{{ dossier.couleur_statut() }}" style="font-size:.78rem">{{ dossier.libelle_statut() }}</span>
+        </div>
+        {% if dossier.observations %}
+        <div class="stat-sub" style="color:var(--red)">{{ dossier.observations }}</div>
+        {% endif %}
+      </div>
+      <i class="bi bi-folder2-open stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-md-4">
+    {% set nb_deposes = pieces_map|length %}
+    {% set nb_requis = documents|selectattr('obligatoire')|list|length %}
+    <div class="stat-card {% if nb_deposes >= nb_requis %}green{% elif nb_deposes > 0 %}yellow{% else %}red{% endif %}">
+      <div>
+        <div class="stat-label">Pièces déposées</div>
+        <div class="stat-value">{{ nb_deposes }}<span style="font-size:.9rem;font-weight:400;color:var(--gris-dark)">/{{ documents|length }}</span></div>
+        <div class="stat-sub">{{ nb_requis }} obligatoires</div>
+      </div>
+      <i class="bi bi-paperclip stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Dépôt</div>
+        <div class="stat-value" style="font-size:1.1rem">{{ dossier.date_depot.strftime('%d/%m/%y') if dossier.date_depot else '—' }}</div>
+        <div class="stat-sub">{{ dossier.annee_academique }}</div>
+      </div>
+      <i class="bi bi-calendar3 stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# ── Alerte si incomplet ── #}
+{% if dossier.statut == 'INCOMPLET' %}
+<div class="d-flex align-items-flex-start gap-3 p-3 rounded-3 mb-4" style="background:#fdecea">
+  <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1" style="color:var(--red)"></i>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark)">Dossier incomplet — action requise</div>
+    {% if dossier.observations %}
+    <div style="font-size:.82rem;color:var(--dark);margin-top:4px">{{ dossier.observations }}</div>
+    {% endif %}
+    <div style="font-size:.8rem;color:var(--gris-dark);margin-top:4px">Complétez les pièces manquantes ci-dessous puis contactez votre représentant.</div>
+  </div>
+</div>
+{% endif %}
+
+{# ── Pièces justificatives ── #}
+<div class="panel mb-4">
+  <div class="panel-header" style="flex-wrap:wrap;gap:8px">
+    <h2 class="panel-title"><i class="bi bi-paperclip me-2" style="color:var(--blue)"></i>Pièces justificatives</h2>
+    {% if dossier.statut in ('DEPOSE', 'INCOMPLET') %}
+    <span style="font-size:.75rem;color:var(--gris-dark)">
+      <i class="bi bi-info-circle me-1"></i>Formats acceptés : PDF, JPG, PNG — max 10 Mo
+    </span>
+    {% endif %}
+  </div>
+  <div class="panel-body p-0">
+
+    {% for doc in documents %}
+    {% set piece = pieces_map.get(doc.id_document) %}
+    <div class="d-flex align-items-center gap-3 px-4 py-3" style="border-bottom:1px solid var(--gris-bg);flex-wrap:wrap">
+
+      {# Numéro #}
+      <div style="width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;
+        {% if piece %}background:var(--green-bg);color:var(--green){% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
+        {% if piece %}<i class="bi bi-check-lg"></i>{% else %}{{ doc.numero }}{% endif %}
+      </div>
+
+      {# Libellé #}
+      <div style="flex:1;min-width:180px">
+        <div style="font-size:.86rem;font-weight:{% if piece %}600{% else %}500{% endif %};color:{% if piece %}var(--dark){% else %}var(--gris-dark){% endif %}">
+          {{ doc.nom }}
+          {% if not doc.obligatoire %}
+          <span style="font-size:.7rem;color:var(--yellow);font-weight:700;margin-left:6px">CONDITIONNEL</span>
+          {% endif %}
+        </div>
+        {% if doc.observation %}
+        <div style="font-size:.75rem;color:var(--gris-dark);margin-top:1px">{{ doc.observation }}</div>
+        {% endif %}
+        {% if piece %}
+        <div style="font-size:.73rem;color:var(--gris-dark);margin-top:2px">
+          {{ piece.nom_original }} — {{ piece.taille_lisible }}
+          · {{ piece.date_upload.strftime('%d/%m/%Y') if piece.date_upload else '' }}
+        </div>
+        {% endif %}
+      </div>
+
+      {# Actions #}
+      <div class="d-flex gap-2 flex-shrink-0" style="flex-wrap:wrap">
+        {% if piece %}
+          {# Voir / Télécharger #}
+          <a href="{{ url_for('etudiant.voir_piece', id_piece=piece.id_piece) }}"
+             target="_blank"
+             class="btn btn-sm"
+             style="background:var(--blue);color:#fff;border:none;border-radius:7px;font-size:.76rem;font-weight:700">
+            <i class="bi bi-eye me-1"></i>Voir
+          </a>
+          {# Remplacer + Supprimer uniquement si dossier modifiable #}
+          {% if dossier.statut in ('DEPOSE', 'INCOMPLET') %}
+          <label class="btn btn-sm"
+                 style="background:#e8f0fc;color:var(--blue);border:none;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;margin:0">
+            <i class="bi bi-arrow-repeat me-1"></i>Remplacer
+            <form method="POST"
+                  action="{{ url_for('etudiant.upload_piece', id_document=doc.id_document) }}"
+                  enctype="multipart/form-data" style="display:none"
+                  id="form-upload-{{ doc.id_document }}">
+              <input type="file" name="fichier" accept=".pdf,.jpg,.jpeg,.png"
+                     onchange="this.form.submit()">
+            </form>
+          </label>
+          <form method="POST"
+                action="{{ url_for('etudiant.supprimer_piece', id_piece=piece.id_piece) }}"
+                onsubmit="return confirm('Supprimer cette pièce ?')">
+            <button type="submit" class="btn btn-sm"
+                    style="background:var(--red-bg);color:var(--red);border:none;border-radius:7px;font-size:.76rem;font-weight:700">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+          {% endif %}
+
+        {% elif dossier.statut in ('DEPOSE', 'INCOMPLET') %}
+          {# Pas encore déposé → upload #}
+          <label class="btn btn-sm"
+                 style="background:var(--gris-bg);color:var(--dark);border:1px dashed #c0c3c8;border-radius:7px;font-size:.76rem;font-weight:700;cursor:pointer;margin:0">
+            <i class="bi bi-cloud-upload me-1"></i>Déposer
+            <form method="POST"
+                  action="{{ url_for('etudiant.upload_piece', id_document=doc.id_document) }}"
+                  enctype="multipart/form-data" style="display:none"
+                  id="form-upload-{{ doc.id_document }}">
+              <input type="file" name="fichier" accept=".pdf,.jpg,.jpeg,.png"
+                     onchange="this.form.submit()">
+            </form>
+          </label>
+        {% else %}
+          <span style="font-size:.75rem;color:var(--gris-dark);font-style:italic">Non déposé</span>
+        {% endif %}
+      </div>
+
+    </div>
+    {% endfor %}
+
+  </div>
+</div>
+
+{# ── Historique des phases ── #}
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title"><i class="bi bi-clock-history me-2" style="color:var(--blue)"></i>Historique des phases</h2>
+  </div>
+  <div class="panel-body p-0">
+    {% for h in dossier.historique | sort(attribute='date_action', reverse=True) %}
+    <div class="d-flex align-items-start gap-3 px-4 py-3" style="border-bottom:1px solid var(--gris-bg)">
+      <div style="width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:6px;flex-shrink:0"></div>
+      <div style="flex:1">
+        <div style="font-size:.84rem;font-weight:600;color:var(--dark)">{{ h.phase }}</div>
+        <div style="font-size:.78rem;color:var(--gris-dark)">
+          {% if h.ancien_statut %}{{ h.ancien_statut }} → {% endif %}<strong>{{ h.nouveau_statut }}</strong>
+          {% if h.commentaire %} — {{ h.commentaire }}{% endif %}
+        </div>
+      </div>
+      <div style="font-size:.72rem;color:var(--gris-dark);flex-shrink:0;white-space:nowrap">
+        {{ h.date_action.strftime('%d/%m/%Y %H:%M') }}
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-4 text-muted" style="font-size:.84rem">Aucun historique disponible.</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

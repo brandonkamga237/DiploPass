@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Gestion des impressions{% endblock %}
+{% block page_title %}Impressions{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-printer me-2"></i>Gestion des impressions</h1>
+  <p>
+    <a href="{{ url_for('chef_bureau.dashboard') }}" class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+    </a>
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span>Dossiers en cours d'impression</span>
+    <span class="badge bg-secondary">{{ dossiers|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Étudiant</th>
+            <th>Matricule</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dossiers %}
+          <tr>
+            <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+            <td><code>{{ d.matricule }}</code></td>
+            <td><span class="badge bg-{{ d.couleur_statut() }}">{{ d.libelle_statut() }}</span></td>
+            <td>
+              {% if d.statut == 'LISTE_FINISSANTS' %}
+              <form method="POST" action="{{ url_for('chef_bureau.lancer_impression_provisoire', id=d.id_dossier) }}" class="d-inline">
+                <button class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-printer me-1"></i>Impression provisoire
+                </button>
+              </form>
+              {% elif d.statut == 'IMPRESSION_PROVISOIRE' %}
+              <form method="POST" action="{{ url_for('chef_bureau.production_definitive', id=d.id_dossier) }}" class="d-inline">
+                <button class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-file-earmark-text me-1"></i>Production définitive
+                </button>
+              </form>
+              {% elif d.statut == 'PRODUCTION_DEFINITIVE' %}
+              <form method="POST" action="{{ url_for('chef_bureau.envoyer_directeur', id=d.id_dossier) }}" class="d-inline">
+                <button class="btn btn-sm btn-success">
+                  <i class="bi bi-arrow-right me-1"></i>Envoyer au Directeur
+                </button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4">
+              <div class="empty-state">
+                <i class="bi bi-printer"></i>
+                <h6>Aucun dossier en cours d'impression</h6>
+                <p>Les dossiers apparaissent ici après la confirmation de la liste des finissants.</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

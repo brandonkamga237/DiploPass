@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau communiqué{% endblock %}
+{% block page_title %}Nouveau communiqué{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-megaphone me-2"></i>Nouveau communiqué</h1>
+  <p>
+    <a href="{{ url_for('directeur.liste_communiques') }}" class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+    </a>
+  </p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">Informations du communiqué</div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Numéro</label>
+              <input type="text" name="numero_communique" class="form-control" required
+                     placeholder="Ex : 001/2025/ENSET">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Année académique</label>
+              {% if annees_disponibles %}
+              <select name="annee_academique" class="form-select" required>
+                <option value="">— Sélectionner —</option>
+                {% for annee in annees_disponibles %}
+                <option value="{{ annee }}">{{ annee }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Tous les étudiants finissants de cette année verront le communiqué.</div>
+              {% else %}
+              <input type="text" name="annee_academique" class="form-control" required
+                     placeholder="2024-2025">
+              <div class="form-text text-warning">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Aucune promotion active — créez d'abord les promotions dans l'administration.
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Titre</label>
+              <input type="text" name="titre" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Objet</label>
+              <input type="text" name="objet" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date limite de dépôt</label>
+              <input type="date" name="date_limite_depot" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Type de processus</label>
+              <select name="type_processus" class="form-select">
+                <option value="DIPLOMATION">Diplomation</option>
+                <option value="INTEGRATION">Intégration</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Contenu</label>
+              <textarea name="contenu" class="form-control" rows="6"
+                        placeholder="Contenu du communiqué…"></textarea>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-2"></i>Enregistrer
+            </button>
+            <a href="{{ url_for('directeur.liste_communiques') }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

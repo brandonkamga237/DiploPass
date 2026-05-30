@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Authentification des dossiers{% endblock %}
+{% block page_title %}Authentification{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-shield-check me-2"></i>Authentification des diplômes</h1>
+  <p>
+    <a href="{{ url_for('chef_bureau.dashboard') }}" class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
+    </a>
+  </p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span>Dossiers en attente d'authentification</span>
+    <span class="badge bg-cyan">{{ dossiers|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Étudiant</th>
+          <th>Matricule</th>
+          <th>Filière</th>
+          <th>Date dépôt</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        <tr>
+          <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+          <td><code>{{ d.matricule }}</code></td>
+          <td>{{ d.etudiant.filiere }}</td>
+          <td>{{ d.date_depot.strftime('%d/%m/%Y') if d.date_depot else '—' }}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                    data-bs-target="#authModal{{ d.id_dossier }}">
+              <i class="bi bi-shield-check me-1"></i>Saisir résultat
+            </button>
+
+            <div class="modal fade" id="authModal{{ d.id_dossier }}" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content" style="border-radius:12px; border:none">
+                  <div class="modal-header" style="border-bottom:1px solid #e2e8f0">
+                    <h6 class="modal-title fw-700">
+                      Résultat — {{ d.etudiant.nom }} {{ d.etudiant.prenom }}
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="POST" action="{{ url_for('chef_bureau.authentifier', id=d.id_dossier) }}">
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Résultat d'authentification</label>
+                        <select name="resultat" class="form-select" required>
+                          <option value="AUTHENTIQUE">Authentique — valider</option>
+                          <option value="FAUX">Faux / Document rejeté</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label">Motif (si rejeté)</label>
+                        <input type="text" name="motif" class="form-control"
+                               placeholder="Raison du rejet…">
+                      </div>
+                    </div>
+                    <div class="modal-footer" style="border-top:1px solid #e2e8f0">
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                      <button type="submit" class="btn btn-primary">Confirmer</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">
+            <div class="empty-state">
+              <i class="bi bi-shield-check" style="color:#059669 !important; opacity:1"></i>
+              <h6>Aucun dossier en attente</h6>
+              <p>Tous les diplômes ont été authentifiés.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

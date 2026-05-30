@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Espace Étudiant</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{--blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--gris-bg:#eeeff1;--gris-dark:#797a7c;--white-pure:#ffffff;--dark:#4b4b4b;--sidebar-w:240px;--green:#2da06e;--yellow:#e8a020;--red:#e05252;}
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue);z-index:1040;display:flex;flex-direction:column;transition:transform .28s ease,width .28s ease;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sidebar-label,#sidebar.collapsed .sidebar-brand-text,#sidebar.collapsed .sidebar-section{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.25rem;}
+    .sidebar-brand{padding:18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.12);min-height:64px;text-decoration:none;}
+    .sidebar-brand-icon{width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--blue);font-weight:800;font-size:.85rem;}
+    .sidebar-brand-text{color:#fff;font-weight:700;font-size:.95rem;line-height:1.2;white-space:nowrap;}
+    .sidebar-brand-text small{font-weight:400;opacity:.75;font-size:.72rem;}
+    .sidebar-nav{flex:1;overflow-y:auto;padding:10px 0;}
+    .sidebar-section{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:14px 20px 4px;}
+    .sidebar-nav .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.78);padding:10px 20px;font-size:.875rem;transition:background .15s,color .15s;white-space:nowrap;text-decoration:none;}
+    .sidebar-nav .nav-link:hover{background:rgba(255,255,255,.1);color:#fff;}
+    .sidebar-nav .nav-link.active{background:var(--blue-dark);color:#fff;border-left:3px solid #fff;}
+    .sidebar-nav .nav-link i{font-size:1rem;flex-shrink:0;}
+    .sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.12);}
+    .sidebar-footer .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.65);font-size:.85rem;text-decoration:none;padding:6px 4px;}
+    .sidebar-footer .nav-link:hover{color:#fff;}
+    .notif-pill{background:#e05252;color:#fff;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:auto;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:64px;left:var(--sidebar-w);background:#fff;border-bottom:1px solid rgba(0,0,0,.08);z-index:1030;display:flex;align-items:center;padding:0 24px;gap:12px;transition:left .28s ease;}
+    #topbar.sidebar-collapsed{left:64px;}
+    #sidebarToggle{background:none;border:none;color:var(--gris-dark);font-size:1.35rem;cursor:pointer;padding:4px 8px;border-radius:6px;flex-shrink:0;}
+    #sidebarToggle:hover{background:var(--gris-bg);}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .topbar-icon-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.2rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .topbar-icon-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .badge-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;background:#e05252;border-radius:50%;border:2px solid #fff;}
+    .topbar-avatar{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background .15s;text-decoration:none;}
+    .topbar-avatar-fallback{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .topbar-name{font-size:.83rem;font-weight:600;color:var(--dark);white-space:nowrap;}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:64px;padding:28px;transition:margin-left .28s ease;min-height:calc(100vh - 64px);}
+    #main.sidebar-collapsed{margin-left:64px;}
+
+    /* SECTION TABS */
+    .section{display:none;} .section.active{display:block;}
+    .page-title{font-size:1.4rem;font-weight:700;color:var(--dark);margin:0;}
+    .page-subtitle{font-size:.83rem;color:var(--gris-dark);margin-top:3px;}
+
+    /* PROFIL */
+    .profil-card{background:#fff;border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,.07);overflow:hidden;}
+    .profil-banner{height:90px;background:linear-gradient(135deg,var(--blue) 0%,var(--blue-light) 100%);}
+    .profil-avatar{width:72px;height:72px;border-radius:50%;background:var(--blue-dark);color:#fff;font-size:1.5rem;font-weight:800;display:flex;align-items:center;justify-content:center;border:4px solid #fff;margin-top:-36px;margin-left:24px;}
+    .profil-body{padding:14px 24px 24px;}
+    .profil-name{font-size:1.15rem;font-weight:800;color:var(--dark);margin-top:6px;}
+    .profil-meta{font-size:.82rem;color:var(--gris-dark);}
+    .profil-chip{display:inline-flex;align-items:center;gap:5px;background:#e8f0fc;color:var(--blue);padding:4px 12px;border-radius:99px;font-size:.78rem;font-weight:700;margin-top:6px;}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px;}
+    .info-item label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);}
+    .info-item .info-val{font-size:.9rem;font-weight:600;color:var(--dark);margin-top:2px;}
+    .panel{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;}
+    .panel-header{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.92rem;font-weight:700;color:var(--dark);margin:0;}
+    .panel-body{padding:20px;}
+    .form-label{font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:4px;}
+    .form-control,.form-select{border:1px solid #dde0e5;border-radius:9px;padding:9px 14px;font-size:.875rem;color:var(--dark);}
+    .form-control:focus,.form-select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,102,158,.12);outline:none;}
+
+    /* PARCOURS STEPPER vertical */
+    .parcours-list{display:flex;flex-direction:column;gap:0;}
+    .parcours-step{display:flex;gap:16px;position:relative;}
+    .parcours-step::before{content:'';position:absolute;left:19px;top:40px;width:2px;height:calc(100% - 10px);background:var(--gris-bg);z-index:0;}
+    .parcours-step:last-child::before{display:none;}
+    .step-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;z-index:1;}
+    .step-circle{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;border:3px solid;flex-shrink:0;}
+    .step-circle.done{background:var(--green);border-color:var(--green);color:#fff;}
+    .step-circle.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(37,102,158,.15);}
+    .step-circle.pending{background:#fff;border-color:#d0d3d8;color:var(--gris-dark);}
+    .step-circle.locked{background:#f0f0f2;border-color:#ccc;color:#bbb;}
+    .step-content{flex:1;background:#fff;border-radius:12px;padding:14px 18px;margin-bottom:14px;box-shadow:0 1px 5px rgba(0,0,0,.05);border:2px solid transparent;transition:border-color .2s;}
+    .step-content.active{border-color:var(--blue);}
+    .step-content.done{border-color:#c8ead8;}
+    .step-label-title{font-size:.92rem;font-weight:700;color:var(--dark);}
+    .step-label-sub{font-size:.78rem;color:var(--gris-dark);margin-top:2px;}
+    .step-status{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:99px;margin-top:6px;display:inline-block;}
+    .step-status.done{background:#e6f5ef;color:#1f7a52;}
+    .step-status.active{background:#e8f0fc;color:var(--blue);}
+    .step-status.pending{background:var(--gris-bg);color:var(--gris-dark);}
+    .step-status.locked{background:#f0f0f2;color:#bbb;}
+
+    /* DEPOT DOSSIER */
+    .depot-section{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);margin-bottom:16px;}
+    .depot-header{padding:14px 18px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;}
+    .depot-header-title{font-size:.9rem;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;}
+    .depot-body{padding:18px;}
+    .piece-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--gris-bg);}
+    .piece-row:last-child{border-bottom:none;}
+    .piece-num{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:.72rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .piece-info{flex:1;}
+    .piece-name{font-size:.86rem;font-weight:600;color:var(--dark);}
+    .piece-req{font-size:.73rem;color:var(--gris-dark);}
+    .piece-upload{flex-shrink:0;}
+    .upload-btn{border:2px solid var(--blue);color:var(--blue);background:none;border-radius:8px;padding:5px 12px;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;}
+    .upload-btn:hover{background:var(--blue);color:#fff;}
+    .upload-btn.done{border-color:var(--green);color:var(--green);background:#e6f5ef;}
+    .submit-bar{background:#fff;border-radius:12px;padding:18px 20px;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:575px){.topbar-name{display:none;}#main{padding:12px;}.info-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="#" class="sidebar-brand">
+    <div class="sidebar-brand-icon">EN</div>
+    <div class="sidebar-brand-text">ENSET Douala<br><small>Espace Étudiant</small></div>
+  </a>
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Mon espace</div>
+    <a href="#" class="nav-link active" onclick="showSection('profil')"><i class="bi bi-person-circle"></i><span class="sidebar-label">Profil</span></a>
+    <a href="#" class="nav-link" onclick="showSection('parcours')"><i class="bi bi-signpost-2"></i><span class="sidebar-label">Étapes du parcours</span></a>
+    <div class="sidebar-section">Dossiers</div>
+    <a href="#" class="nav-link" onclick="showSection('diplomation')"><i class="bi bi-mortarboard"></i><span class="sidebar-label">Dépôt — Diplomation</span></a>
+    <a href="#" class="nav-link" onclick="showSection('formalisation')"><i class="bi bi-file-earmark-text"></i><span class="sidebar-label">Dépôt — Formalisation</span></a>
+    <a href="#" class="nav-link" onclick="showSection('integration')"><i class="bi bi-building-check"></i><span class="sidebar-label">Dossier intégration</span></a>
+    <div class="sidebar-section">Autres</div>
+    <a href="notifications.html" class="nav-link"><i class="bi bi-bell"></i><span class="sidebar-label">Notifications</span><span class="notif-pill">3</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sidebar-label">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="sidebarToggle"><i class="bi bi-list"></i></button>
+  <div class="ms-2 d-none d-md-block" style="font-size:.83rem;color:var(--gris-dark);">
+    Matricule : <strong style="color:var(--blue);">21G0042</strong>
+  </div>
+  <div class="topbar-right">
+    <a href="notifications.html" class="topbar-icon-btn"><i class="bi bi-bell"></i><span class="badge-dot"></span></a>
+    <a href="#" class="topbar-avatar">
+      <div class="topbar-avatar-fallback">MB</div>
+      <span class="topbar-name d-none d-md-block">MBALLA Jean</span>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- ── PROFIL ── -->
+  <div id="section-profil" class="section active">
+    <h1 class="page-title mb-4">Mon profil</h1>
+    <div class="row g-4">
+      <div class="col-12 col-lg-5">
+        <div class="profil-card">
+          <div class="profil-banner"></div>
+          <div class="profil-avatar">MB</div>
+          <div class="profil-body">
+            <div class="profil-name">MBALLA Jean-Baptiste</div>
+            <div class="profil-meta">Étudiant en Génie Informatique</div>
+            <span class="profil-chip"><i class="bi bi-mortarboard"></i> Licence 3 — Finissant</span>
+            <div class="info-grid mt-3">
+              <div class="info-item"><label>Matricule</label><div class="info-val" style="color:var(--blue);">21G0042</div></div>
+              <div class="info-item"><label>Filière</label><div class="info-val">Génie Informatique</div></div>
+              <div class="info-item"><label>Niveau</label><div class="info-val">Licence 3</div></div>
+              <div class="info-item"><label>Promotion</label><div class="info-val">2024-2025</div></div>
+              <div class="info-item"><label>Email</label><div class="info-val" style="font-size:.82rem;">jean.mballa@enset.cm</div></div>
+              <div class="info-item"><label>Téléphone</label><div class="info-val">+237 6XX XX XX XX</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-7">
+        <div class="panel mb-4">
+          <div class="panel-header"><h2 class="panel-title"><i class="bi bi-pencil me-2" style="color:var(--blue);"></i>Modifier mes informations</h2></div>
+          <div class="panel-body">
+            <div class="row g-3">
+              <div class="col-12 col-md-6"><label class="form-label">Nom</label><input type="text" class="form-control" value="MBALLA"/></div>
+              <div class="col-12 col-md-6"><label class="form-label">Prénom(s)</label><input type="text" class="form-control" value="Jean-Baptiste"/></div>
+              <div class="col-12 col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" value="jean.mballa@enset.cm"/></div>
+              <div class="col-12 col-md-6"><label class="form-label">Téléphone</label><input type="tel" class="form-control" value="+237 6XX XX XX XX"/></div>
+              <div class="col-12"><label class="form-label">Adresse</label><input type="text" class="form-control" placeholder="Votre adresse à Douala…"/></div>
+            </div>
+            <hr style="border-color:var(--gris-bg);margin:18px 0;">
+            <div style="font-size:.85rem;font-weight:700;color:var(--dark);margin-bottom:10px;">Changer le mot de passe</div>
+            <div class="row g-3">
+              <div class="col-12 col-md-4"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-control" placeholder="••••••••"/></div>
+              <div class="col-12 col-md-4"><label class="form-label">Nouveau</label><input type="password" class="form-control" placeholder="••••••••"/></div>
+              <div class="col-12 col-md-4"><label class="form-label">Confirmer</label><input type="password" class="form-control" placeholder="••••••••"/></div>
+            </div>
+            <div class="mt-3 d-flex gap-2">
+              <button class="btn" style="background:var(--blue);color:#fff;border-radius:9px;font-size:.86rem;font-weight:600;border:none;padding:9px 22px;">Enregistrer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PARCOURS ── -->
+  <div id="section-parcours" class="section">
+    <h1 class="page-title mb-1">Étapes de mon parcours administratif</h1>
+    <p class="page-subtitle mb-4">Suivez l'avancement de votre dossier tout au long de votre cursus</p>
+    <div class="row g-4">
+      <div class="col-12 col-lg-8">
+        <div class="parcours-list">
+          <div class="parcours-step">
+            <div class="step-left"><div class="step-circle done"><i class="bi bi-check-lg"></i></div></div>
+            <div class="step-content done">
+              <div class="step-label-title">1. Inscription académique</div>
+              <div class="step-label-sub">Enregistrement initial à l'entrée à l'ENSET</div>
+              <div class="step-status done">✓ Complété — Sept. 2021</div>
+              <div style="font-size:.78rem;color:var(--gris-dark);margin-top:6px;">Fiche d'inscription validée · Dossier physique déposé à la scolarité</div>
+            </div>
+          </div>
+          <div class="parcours-step">
+            <div class="step-left"><div class="step-circle done"><i class="bi bi-check-lg"></i></div></div>
+            <div class="step-content done">
+              <div class="step-label-title">2. Vie académique (L1 → L3)</div>
+              <div class="step-label-sub">Paiements des frais, relevés de notes, attestations</div>
+              <div class="step-status done">✓ Complété — 2021-2024</div>
+              <div style="font-size:.78rem;color:var(--gris-dark);margin-top:6px;">3 années de scolarité validées · Reçus de paiement conservés</div>
+            </div>
+          </div>
+          <div class="parcours-step">
+            <div class="step-left"><div class="step-circle active">3</div></div>
+            <div class="step-content active">
+              <div class="step-label-title">3. Dépôt du dossier de diplomation</div>
+              <div class="step-label-sub">Constitution et dépôt du dossier finissant</div>
+              <div class="step-status active">→ En cours — Deadline : 31 jan. 2025</div>
+              <div style="font-size:.78rem;color:var(--dark);margin-top:6px;font-weight:600;">6 pièces déposées sur 8 — 2 pièces manquantes</div>
+              <button class="btn btn-sm mt-2" style="background:var(--blue);color:#fff;border-radius:7px;font-size:.78rem;border:none;" onclick="showSection('diplomation')">
+                <i class="bi bi-upload me-1"></i>Compléter mon dossier
+              </button>
+            </div>
+          </div>
+          <div class="parcours-step">
+            <div class="step-left"><div class="step-circle pending">4</div></div>
+            <div class="step-content">
+              <div class="step-label-title">4. Vérification par le représentant de filière</div>
+              <div class="step-label-sub">Contrôle des pièces par votre représentant</div>
+              <div class="step-status pending">En attente</div>
+            </div>
+          </div>
+          <div class="parcours-step">
+            <div class="step-left"><div class="step-circle pending">5</div></div>
+            <div class="step-content">
+              <div class="step-label-title">5. Validation Direction</div>
+              <div class="step-label-sub">Validation finale du dossier par la Direction</div>
+              <div class="step-status pending">En attente</div>
+            </div>
+          </div>
+          <div class="parcours-step">
+            <div class="step-left"><div class="step-circle locked"><i class="bi bi-lock"></i></div></div>
+            <div class="step-content">
+              <div class="step-label-title">6. Formalisation (soutenance)</div>
+              <div class="step-label-sub">Dépôt du dossier post-soutenance</div>
+              <div class="step-status locked">Verrouillé</div>
+            </div>
+          </div>
+          <div class="parcours-step">
+            <div class="step-left"><div class="step-circle locked"><i class="bi bi-lock"></i></div></div>
+            <div class="step-content">
+              <div class="step-label-title">7. Intégration dans la fonction publique</div>
+              <div class="step-label-sub">Transmission au Ministère de tutelle</div>
+              <div class="step-status locked">Verrouillé</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-4">
+        <div class="panel">
+          <div class="panel-header"><h2 class="panel-title"><i class="bi bi-info-circle me-2" style="color:var(--blue);"></i>Récapitulatif</h2></div>
+          <div class="panel-body">
+            <div style="text-align:center;margin-bottom:16px;">
+              <div style="font-size:2rem;font-weight:800;color:var(--blue);">3/7</div>
+              <div style="font-size:.8rem;color:var(--gris-dark);">étapes complétées</div>
+            </div>
+            <div class="progress mb-3" style="height:10px;border-radius:99px;background:var(--gris-bg);">
+              <div class="progress-bar" style="width:43%;background:var(--blue);border-radius:99px;"></div>
+            </div>
+            <div class="d-flex flex-column gap-2">
+              <div class="d-flex justify-content-between" style="font-size:.82rem;"><span>Dossier diplomation</span><strong style="color:var(--yellow);">6/8 pièces</strong></div>
+              <div class="d-flex justify-content-between" style="font-size:.82rem;"><span>Statut actuel</span><strong style="color:var(--blue);">Dépôt en cours</strong></div>
+              <div class="d-flex justify-content-between" style="font-size:.82rem;"><span>Délai clôture</span><strong style="color:var(--red);">8 jours</strong></div>
+            </div>
+            <div class="alert mt-3 mb-0" style="background:#fdecea;border:none;border-radius:9px;font-size:.79rem;">
+              <i class="bi bi-exclamation-triangle-fill me-2" style="color:var(--red);"></i>
+              <strong>2 pièces manquantes</strong> — Complétez votre dossier avant le 31 jan.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DÉPÔT DIPLOMATION ── -->
+  <div id="section-diplomation" class="section">
+    <h1 class="page-title mb-1">Dépôt — Dossier de diplomation</h1>
+    <p class="page-subtitle mb-4">Déposez vos pièces une à une · Délai : <strong style="color:var(--red);">31 janvier 2025</strong></p>
+
+    <div class="alert mb-4" style="background:#e8f0fc;border:none;border-radius:10px;">
+      <i class="bi bi-info-circle-fill me-2" style="color:var(--blue);"></i>
+      <strong>6 pièces déposées sur 8.</strong> Vérifiez les pièces manquantes et déposez-les avant la clôture.
+      <div class="progress mt-2" style="height:6px;border-radius:99px;background:rgba(255,255,255,.5);">
+        <div class="progress-bar" style="width:75%;background:var(--blue);border-radius:99px;"></div>
+      </div>
+    </div>
+
+    <div class="depot-section">
+      <div class="depot-header">
+        <div class="depot-header-title"><i class="bi bi-folder2-open" style="color:var(--blue);"></i>Pièces à fournir — Dossier de diplomation</div>
+        <span style="font-size:.78rem;color:var(--gris-dark);">6/8 déposées</span>
+      </div>
+      <div class="depot-body">
+        <div id="piecesList"></div>
+      </div>
+    </div>
+
+    <div class="submit-bar mt-3">
+      <div>
+        <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Soumettre le dossier pour vérification</div>
+        <div style="font-size:.78rem;color:var(--gris-dark);margin-top:2px;">Une fois soumis, votre représentant de filière sera notifié.</div>
+      </div>
+      <button class="btn" id="submitBtn" style="background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-weight:700;font-size:.88rem;" onclick="submitDossier()">
+        <i class="bi bi-send-fill me-2"></i>Soumettre le dossier
+      </button>
+    </div>
+  </div>
+
+  <!-- ── FORMALISATION ── -->
+  <div id="section-formalisation" class="section">
+    <h1 class="page-title mb-1">Dépôt — Dossier de formalisation</h1>
+    <p class="page-subtitle mb-4">À déposer après votre soutenance de fin de cycle</p>
+    <div class="alert" style="background:#fff4e0;border:none;border-radius:10px;display:flex;align-items:flex-start;gap:12px;">
+      <i class="bi bi-lock-fill mt-1" style="color:var(--yellow);font-size:1.2rem;flex-shrink:0;"></i>
+      <div>
+        <div style="font-size:.9rem;font-weight:700;color:var(--dark);">Cette section est verrouillée</div>
+        <div style="font-size:.82rem;color:var(--dark);margin-top:4px;">Le dépôt du dossier de formalisation sera disponible après la validation de votre dossier de diplomation et l'autorisation de soutenance délivrée par la Direction.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── INTÉGRATION ── -->
+  <div id="section-integration" class="section">
+    <h1 class="page-title mb-1">Dossier d'intégration</h1>
+    <p class="page-subtitle mb-4">Suivi du dossier transmis au Ministère de tutelle</p>
+    <div class="alert" style="background:#fff4e0;border:none;border-radius:10px;display:flex;align-items:flex-start;gap:12px;">
+      <i class="bi bi-building mt-1" style="color:var(--yellow);font-size:1.2rem;flex-shrink:0;"></i>
+      <div>
+        <div style="font-size:.9rem;font-weight:700;color:var(--dark);">Dossier non encore transmis</div>
+        <div style="font-size:.82rem;color:var(--dark);margin-top:4px;">Votre dossier d'intégration sera constitué et transmis au Ministère de tutelle à l'issue des étapes précédentes. Vous serez notifié à chaque changement de statut.</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Input file hidden -->
+<input type="file" id="hiddenFile" style="display:none;" accept=".pdf,.jpg,.png,.docx" onchange="handleUpload(this)"/>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Sidebar
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggle=document.getElementById('sidebarToggle'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggle.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sidebar-collapsed');main.classList.toggle('sidebar-collapsed');}});
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+  window.addEventListener('resize',()=>{if(!isMobile()){sidebar.classList.remove('mobile-open');overlay.classList.remove('show');}});
+
+  // Sections
+  function showSection(id){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('section-'+id).classList.add('active');
+    document.querySelectorAll('.sidebar-nav .nav-link').forEach(l=>l.classList.remove('active'));
+    const map={profil:0,parcours:1,diplomation:2,formalisation:3,integration:4};
+    const links=document.querySelectorAll('.sidebar-nav .nav-link');
+    if(map[id]!==undefined) links[map[id]].classList.add('active');
+    return false;
+  }
+  document.querySelectorAll('.sidebar-nav .nav-link').forEach(l=>{
+    l.addEventListener('click',e=>{if(l.href==='#'||l.getAttribute('href')==='#'){e.preventDefault();}});
+  });
+
+  // Pièces dossier diplomation
+  const piecesData=[
+    {name:'Fiche d\'inscription officielle (signée)',req:'Original signé par le Directeur',done:true},
+    {name:'Acte de naissance (copie légalisée)',req:'Légalisée il y a moins de 3 mois',done:true},
+    {name:'Carte Nationale d\'Identité (recto-verso)',req:'Copie lisible',done:true},
+    {name:'Diplôme du Baccalauréat (original ou copie légalisée)',req:'Original ou copie certifiée',done:true},
+    {name:'Reçus de paiement des frais de scolarité (3 ans)',req:'Tous les reçus depuis l\'inscription',done:true},
+    {name:'4 photos d\'identité récentes (fond blanc)',req:'Format 4x4 cm, récentes de moins de 3 mois',done:true},
+    {name:'Certificat médical de visite d\'aptitude',req:'Médecin agréé, validité 3 mois',done:false},
+    {name:'Fiche de fin d\'études (signée Directeur & Doyen)',req:'Formulaire ENSET à faire signer',done:false},
+  ];
+  let currentIdx=null;
+
+  function renderPieces(){
+    const container=document.getElementById('piecesList');
+    container.innerHTML=piecesData.map((p,i)=>`
+      <div class="piece-row">
+        <div class="piece-num">${i+1}</div>
+        <div class="piece-info">
+          <div class="piece-name">${p.name}</div>
+          <div class="piece-req">${p.req}</div>
+        </div>
+        <div class="piece-upload">
+          <button class="upload-btn ${p.done?'done':''}" onclick="triggerUpload(${i})">
+            ${p.done?'<i class="bi bi-check-circle-fill"></i> Déposé':'<i class="bi bi-cloud-upload"></i> Déposer'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function triggerUpload(idx){currentIdx=idx;document.getElementById('hiddenFile').click();}
+  function handleUpload(input){
+    if(input.files.length&&currentIdx!==null){
+      piecesData[currentIdx].done=true;
+      renderPieces();
+    }
+    input.value='';
+  }
+  function submitDossier(){
+    const done=piecesData.filter(p=>p.done).length;
+    if(done<piecesData.length){
+      alert(`Attention : ${piecesData.length-done} pièce(s) manquante(s). Vous pouvez quand même soumettre, mais votre dossier sera signalé incomplet.`);
+    } else {
+      alert('✓ Dossier soumis avec succès ! Votre représentant de filière a été notifié.');
+    }
+  }
+  renderPieces();
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Nouvelle année de diplomation{% endblock %}
+{% block page_title %}Nouvelle année de diplomation{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-calendar-range me-2"></i>Nouvelle année de diplomation</h1>
+  <p>
+    <a href="{{ url_for('admin.liste_annees') }}" class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+  </p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">Créer une session de diplomation</div>
+      <div class="card-body">
+        <form method="POST">
+          <div class="mb-4">
+            <label class="form-label">Année académique</label>
+            <input type="text" name="code" class="form-control form-control-lg"
+                   required placeholder="2024-2025" pattern="\d{4}-\d{4}"
+                   style="font-family:monospace; letter-spacing:.05em">
+            <div class="form-text">
+              Format : AAAA-AAAA. Cette année sera proposée lors de l'import des étudiants
+              et lors de la création des communiqués.
+            </div>
+          </div>
+
+          <div class="alert alert-info py-2" style="font-size:.88rem">
+            <i class="bi bi-info-circle me-1"></i>
+            Les redoublants sont réintégrés à la diplomation en les réimportant
+            avec cette nouvelle année — leur ancien compte est simplement mis à jour.
+          </div>
+
+          <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-check-circle me-1"></i> Créer
+            </button>
+            <a href="{{ url_for('admin.liste_annees') }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

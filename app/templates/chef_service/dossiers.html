@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Tous les dossiers{% endblock %}
+{% block page_title %}Dossiers de diplomation{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-archive me-2"></i>Tous les dossiers</h1>
+  <p>Vue d'ensemble de l'ensemble des dossiers de diplomation.</p>
+</div>
+
+<!-- Filtre -->
+<div class="card mb-4">
+  <div class="card-body py-3">
+    <form method="GET" class="d-flex align-items-center gap-3">
+      <label style="font-size:.78rem; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap">
+        Filtrer par statut
+      </label>
+      <select name="statut" class="form-select" style="width:auto; min-width:220px" onchange="this.form.submit()">
+        <option value="">Tous les statuts</option>
+        {% for s in ['DEPOSE','EN_VERIFICATION','AUTHENTIFICATION','LISTE_FINISSANTS',
+                     'IMPRESSION_PROVISOIRE','PRODUCTION_DEFINITIVE','SIGNATURE_DIRECTEUR',
+                     'SIGNATURE_RECTEUR','SIGNATURE_MINISTRE','FORMALISATION','CLOTURE','REJETE'] %}
+        <option value="{{ s }}" {{ 'selected' if statut_filtre == s }}>{{ s.replace('_',' ') }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span>Résultats</span>
+    <span class="badge bg-secondary">{{ dossiers|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Étudiant</th>
+            <th>Filière</th>
+            <th>Statut</th>
+            <th>Mise à jour</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in dossiers %}
+          <tr>
+            <td><code>#{{ d.id_dossier }}</code></td>
+            <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+            <td>{{ d.etudiant.filiere }}</td>
+            <td><span class="badge bg-{{ d.couleur_statut() }}">{{ d.libelle_statut() }}</span></td>
+            <td style="color:#94a3b8">{{ d.updated_at.strftime('%d/%m/%Y') if d.updated_at else '—' }}</td>
+            <td>
+              {% if d.statut == 'SIGNATURE_DIRECTEUR' %}
+              <form method="POST" action="{{ url_for('chef_service.passer_signature_recteur', id=d.id_dossier) }}" class="d-inline">
+                <button class="btn btn-sm btn-outline-secondary">→ Recteur</button>
+              </form>
+              {% elif d.statut == 'SIGNATURE_RECTEUR' %}
+              <form method="POST" action="{{ url_for('chef_service.passer_signature_ministre', id=d.id_dossier) }}" class="d-inline">
+                <button class="btn btn-sm btn-outline-secondary">→ Ministre</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <i class="bi bi-folder-x"></i>
+                <h6>Aucun dossier</h6>
+                <p>{{ 'Aucun dossier avec ce statut.' if statut_filtre else 'Aucun dossier de diplomation trouvé.' }}</p>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

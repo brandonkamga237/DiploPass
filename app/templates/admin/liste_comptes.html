@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+{% block title %}Comptes utilisateurs{% endblock %}
+{% block page_title %}Comptes utilisateurs{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-sm" style="background:var(--blue);color:#fff;border-radius:8px"
+        data-bs-toggle="modal" data-bs-target="#modalCreer">
+  <i class="bi bi-person-plus me-1"></i>Nouveau compte
+</button>
+{% endblock %}
+
+{% block content %}
+
+{% set chefs_bureau = representants | selectattr('est_chef_bureau') | list %}
+{% set reps_seuls   = representants | rejectattr('est_chef_bureau') | list %}
+{% set nb_filieres  = filieres | length %}
+
+{# ─── KPI ─────────────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="stat-card blue">
+      <div><div class="stat-label">Directeurs</div><div class="stat-value">{{ directeurs|length }}</div></div>
+      <i class="bi bi-building stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card green">
+      <div><div class="stat-label">Chefs Service</div><div class="stat-value">{{ chefs_service|length }}</div></div>
+      <i class="bi bi-person-workspace stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card yellow">
+      <div><div class="stat-label">Chefs Bureau</div><div class="stat-value">{{ chefs_bureau|length }}</div></div>
+      <i class="bi bi-printer stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card blue">
+      <div><div class="stat-label">Représentants</div><div class="stat-value">{{ reps_seuls|length }}</div></div>
+      <i class="bi bi-person-badge stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# Alerte globale si aucune filière #}
+{% if nb_filieres == 0 %}
+<div class="d-flex align-items-start gap-3 p-3 rounded mb-4"
+     style="background:#fff4e0;border:1px solid #fcd34d;font-size:.85rem">
+  <i class="bi bi-exclamation-triangle-fill mt-1" style="color:var(--yellow);font-size:1.1rem;flex-shrink:0"></i>
+  <div>
+    <strong>Aucune filière configurée.</strong>
+    Vous ne pouvez pas créer de Représentant ni de Chef Bureau sans filières.
+    <a href="{{ url_for('admin.liste_filieres') }}" style="color:var(--blue);font-weight:600;margin-left:6px">
+      Configurer les filières →
+    </a>
+  </div>
+</div>
+{% endif %}
+
+{# ─── Onglets ─────────────────────────────────────────────────────────────── #}
+<div class="panel">
+  <div class="panel-header" style="padding-bottom:0;border-bottom:none">
+    <ul class="nav nav-tabs" style="border-bottom:none;gap:4px">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-directeurs">
+          <i class="bi bi-building me-1"></i>Directeurs
+          <span class="badge rounded-pill ms-1" style="background:var(--blue);color:#fff;font-size:.68rem">{{ directeurs|length }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-chefs-service">
+          <i class="bi bi-person-workspace me-1"></i>Chefs Service
+          <span class="badge rounded-pill ms-1" style="background:var(--gris-dark);color:#fff;font-size:.68rem">{{ chefs_service|length }}</span>
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link {% if nb_filieres == 0 %}disabled{% endif %}"
+                {% if nb_filieres > 0 %}data-bs-toggle="tab" data-bs-target="#tab-representants"{% endif %}
+                title="{{ 'Créez d\'abord des filières' if nb_filieres == 0 else '' }}">
+          <i class="bi bi-person-badge me-1"></i>Représentants & Bureau
+          {% if nb_filieres == 0 %}
+          <i class="bi bi-lock-fill ms-1 text-muted" style="font-size:.7rem"></i>
+          {% else %}
+          <span class="badge rounded-pill ms-1" style="background:var(--gris-dark);color:#fff;font-size:.68rem">{{ representants|length }}</span>
+          {% endif %}
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="tab-content">
+
+    {# ══ Directeurs ══════════════════════════════════════════════════════════ #}
+    <div class="tab-pane fade show active" id="tab-directeurs">
+      <table class="table recent-table mb-0">
+        <thead><tr>
+          <th>Nom & prénom</th><th>Login</th><th>Grade</th><th>Statut</th>
+          <th style="width:100px;text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for c in directeurs %}
+          <tr>
+            <td class="fw-500">{{ c.prenom }} {{ c.nom }}</td>
+            <td><code>{{ c.login }}</code></td>
+            <td style="font-size:.82rem;color:var(--gris-dark)">{{ c.grade or '—' }}</td>
+            <td><span class="badge-status {{ 'badge-complet' if c.actif else 'badge-manquant' }}">{{ 'Actif' if c.actif else 'Inactif' }}</span></td>
+            <td>
+              <div class="d-flex gap-1 justify-content-end">
+                <button class="btn-icon-sm" title="Modifier"
+                        onclick="ouvrirEditDir({{ c.id_directeur }}, '{{ c.nom }}', '{{ c.prenom }}', '{{ c.login }}', '{{ c.grade or '' }}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn-icon-sm" title="{{ 'Désactiver' if c.actif else 'Activer' }}"
+                        onclick="confirmToggle('{{ url_for('admin.toggle_directeur', id=c.id_directeur) }}', '{{ c.prenom }} {{ c.nom }}', {{ c.actif | tojson }})">
+                  <i class="bi bi-toggle-{{ 'on' if c.actif else 'off' }}" style="color:{{ 'var(--green)' if c.actif else 'var(--gris-dark)' }}"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="text-center py-4 text-muted" style="font-size:.85rem">Aucun directeur créé.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# ══ Chefs Service ═══════════════════════════════════════════════════════ #}
+    <div class="tab-pane fade" id="tab-chefs-service">
+      <table class="table recent-table mb-0">
+        <thead><tr>
+          <th>Nom & prénom</th><th>Login</th><th>Statut</th>
+          <th style="width:100px;text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for c in chefs_service %}
+          <tr>
+            <td class="fw-500">{{ c.prenom }} {{ c.nom }}</td>
+            <td><code>{{ c.login }}</code></td>
+            <td><span class="badge-status {{ 'badge-complet' if c.actif else 'badge-manquant' }}">{{ 'Actif' if c.actif else 'Inactif' }}</span></td>
+            <td>
+              <div class="d-flex gap-1 justify-content-end">
+                <button class="btn-icon-sm" title="Modifier"
+                        onclick="ouvrirEditCS({{ c.id_chef_service }}, '{{ c.nom }}', '{{ c.prenom }}', '{{ c.login }}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn-icon-sm" title="{{ 'Désactiver' if c.actif else 'Activer' }}"
+                        onclick="confirmToggle('{{ url_for('admin.toggle_chef_service', id=c.id_chef_service) }}', '{{ c.prenom }} {{ c.nom }}', {{ c.actif | tojson }})">
+                  <i class="bi bi-toggle-{{ 'on' if c.actif else 'off' }}" style="color:{{ 'var(--green)' if c.actif else 'var(--gris-dark)' }}"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="text-center py-4 text-muted" style="font-size:.85rem">Aucun chef de service créé.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# ══ Représentants & Chef Bureau ═════════════════════════════════════════ #}
+    <div class="tab-pane fade" id="tab-representants">
+      {% if nb_filieres == 0 %}
+      <div class="p-4 text-center text-muted">
+        <i class="bi bi-lock-fill d-block mb-2" style="font-size:1.8rem;opacity:.3"></i>
+        Configurez les filières avant de créer des représentants.
+        <a href="{{ url_for('admin.liste_filieres') }}" class="d-block mt-2" style="color:var(--blue)">Aller aux filières →</a>
+      </div>
+      {% else %}
+      <table class="table recent-table mb-0">
+        <thead><tr>
+          <th>Nom & prénom</th><th>Login</th><th>Filière</th><th>Rôle</th><th>Statut</th>
+          <th style="width:120px;text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for r in representants %}
+          <tr>
+            <td class="fw-500">{{ r.prenom }} {{ r.nom }}</td>
+            <td><code>{{ r.login }}</code></td>
+            <td style="font-size:.82rem">{{ r.filiere_geree }}</td>
+            <td>
+              {% if r.est_chef_bureau %}
+              <span class="badge-status badge-complet"><i class="bi bi-star-fill me-1"></i>Chef Bureau</span>
+              {% else %}
+              <span class="badge-status badge-en-cours">Représentant</span>
+              {% endif %}
+            </td>
+            <td><span class="badge-status {{ 'badge-complet' if r.actif else 'badge-manquant' }}">{{ 'Actif' if r.actif else 'Inactif' }}</span></td>
+            <td>
+              <div class="d-flex gap-1 justify-content-end">
+                <button class="btn-icon-sm" title="Modifier"
+                        onclick="ouvrirEditRep({{ r.id_representant }}, '{{ r.nom }}', '{{ r.prenom }}', '{{ r.login }}', '{{ r.filiere_geree }}')">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                {# Nomination / Retrait Chef Bureau #}
+                {% if r.est_chef_bureau %}
+                <form method="POST" action="{{ url_for('admin.retirer_chef_bureau', id=r.id_representant) }}">
+                  <button type="submit" class="btn-icon-sm" title="Retirer Chef Bureau"
+                          onclick="return confirm('Retirer le titre Chef Bureau de {{ r.prenom }} {{ r.nom }} ?')">
+                    <i class="bi bi-star" style="color:var(--yellow)"></i>
+                  </button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('admin.nommer_chef_bureau', id=r.id_representant) }}">
+                  <button type="submit" class="btn-icon-sm" title="Nommer Chef Bureau">
+                    <i class="bi bi-star-fill" style="color:var(--gris-dark)"></i>
+                  </button>
+                </form>
+                {% endif %}
+                <button class="btn-icon-sm" title="{{ 'Désactiver' if r.actif else 'Activer' }}"
+                        onclick="confirmToggle('{{ url_for('admin.toggle_representant', id=r.id_representant) }}', '{{ r.prenom }} {{ r.nom }}', {{ r.actif | tojson }})">
+                  <i class="bi bi-toggle-{{ 'on' if r.actif else 'off' }}" style="color:{{ 'var(--green)' if r.actif else 'var(--gris-dark)' }}"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="text-center py-4 text-muted" style="font-size:.85rem">Aucun représentant créé.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+
+{# ═══════════════════════════════════════════════════════════════════════════
+   MODAL — Créer un compte
+═══════════════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalCreer" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" action="{{ url_for('admin.creer_compte') }}">
+        <div class="modal-header" style="border-bottom:1px solid var(--gris-bg);padding:20px 24px 16px">
+          <h5 class="modal-title" style="font-weight:700;color:var(--dark)">
+            <i class="bi bi-person-plus me-2" style="color:var(--blue)"></i>Créer un compte
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px">
+
+          <div class="mb-3">
+            <label class="form-label form-label-sm fw-600">Rôle</label>
+            <select name="role" class="form-select form-select-sm" id="roleSelect" required>
+              <option value="">Sélectionnez un rôle…</option>
+              <option value="directeur">Directeur</option>
+              <option value="chef_service">Chef Service Scolarité</option>
+              <option value="chef_bureau" {% if nb_filieres == 0 %}disabled{% endif %}>
+                Chef Bureau Diplomation{% if nb_filieres == 0 %} (filières requises){% endif %}
+              </option>
+              <option value="representant" {% if nb_filieres == 0 %}disabled{% endif %}>
+                Représentant de Filière{% if nb_filieres == 0 %} (filières requises){% endif %}
+              </option>
+            </select>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Nom</label>
+              <input type="text" name="nom" class="form-control form-control-sm" required placeholder="NOM">
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Prénom</label>
+              <input type="text" name="prenom" class="form-control form-control-sm" required placeholder="Prénom">
+            </div>
+          </div>
+
+          <div class="mb-3 field-grade" style="display:none">
+            <label class="form-label form-label-sm fw-600">Grade</label>
+            <input type="text" name="grade" class="form-control form-control-sm" placeholder="Ex : Professeur">
+          </div>
+
+          <div class="mb-3 field-filiere" style="display:none">
+            <label class="form-label form-label-sm fw-600">Filière gérée</label>
+            <select name="filiere_geree" class="form-select form-select-sm">
+              <option value="">Sélectionnez une filière…</option>
+              {% for f in filieres %}
+              <option value="{{ f.nom }}">{{ f.nom }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label form-label-sm fw-600">Login</label>
+            <input type="text" name="login" class="form-control form-control-sm" required placeholder="identifiant.connexion">
+          </div>
+          <div class="mb-1">
+            <label class="form-label form-label-sm fw-600">Mot de passe</label>
+            <input type="password" name="mot_de_passe" class="form-control form-control-sm" required minlength="6">
+          </div>
+
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--gris-bg);padding:16px 24px">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-sm" style="background:var(--blue);color:#fff;border-radius:8px;min-width:120px">
+            <i class="bi bi-person-check me-1"></i>Créer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{# ═══════════════════════════════════════════════════════════════════════════
+   MODAL — Éditer Directeur
+═══════════════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalEditDir" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" id="formEditDir">
+        <div class="modal-header" style="border-bottom:1px solid var(--gris-bg);padding:20px 24px 16px">
+          <h5 class="modal-title" style="font-weight:700;color:var(--dark)">
+            <i class="bi bi-pencil-square me-2" style="color:var(--blue)"></i>Modifier le directeur
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Nom</label>
+              <input type="text" name="nom" id="dirNom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Prénom</label>
+              <input type="text" name="prenom" id="dirPrenom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-7">
+              <label class="form-label form-label-sm fw-600">Login</label>
+              <input type="text" name="login" id="dirLogin" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-5">
+              <label class="form-label form-label-sm fw-600">Grade</label>
+              <input type="text" name="grade" id="dirGrade" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label form-label-sm fw-600">Nouveau mot de passe <span class="text-muted fw-400">(laisser vide = inchangé)</span></label>
+              <input type="password" name="nouveau_mdp" class="form-control form-control-sm" minlength="6" placeholder="Min. 6 caractères">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--gris-bg);padding:16px 24px">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-sm" style="background:var(--blue);color:#fff;border-radius:8px;min-width:130px">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{# ═══════════════════════════════════════════════════════════════════════════
+   MODAL — Éditer Chef Service
+═══════════════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalEditCS" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" id="formEditCS">
+        <div class="modal-header" style="border-bottom:1px solid var(--gris-bg);padding:20px 24px 16px">
+          <h5 class="modal-title" style="font-weight:700;color:var(--dark)">
+            <i class="bi bi-pencil-square me-2" style="color:var(--blue)"></i>Modifier le Chef Service
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Nom</label>
+              <input type="text" name="nom" id="csNom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Prénom</label>
+              <input type="text" name="prenom" id="csPrenom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label form-label-sm fw-600">Login</label>
+              <input type="text" name="login" id="csLogin" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label form-label-sm fw-600">Nouveau mot de passe <span class="text-muted fw-400">(laisser vide = inchangé)</span></label>
+              <input type="password" name="nouveau_mdp" class="form-control form-control-sm" minlength="6" placeholder="Min. 6 caractères">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--gris-bg);padding:16px 24px">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-sm" style="background:var(--blue);color:#fff;border-radius:8px;min-width:130px">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{# ═══════════════════════════════════════════════════════════════════════════
+   MODAL — Éditer Représentant / Chef Bureau
+═══════════════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="modalEditRep" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <form method="POST" id="formEditRep">
+        <div class="modal-header" style="border-bottom:1px solid var(--gris-bg);padding:20px 24px 16px">
+          <h5 class="modal-title" style="font-weight:700;color:var(--dark)">
+            <i class="bi bi-pencil-square me-2" style="color:var(--blue)"></i>Modifier le représentant
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" style="padding:24px">
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Nom</label>
+              <input type="text" name="nom" id="repNom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Prénom</label>
+              <input type="text" name="prenom" id="repPrenom" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Login</label>
+              <input type="text" name="login" id="repLogin" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label form-label-sm fw-600">Filière gérée</label>
+              <select name="filiere_geree" id="repFiliere" class="form-select form-select-sm">
+                {% for f in filieres %}
+                <option value="{{ f.nom }}">{{ f.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label form-label-sm fw-600">Nouveau mot de passe <span class="text-muted fw-400">(laisser vide = inchangé)</span></label>
+              <input type="password" name="nouveau_mdp" class="form-control form-control-sm" minlength="6" placeholder="Min. 6 caractères">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="border-top:1px solid var(--gris-bg);padding:16px 24px">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-sm" style="background:var(--blue);color:#fff;border-radius:8px;min-width:130px">
+            <i class="bi bi-check-lg me-1"></i>Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Formulaire caché pour les POSTs toggle #}
+<form method="POST" id="formToggle" style="display:none"></form>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+// ── Champs dynamiques modal Créer ────────────────────────────────────────────
+document.getElementById('roleSelect').addEventListener('change', function () {
+  const role = this.value;
+  document.querySelector('.field-grade').style.display   = role === 'directeur' ? 'block' : 'none';
+  document.querySelector('.field-filiere').style.display = ['representant','chef_bureau'].includes(role) ? 'block' : 'none';
+});
+
+// ── Toggle actif ─────────────────────────────────────────────────────────────
+function confirmToggle(url, nom, estActif) {
+  const action = estActif ? 'Désactiver' : 'Activer';
+  if (!confirm(action + ' le compte de ' + nom + ' ?')) return;
+  const f = document.getElementById('formToggle');
+  f.action = url;
+  f.submit();
+}
+
+// ── Éditer Directeur ──────────────────────────────────────────────────────────
+function ouvrirEditDir(id, nom, prenom, login, grade) {
+  document.getElementById('formEditDir').action = '/admin/comptes/directeur/' + id + '/modifier';
+  document.getElementById('dirNom').value    = nom;
+  document.getElementById('dirPrenom').value = prenom;
+  document.getElementById('dirLogin').value  = login;
+  document.getElementById('dirGrade').value  = grade;
+  document.querySelector('#formEditDir [name=nouveau_mdp]').value = '';
+  new bootstrap.Modal(document.getElementById('modalEditDir')).show();
+}
+
+// ── Éditer Chef Service ───────────────────────────────────────────────────────
+function ouvrirEditCS(id, nom, prenom, login) {
+  document.getElementById('formEditCS').action = '/admin/comptes/chef-service/' + id + '/modifier';
+  document.getElementById('csNom').value    = nom;
+  document.getElementById('csPrenom').value = prenom;
+  document.getElementById('csLogin').value  = login;
+  document.querySelector('#formEditCS [name=nouveau_mdp]').value = '';
+  new bootstrap.Modal(document.getElementById('modalEditCS')).show();
+}
+
+// ── Éditer Représentant ───────────────────────────────────────────────────────
+function ouvrirEditRep(id, nom, prenom, login, filiere) {
+  document.getElementById('formEditRep').action = '/admin/comptes/representant/' + id + '/modifier';
+  document.getElementById('repNom').value     = nom;
+  document.getElementById('repPrenom').value  = prenom;
+  document.getElementById('repLogin').value   = login;
+  document.getElementById('repFiliere').value = filiere;
+  document.querySelector('#formEditRep [name=nouveau_mdp]').value = '';
+  new bootstrap.Modal(document.getElementById('modalEditRep')).show();
+}
+</script>
+{% endblock %}

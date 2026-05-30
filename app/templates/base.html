@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}DigiPass{% endblock %} — ENSET Douala</title>
+  <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Mobile overlay -->
+<div id="sidebarOverlay"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+
+  <a href="{{ url_for('auth.index') }}" class="sidebar-brand">
+    <div class="sidebar-brand-icon">EN</div>
+    <div class="sidebar-brand-text">
+      DigiPass<br><small>ENSET de Douala</small>
+    </div>
+  </a>
+
+  <div class="sidebar-nav">
+
+    {% if session.role == 'etudiant' %}
+    <div class="sidebar-section">Mon espace</div>
+    <a href="{{ url_for('etudiant.dashboard') }}"
+       class="nav-link {% if request.endpoint == 'etudiant.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Tableau de bord</span>
+    </a>
+    {% if not current_user.dossier_diplomation %}
+    <a href="{{ url_for('etudiant.soumettre_dossier') }}"
+       class="nav-link {% if request.endpoint == 'etudiant.soumettre_dossier' %}active{% endif %}">
+      <i class="bi bi-send"></i>
+      <span class="sidebar-label">Déposer mon dossier</span>
+    </a>
+    {% else %}
+    <a href="{{ url_for('etudiant.detail_dossier') }}"
+       class="nav-link {% if request.endpoint == 'etudiant.detail_dossier' %}active{% endif %}">
+      <i class="bi bi-folder2"></i>
+      <span class="sidebar-label">Mon dossier</span>
+    </a>
+    {% endif %}
+    <a href="{{ url_for('etudiant.profil') }}"
+       class="nav-link {% if request.endpoint == 'etudiant.profil' %}active{% endif %}">
+      <i class="bi bi-person"></i>
+      <span class="sidebar-label">Mon profil</span>
+    </a>
+    <a href="{{ url_for('etudiant.changer_mot_de_passe') }}"
+       class="nav-link {% if request.endpoint == 'etudiant.changer_mot_de_passe' %}active{% endif %}">
+      <i class="bi bi-shield-lock"></i>
+      <span class="sidebar-label">Mot de passe</span>
+    </a>
+
+    {% elif session.role in ('representant', 'chef_bureau') %}
+    <div class="sidebar-section">Ma filière — {{ current_user.filiere_geree }}</div>
+    <a href="{{ url_for('representant.dashboard') }}"
+       class="nav-link {% if request.endpoint == 'representant.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Tableau de bord</span>
+    </a>
+    <a href="{{ url_for('representant.liste_dossiers') }}"
+       class="nav-link {% if request.endpoint == 'representant.liste_dossiers' %}active{% endif %}">
+      <i class="bi bi-folder2-open"></i>
+      <span class="sidebar-label">Dossiers soumis</span>
+    </a>
+
+    {% if session.role == 'chef_bureau' %}
+    <div class="sidebar-section">Bureau Diplomation</div>
+    <a href="{{ url_for('chef_bureau.dossiers_authentification') }}"
+       class="nav-link {% if request.endpoint == 'chef_bureau.dossiers_authentification' %}active{% endif %}">
+      <i class="bi bi-shield-check"></i>
+      <span class="sidebar-label">Authentification</span>
+    </a>
+    <a href="{{ url_for('chef_bureau.impressions') }}"
+       class="nav-link {% if request.endpoint == 'chef_bureau.impressions' %}active{% endif %}">
+      <i class="bi bi-printer"></i>
+      <span class="sidebar-label">Impressions</span>
+    </a>
+    {% endif %}
+
+    {% elif session.role == 'chef_service' %}
+    <div class="sidebar-section">Service Scolarité</div>
+    <a href="{{ url_for('chef_service.dashboard') }}"
+       class="nav-link {% if request.endpoint == 'chef_service.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Tableau de bord</span>
+    </a>
+    <a href="{{ url_for('chef_service.tous_dossiers') }}"
+       class="nav-link {% if request.endpoint == 'chef_service.tous_dossiers' %}active{% endif %}">
+      <i class="bi bi-archive"></i>
+      <span class="sidebar-label">Tous les dossiers</span>
+    </a>
+
+    {% elif session.role == 'directeur' %}
+    <div class="sidebar-section">Direction</div>
+    <a href="{{ url_for('directeur.dashboard') }}"
+       class="nav-link {% if request.endpoint == 'directeur.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Tableau de bord</span>
+    </a>
+    <a href="{{ url_for('directeur.dossiers_a_signer') }}"
+       class="nav-link {% if request.endpoint == 'directeur.dossiers_a_signer' %}active{% endif %}">
+      <i class="bi bi-pen"></i>
+      <span class="sidebar-label">Dossiers à signer</span>
+    </a>
+    <a href="{{ url_for('directeur.liste_communiques') }}"
+       class="nav-link {% if request.endpoint in ('directeur.liste_communiques', 'directeur.nouveau_communique') %}active{% endif %}">
+      <i class="bi bi-megaphone"></i>
+      <span class="sidebar-label">Communiqués</span>
+    </a>
+
+    {% elif session.role == 'admin' %}
+    <div class="sidebar-section">Administration</div>
+    <a href="{{ url_for('admin.dashboard') }}"
+       class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Tableau de bord</span>
+    </a>
+    <a href="{{ url_for('admin.liste_comptes') }}"
+       class="nav-link {% if request.endpoint == 'admin.liste_comptes' %}active{% endif %}">
+      <i class="bi bi-people"></i>
+      <span class="sidebar-label">Gérer les comptes</span>
+    </a>
+    <div class="sidebar-section">Données</div>
+    <a href="{{ url_for('admin.liste_filieres') }}"
+       class="nav-link {% if request.endpoint in ('admin.liste_filieres', 'admin.nouvelle_filiere') %}active{% endif %}">
+      <i class="bi bi-diagram-3"></i>
+      <span class="sidebar-label">Filières</span>
+    </a>
+    <a href="{{ url_for('admin.importer_etudiants') }}"
+       class="nav-link {% if request.endpoint == 'admin.importer_etudiants' %}active{% endif %}">
+      <i class="bi bi-upload"></i>
+      <span class="sidebar-label">Importer étudiants</span>
+    </a>
+    <a href="{{ url_for('admin.liste_etudiants') }}"
+       class="nav-link {% if request.endpoint == 'admin.liste_etudiants' %}active{% endif %}">
+      <i class="bi bi-mortarboard"></i>
+      <span class="sidebar-label">Liste étudiants</span>
+    </a>
+    <div class="sidebar-section">Configuration</div>
+    <a href="{{ url_for('admin.liste_annees') }}"
+       class="nav-link {% if request.endpoint in ('admin.liste_annees', 'admin.nouvelle_annee') %}active{% endif %}">
+      <i class="bi bi-calendar-range"></i>
+      <span class="sidebar-label">Années diplomation</span>
+    </a>
+    {% endif %}
+
+  </div>
+
+  {# ── Widget année académique ── #}
+  {% if toutes_annees %}
+  <div class="sidebar-annee-widget">
+
+    {# Année courante + toggle dropdown #}
+    <button class="sidebar-annee-btn" id="anneeToggle" title="Changer d'année académique">
+      <div class="sidebar-annee-icon"><i class="bi bi-calendar2-check"></i></div>
+      <div class="sidebar-label">
+        <div class="sidebar-annee-label-txt">Année académique</div>
+        <div class="sidebar-annee-code">
+          {{ annee_active.code if annee_active else '—' }}
+          {% if est_archive %}<span class="sidebar-annee-archive-badge">Archive</span>{% endif %}
+        </div>
+      </div>
+      <i class="bi bi-chevron-up sidebar-label" id="anneeChevron" style="font-size:.7rem;transition:transform .2s"></i>
+    </button>
+
+    {# Liste des années (collapsible) #}
+    <div class="sidebar-annee-list" id="anneeList" style="display:none">
+      {% for a in toutes_annees %}
+      <a href="{{ url_for('auth.changer_annee', code=a.code) }}"
+         class="sidebar-annee-item {% if annee_active and a.code == annee_active.code %}active{% endif %}">
+        <span>{{ a.code }}</span>
+        {% if loop.first %}<span class="sidebar-annee-current-dot"></span>{% endif %}
+      </a>
+      {% endfor %}
+      {% if session.role == 'admin' %}
+      <div class="sidebar-annee-create">
+        <a href="{{ url_for('admin.liste_annees') }}" class="sidebar-annee-manage-link">
+          <i class="bi bi-gear me-1"></i>Gérer les années
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+  {% endif %}
+
+  <div class="sidebar-footer">
+    <a href="{{ url_for('auth.logout') }}" class="nav-link">
+      <i class="bi bi-box-arrow-right"></i>
+      <span class="sidebar-label">Déconnexion</span>
+    </a>
+  </div>
+
+</nav>
+
+<!-- ── TOPBAR ── -->
+<header id="topbar">
+  <button id="sidebarToggle" title="Réduire / Ouvrir la barre">
+    <i class="bi bi-list"></i>
+  </button>
+
+  <span class="topbar-page-title d-none d-md-block">{% block page_title %}{% endblock %}</span>
+
+  <div class="topbar-right">
+    {% block topbar_actions %}{% endblock %}
+
+    <a href="{{ url_for('auth.logout') }}" class="topbar-icon-btn" title="Déconnexion">
+      <i class="bi bi-box-arrow-right"></i>
+    </a>
+
+    {% if current_user.is_authenticated %}
+    <div class="topbar-avatar" title="{{ current_user.prenom }} {{ current_user.nom }}">
+      <div class="topbar-avatar-fallback">
+        {{ current_user.prenom[0]|upper }}{{ current_user.nom[0]|upper }}
+      </div>
+      <span class="topbar-name d-none d-md-block">{{ current_user.prenom }} {{ current_user.nom }}</span>
+    </div>
+    {% endif %}
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  {# Bandeau mode archive #}
+  {% if est_archive and annee_active %}
+  <div class="archive-banner">
+    <i class="bi bi-archive-fill me-2"></i>
+    Mode consultation — Année <strong>{{ annee_active.code }}</strong>
+    &nbsp;·&nbsp; Les données affichées sont celles de cette année archivée.
+    <a href="{{ url_for('auth.changer_annee', code=toutes_annees[0].code) }}"
+       class="archive-banner-back">
+      Revenir à {{ toutes_annees[0].code }} →
+    </a>
+  </div>
+  {% endif %}
+
+  {% for cat, msg in get_flashed_messages(with_categories=true) %}
+  <div class="alert alert-{{ cat }} alert-dismissible fade show mb-4" role="alert">
+    {% if cat == 'success' %}<i class="bi bi-check-circle me-2"></i>
+    {% elif cat == 'danger' %}<i class="bi bi-exclamation-triangle me-2"></i>
+    {% elif cat == 'warning' %}<i class="bi bi-exclamation-circle me-2"></i>
+    {% else %}<i class="bi bi-info-circle me-2"></i>{% endif %}
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+
+  {% block content %}{% endblock %}
+
+</main>
+
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const topbar  = document.getElementById('topbar');
+  const main    = document.getElementById('main');
+  const toggle  = document.getElementById('sidebarToggle');
+  const overlay = document.getElementById('sidebarOverlay');
+  const mobile  = () => window.innerWidth < 992;
+
+  toggle.addEventListener('click', () => {
+    if (mobile()) {
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('show');
+    } else {
+      sidebar.classList.toggle('collapsed');
+      topbar.classList.toggle('sidebar-collapsed');
+      main.classList.toggle('sidebar-collapsed');
+    }
+  });
+
+  overlay.addEventListener('click', () => {
+    sidebar.classList.remove('mobile-open');
+    overlay.classList.remove('show');
+  });
+
+  window.addEventListener('resize', () => {
+    if (!mobile()) {
+      sidebar.classList.remove('mobile-open');
+      overlay.classList.remove('show');
+    }
+  });
+
+  // ── Widget année académique ────────────────────────────────────────────────
+  const anneeToggle  = document.getElementById('anneeToggle');
+  const anneeList    = document.getElementById('anneeList');
+  const anneeChevron = document.getElementById('anneeChevron');
+
+  if (anneeToggle) {
+    anneeToggle.addEventListener('click', () => {
+      const open = anneeList.style.display !== 'none';
+      anneeList.style.display  = open ? 'none' : 'block';
+      anneeChevron.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+    });
+  }
+
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

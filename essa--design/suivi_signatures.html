@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Suivi des signatures</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --gold:#b8860b;--gold-bg:#fdf6e3;
+      --purple:#7b5ea7;--purple-bg:#f0ebf8;
+      --sidebar-w:250px;
+
+      /* Couleurs étapes signature */
+      --s1:#3a7fc1;  /* Produit */
+      --s2:#e8a020;  /* Visé Directeur */
+      --s3:#7b5ea7;  /* Signé Recteur */
+      --s4:#1a9090;  /* Signé Ministre */
+      --s5:#2da06e;  /* Finalisé */
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* ── SIDEBAR ── */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* ── TOPBAR ── */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .tb-btn:hover{background:var(--gris-bg);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* ── MAIN ── */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+
+    /* ── ÉTAPES SIGNATURE PIPELINE ── */
+    .sig-pipeline{display:flex;gap:0;overflow-x:auto;padding-bottom:4px;}
+    .sig-stage{flex:1;min-width:140px;background:var(--white);border-radius:12px;border:2px solid var(--gris-border);padding:16px 14px;transition:all .2s;cursor:pointer;position:relative;}
+    .sig-stage:hover{border-color:var(--blue);box-shadow:0 3px 14px rgba(0,0,0,.1);}
+    .sig-stage.active-filter{border-color:var(--blue)!important;box-shadow:0 3px 14px rgba(37,102,158,.2);}
+    .sig-stage:not(:last-child){margin-right:10px;}
+    .sig-stage-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:10px;}
+    .sig-stage-num{font-size:1.7rem;font-weight:900;color:var(--dark);line-height:1;}
+    .sig-stage-label{font-size:.73rem;font-weight:700;color:var(--dark);margin-top:3px;}
+    .sig-stage-sub{font-size:.67rem;color:var(--gris-dark);margin-top:2px;}
+    .sig-stage-bar{height:4px;border-radius:99px;background:var(--gris-bg);margin-top:10px;overflow:hidden;}
+    .sig-stage-fill{height:100%;border-radius:99px;}
+    .s1 .sig-stage-icon{background:rgba(58,127,193,.12);color:var(--s1);}
+    .s2 .sig-stage-icon{background:rgba(232,160,32,.12);color:var(--s2);}
+    .s3 .sig-stage-icon{background:rgba(123,94,167,.12);color:var(--s3);}
+    .s4 .sig-stage-icon{background:rgba(26,144,144,.12);color:var(--s4);}
+    .s5 .sig-stage-icon{background:rgba(45,160,110,.12);color:var(--s5);}
+    .s1 .sig-stage-num{color:var(--s1);} .s2 .sig-stage-num{color:var(--s2);} .s3 .sig-stage-num{color:var(--s3);} .s4 .sig-stage-num{color:var(--s4);} .s5 .sig-stage-num{color:var(--s5);}
+    .s1 .sig-stage-fill{background:var(--s1);} .s2 .sig-stage-fill{background:var(--s2);} .s3 .sig-stage-fill{background:var(--s3);} .s4 .sig-stage-fill{background:var(--s4);} .s5 .sig-stage-fill{background:var(--s5);}
+
+    /* ── PANEL ── */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:14px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* ── TABLEAU SIGNATURES ── */
+    #sigTable thead th{font-size:.67rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border-bottom:2px solid var(--gris-bg)!important;border:none;padding:9px 10px;white-space:nowrap;}
+    #sigTable tbody td{font-size:.83rem;border:none;padding:8px 10px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    #sigTable tbody tr:hover td{background:#f5f7fb;}
+    .dt-length label,.dt-search label{font-size:.82rem;color:var(--gris-dark);}
+    .dt-length select,.dt-search input{border:1px solid var(--gris-border)!important;border-radius:7px!important;padding:5px 10px!important;font-size:.82rem!important;}
+    .dt-search input:focus{border-color:var(--blue)!important;outline:none!important;}
+    .dataTables_paginate .paginate_button{border-radius:7px!important;font-size:.82rem!important;}
+    .dataTables_paginate .paginate_button.current,.dataTables_paginate .paginate_button.current:hover{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important;}
+
+    /* ── STEPPER INLINE (par diplôme) ── */
+    .dip-stepper{display:flex;align-items:center;gap:4px;}
+    .dip-step{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;border:2px solid;transition:all .2s;cursor:default;position:relative;}
+    .dip-step.done{border-color:var(--green);background:var(--green);color:#fff;}
+    .dip-step.current{border-color:var(--yellow);background:var(--yellow);color:#fff;box-shadow:0 0 0 3px rgba(232,160,32,.25);}
+    .dip-step.pending{border-color:var(--gris-border);background:var(--white);color:var(--gris-dark);}
+    .dip-step.blocked{border-color:#e8e9eb;background:#f4f4f6;color:#ccc;}
+    .dip-connector{width:14px;height:2px;background:var(--gris-bg);flex-shrink:0;}
+    .dip-connector.done{background:var(--green);}
+    .dip-step[title]:hover::after{content:attr(title);position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;font-size:.65rem;padding:3px 7px;border-radius:5px;white-space:nowrap;z-index:10;pointer-events:none;}
+
+    /* ── BADGES ── */
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;}
+    .bs-s1{background:rgba(58,127,193,.12);color:var(--s1);}
+    .bs-s2{background:rgba(232,160,32,.12);color:var(--s2);}
+    .bs-s3{background:rgba(123,94,167,.12);color:var(--s3);}
+    .bs-s4{background:rgba(26,144,144,.12);color:var(--s4);}
+    .bs-s5{background:var(--green-bg);color:var(--green);}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+    .bs-gray{background:var(--gris-bg);color:var(--gris-dark);}
+
+    /* ── MISE À JOUR BOUTON ── */
+    .btn-upd{border:none;border-radius:7px;padding:4px 9px;font-size:.74rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .14s;white-space:nowrap;}
+    .btn-upd-blue{background:var(--blue-xlight);color:var(--blue);}
+    .btn-upd-blue:hover{background:var(--blue);color:#fff;}
+    .btn-upd-gold{background:var(--gold-bg);color:var(--gold);}
+    .btn-upd-gold:hover{background:var(--gold);color:#fff;}
+    .btn-upd-green{background:var(--green-bg);color:var(--green);}
+    .btn-upd-green:hover{background:var(--green);color:#fff;}
+    .btn-upd-gray{background:var(--gris-bg);color:var(--gris-dark);}
+
+    /* ── AUTORITÉ CARD ── */
+    .auth-card{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:18px;border-top:4px solid transparent;transition:box-shadow .2s;}
+    .auth-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.1);}
+    .auth-card.dir{border-color:var(--s2);}
+    .auth-card.rect{border-color:var(--s3);}
+    .auth-card.min{border-color:var(--s4);}
+    .auth-avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:#fff;flex-shrink:0;margin-bottom:10px;}
+    .auth-avatar.dir{background:linear-gradient(135deg,var(--s2),#d49040);}
+    .auth-avatar.rect{background:linear-gradient(135deg,var(--s3),#6040a0);}
+    .auth-avatar.min{background:linear-gradient(135deg,var(--s4),var(--green));}
+    .auth-name{font-size:.88rem;font-weight:800;color:var(--dark);}
+    .auth-role{font-size:.74rem;color:var(--gris-dark);margin-top:1px;}
+    .auth-stat{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--gris-bg);}
+    .auth-stat-val{font-size:1.2rem;font-weight:900;}
+    .auth-stat-lbl{font-size:.68rem;color:var(--gris-dark);font-weight:700;text-transform:uppercase;}
+    .auth-prog-bar{height:6px;background:var(--gris-bg);border-radius:99px;margin-top:8px;overflow:hidden;}
+    .auth-prog-fill{height:100%;border-radius:99px;}
+    .auth-card.dir .auth-prog-fill{background:var(--s2);}
+    .auth-card.rect .auth-prog-fill{background:var(--s3);}
+    .auth-card.min .auth-prog-fill{background:var(--s4);}
+    .auth-action{width:100%;margin-top:10px;border:none;border-radius:9px;padding:8px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .auth-card.dir .auth-action{background:rgba(232,160,32,.12);color:var(--s2);}
+    .auth-card.dir .auth-action:hover{background:var(--s2);color:#fff;}
+    .auth-card.rect .auth-action{background:rgba(123,94,167,.12);color:var(--s3);}
+    .auth-card.rect .auth-action:hover{background:var(--s3);color:#fff;}
+    .auth-card.min .auth-action{background:rgba(26,144,144,.12);color:var(--s4);}
+    .auth-card.min .auth-action:hover{background:var(--s4);color:#fff;}
+
+    /* ── LÉGENDE ── */
+    .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+    .legend-item{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--dark);}
+
+    /* ── JOURNAL ── */
+    .jnl-item{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--gris-bg);}
+    .jnl-item:last-child{border-bottom:none;}
+    .jnl-dot{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
+    .jnl-text{font-size:.83rem;color:var(--dark);font-weight:600;}
+    .jnl-sub{font-size:.74rem;color:var(--gris-dark);margin-top:1px;}
+    .jnl-time{font-size:.7rem;color:var(--gris-dark);white-space:nowrap;flex-shrink:0;margin-top:2px;}
+
+    /* ── MODAL MàJ ── */
+    .etape-sel{border:2px solid var(--gris-border);border-radius:11px;padding:12px 14px;cursor:pointer;transition:all .15s;display:flex;align-items:flex-start;gap:11px;margin-bottom:8px;}
+    .etape-sel:hover{border-color:var(--blue);}
+    .etape-sel.active{border-color:var(--blue);background:var(--blue-xlight);}
+    .etape-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--gris-border);flex-shrink:0;margin-top:1px;transition:all .14s;display:flex;align-items:center;justify-content:center;}
+    .etape-sel.active .etape-radio{border-color:var(--blue);background:var(--blue);}
+    .etape-sel.active .etape-radio::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;display:block;}
+    .etape-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}.sig-pipeline{gap:8px;}.sig-stage{min-width:120px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <a href="chef_diplomation.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Bureau Diplomation</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Production</div>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Vue d'ensemble</span></a>
+    <a href="lancement_premier_jet.html" class="nav-link"><i class="bi bi-play-circle"></i><span class="sl">Lancement premier jet</span></a>
+    <a href="verification_premier_jet.html" class="nav-link"><i class="bi bi-eye-fill"></i><span class="sl">Vérification premier jet</span></a>
+    <a href="production_officielle.html" class="nav-link"><i class="bi bi-mortarboard-fill"></i><span class="sl">Production officielle</span></a>
+    <a href="suivi_signatures.html" class="nav-link active"><i class="bi bi-pen-fill"></i><span class="sl">Suivi signatures</span></a>
+    <div class="ss">Navigation</div>
+    <a href="liste_validee.html" class="nav-link"><i class="bi bi-check2-square"></i><span class="sl">Liste validée</span></a>
+    <a href="authentification_saisie.html" class="nav-link"><i class="bi bi-shield-check"></i><span class="sl">Authentification</span></a>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+    <a href="dashboard_directeur.html" class="nav-link"><i class="bi bi-building"></i><span class="sl">Direction</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Suivi des signatures</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">592 diplômes officiels · Circuit de signatures multi-niveaux</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-c">BD</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Bureau</div><div class="av-role">Bureau Diplomation</div></div>
+    </a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="bc">
+    <a href="chef_diplomation.html">Bureau Diplomation</a><i class="bi bi-chevron-right"></i>
+    <a href="production_officielle.html">Production</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Suivi signatures</span>
+  </div>
+
+  <div class="d-flex align-items-flex-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <div style="font-size:1.4rem;font-weight:800;color:var(--dark);">Tableau de bord — Circuit de signatures</div>
+      <div style="font-size:.82rem;color:var(--gris-dark);margin-top:3px;">Suivi en temps réel du statut de chaque diplôme à travers les 5 étapes du circuit</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-sm btn-light" style="border-radius:9px;font-size:.82rem;font-weight:700;border:1px solid var(--gris-border);" onclick="exporterEtat()">
+        <i class="bi bi-download me-1"></i>Exporter état
+      </button>
+      <button class="btn btn-sm" style="background:var(--blue);color:#fff;border:none;border-radius:9px;font-size:.82rem;font-weight:700;" data-bs-toggle="modal" data-bs-target="#majLotModal">
+        <i class="bi bi-pen-fill me-1"></i>Mise à jour en lot
+      </button>
+    </div>
+  </div>
+
+  <!-- PIPELINE ÉTAPES -->
+  <div class="sig-pipeline mb-4">
+    <div class="sig-stage s1" onclick="filtrerEtape(1,this)" id="st1">
+      <div class="sig-stage-icon"><i class="bi bi-file-earmark-pdf-fill"></i></div>
+      <div class="sig-stage-num">247</div>
+      <div class="sig-stage-label">Produit</div>
+      <div class="sig-stage-sub">En attente de visa</div>
+      <div class="sig-stage-bar"><div class="sig-stage-fill" style="width:42%;"></div></div>
+    </div>
+    <div class="sig-stage s2" onclick="filtrerEtape(2,this)" id="st2">
+      <div class="sig-stage-icon"><i class="bi bi-pen"></i></div>
+      <div class="sig-stage-num">143</div>
+      <div class="sig-stage-label">Visé Directeur</div>
+      <div class="sig-stage-sub">ENSET Douala</div>
+      <div class="sig-stage-bar"><div class="sig-stage-fill" style="width:24%;"></div></div>
+    </div>
+    <div class="sig-stage s3" onclick="filtrerEtape(3,this)" id="st3">
+      <div class="sig-stage-icon"><i class="bi bi-person-badge-fill"></i></div>
+      <div class="sig-stage-num">98</div>
+      <div class="sig-stage-label">Signé Recteur</div>
+      <div class="sig-stage-sub">Université de Douala</div>
+      <div class="sig-stage-bar"><div class="sig-stage-fill" style="width:17%;"></div></div>
+    </div>
+    <div class="sig-stage s4" onclick="filtrerEtape(4,this)" id="st4">
+      <div class="sig-stage-icon"><i class="bi bi-building-check"></i></div>
+      <div class="sig-stage-num">64</div>
+      <div class="sig-stage-label">Signé Ministre</div>
+      <div class="sig-stage-sub">MINESUP</div>
+      <div class="sig-stage-bar"><div class="sig-stage-fill" style="width:11%;"></div></div>
+    </div>
+    <div class="sig-stage s5" onclick="filtrerEtape(5,this)" id="st5">
+      <div class="sig-stage-icon"><i class="bi bi-patch-check-fill"></i></div>
+      <div class="sig-stage-num">40</div>
+      <div class="sig-stage-label">Finalisé</div>
+      <div class="sig-stage-sub">Prêt à remettre</div>
+      <div class="sig-stage-bar"><div class="sig-stage-fill" style="width:7%;"></div></div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- TABLE PRINCIPALE -->
+    <div class="col-12 col-xl-8">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-table me-2" style="color:var(--blue);"></i>Suivi individuel des diplômes</span>
+          <div class="d-flex gap-2 flex-wrap align-items-center">
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;border:1px solid var(--gris-border);" onclick="resetFiltreEtape()">Tous</button>
+            <span style="font-size:.74rem;color:var(--gris-dark);" id="filtreLabel">592 diplômes affichés</span>
+          </div>
+        </div>
+        <div class="table-responsive px-2 pb-2 pt-2">
+          <table id="sigTable" class="table w-100">
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="selAll" onchange="toggleAll(this)"/></th>
+                <th>N° Diplôme</th>
+                <th>Étudiant</th>
+                <th>Filière</th>
+                <th>Circuit signatures</th>
+                <th>Étape actuelle</th>
+                <th>Depuis</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="sigBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-12 col-xl-4">
+
+      <!-- AUTORITÉS EXTERNES -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--gris-dark);margin-bottom:12px;">
+          <i class="bi bi-people me-1"></i>Autorités signataires — Statut actuel
+        </div>
+        <div class="d-flex flex-column gap-3">
+
+          <!-- Directeur -->
+          <div class="auth-card dir">
+            <div class="d-flex align-items-center gap-12" style="gap:12px;">
+              <div class="auth-avatar dir">DIR</div>
+              <div>
+                <div class="auth-name">Prof. MBIDA Jean</div>
+                <div class="auth-role">Directeur ENSET Douala</div>
+              </div>
+            </div>
+            <div class="auth-stat">
+              <div><div class="auth-stat-val" style="color:var(--s2);">143</div><div class="auth-stat-lbl">Visés</div></div>
+              <div style="text-align:right;"><div class="auth-stat-val" style="color:var(--gris-dark);">247</div><div class="auth-stat-lbl">En attente</div></div>
+            </div>
+            <div class="auth-prog-bar"><div class="auth-prog-fill" style="width:37%;"></div></div>
+            <button class="auth-action" onclick="ouvrirMajAutorite('directeur')">
+              <i class="bi bi-pen-fill"></i>Saisir retour visa Directeur
+            </button>
+          </div>
+
+          <!-- Recteur -->
+          <div class="auth-card rect">
+            <div class="d-flex align-items-center gap-12" style="gap:12px;">
+              <div class="auth-avatar rect">RECT</div>
+              <div>
+                <div class="auth-name">Prof. NKOULOU Albert</div>
+                <div class="auth-role">Recteur Université de Douala</div>
+              </div>
+            </div>
+            <div class="auth-stat">
+              <div><div class="auth-stat-val" style="color:var(--s3);">98</div><div class="auth-stat-lbl">Signés</div></div>
+              <div style="text-align:right;"><div class="auth-stat-val" style="color:var(--gris-dark);">143</div><div class="auth-stat-lbl">En attente</div></div>
+            </div>
+            <div class="auth-prog-bar"><div class="auth-prog-fill" style="width:41%;"></div></div>
+            <button class="auth-action" onclick="ouvrirMajAutorite('recteur')">
+              <i class="bi bi-pen-fill"></i>Saisir retour signature Recteur
+            </button>
+          </div>
+
+          <!-- Ministre -->
+          <div class="auth-card min">
+            <div class="d-flex align-items-center gap-12" style="gap:12px;">
+              <div class="auth-avatar min">MIN</div>
+              <div>
+                <div class="auth-name">Prof. FOUDA Marie-Thérèse</div>
+                <div class="auth-role">Ministre — MINESUP</div>
+              </div>
+            </div>
+            <div class="auth-stat">
+              <div><div class="auth-stat-val" style="color:var(--s4);">64</div><div class="auth-stat-lbl">Signés</div></div>
+              <div style="text-align:right;"><div class="auth-stat-val" style="color:var(--gris-dark);">98</div><div class="auth-stat-lbl">En attente</div></div>
+            </div>
+            <div class="auth-prog-bar"><div class="auth-prog-fill" style="width:40%;"></div></div>
+            <button class="auth-action" onclick="ouvrirMajAutorite('ministre')">
+              <i class="bi bi-pen-fill"></i>Saisir retour signature Ministre
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- LÉGENDE -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-info-circle me-2" style="color:var(--blue);"></i>Légende du circuit</span></div>
+        <div class="panel-bd d-flex flex-column gap-2">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--s1);"></div>Produit — En attente de visa Directeur</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--s2);"></div>Visé Directeur — En attente signature Recteur</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--s3);"></div>Signé Recteur — En attente signature Ministre</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--s4);"></div>Signé Ministre — Contrôle final</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--s5);"></div>Finalisé — Prêt à remettre à l'étudiant</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e8e9eb;border:1px solid #ccc;"></div>Étapes non encore atteintes</div>
+        </div>
+      </div>
+
+      <!-- JOURNAL -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-clock-history me-2" style="color:var(--blue);"></i>Journal des mises à jour</span></div>
+        <div class="panel-bd py-0" id="journal"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- MODAL MÀJ INDIVIDUELLE -->
+<div class="modal fade" id="majModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pt-4 px-4 pb-0">
+        <h5 class="modal-title" style="font-weight:800;font-size:1rem;color:var(--blue);">
+          <i class="bi bi-pen-fill me-2"></i>Mise à jour du statut de signature
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div style="font-size:.82rem;color:var(--gris-dark);margin-bottom:14px;">Diplôme : <strong style="color:var(--dark);" id="majDipInfo"></strong></div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--dark);margin-bottom:10px;">Nouvelle étape <span style="color:var(--red);">*</span></div>
+        <div id="etapesContainer"></div>
+        <div class="row g-3 mt-1">
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Date de signature</label>
+            <input type="date" class="form-control" id="majDate" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;"/>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Référence / N° parapheur</label>
+            <input type="text" class="form-control" id="majRef" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Ex: PARA-2025-042"/>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Observations</label>
+            <textarea class="form-control" rows="2" id="majObs" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Observations optionnelles…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" style="background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;" onclick="enregistrerMaj()">
+          <i class="bi bi-check-circle-fill me-1"></i>Enregistrer la mise à jour
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MÀJ PAR AUTORITÉ -->
+<div class="modal fade" id="majAutoriteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pt-4 px-4 pb-0">
+        <h5 class="modal-title" id="majAutTitle" style="font-weight:800;font-size:1rem;"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Date de retour</label>
+            <input type="date" class="form-control" id="autDate" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;"/>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Nombre de diplômes retournés</label>
+            <input type="number" class="form-control" id="autCount" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Ex: 48" min="1"/>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">N° du parapheur / bordereau</label>
+            <input type="text" class="form-control" id="autRef" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Ex: BORDER-MINESUP-2025-014"/>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Fichier bordereau (optionnel)</label>
+            <input type="file" class="form-control" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.84rem;" accept=".pdf"/>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Observations</label>
+            <textarea class="form-control" rows="2" id="autObs" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Ex: Diplômes retournés avec correction demandée pour 2 étudiants…"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" id="autSaveBtn" style="border-radius:8px;font-weight:700;border:none;" onclick="enregistrerAutorite()">
+          <i class="bi bi-check-circle-fill me-1"></i>Enregistrer le retour
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MÀJ EN LOT -->
+<div class="modal fade" id="majLotModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pt-4 px-4 pb-0">
+        <h5 class="modal-title" style="font-weight:800;font-size:1rem;color:var(--blue);"><i class="bi bi-pen-fill me-2"></i>Mise à jour en lot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div class="row g-3">
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Filière concernée</label>
+            <select class="form-select" id="lotFiliere" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;">
+              <option value="">— Toutes les filières —</option>
+              <option>Génie Informatique</option><option>Génie Électrique</option>
+              <option>Génie Civil</option><option>Sciences Industrielles</option><option>Génie Mécanique</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:6px;">Passer à l'étape</label>
+            <div id="lotEtapesContainer"></div>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Date d'effet</label>
+            <input type="date" class="form-control" id="lotDate" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;"/>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" style="background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;" onclick="appliquerLot()">
+          <i class="bi bi-check-all me-1"></i>Appliquer à la sélection
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+/* ══ DONNÉES ══ */
+const etapes = [
+  {id:1,label:'Produit',sub:'En attente visa Directeur',icon:'bi-file-earmark-pdf-fill',color:'var(--s1)',bg:'rgba(58,127,193,.1)'},
+  {id:2,label:'Visé Directeur',sub:'En attente Recteur',icon:'bi-pen',color:'var(--s2)',bg:'rgba(232,160,32,.1)'},
+  {id:3,label:'Signé Recteur',sub:'En attente Ministre',icon:'bi-person-badge-fill',color:'var(--s3)',bg:'rgba(123,94,167,.1)'},
+  {id:4,label:'Signé Ministre',sub:'Contrôle final',icon:'bi-building-check',color:'var(--s4)',bg:'rgba(26,144,144,.1)'},
+  {id:5,label:'Finalisé',sub:'Prêt à remettre',icon:'bi-patch-check-fill',color:'var(--s5)',bg:'rgba(45,160,110,.1)'},
+];
+
+const bsCls={1:'bs-s1',2:'bs-s2',3:'bs-s3',4:'bs-s4',5:'bs-s5'};
+
+const diplomes = [
+  {id:'ENSET-DIP-2025-0001',mat:'21G0042',nom:'MBALLA Jean-Baptiste',filiere:'Génie Informatique',etape:5,depuis:'12 fév.',ref:'PARA-2025-001'},
+  {id:'ENSET-DIP-2025-0002',mat:'21G0043',nom:'FOMO EKOTTO Claire',filiere:'Génie Électrique',etape:4,depuis:'18 fév.',ref:'PARA-2025-012'},
+  {id:'ENSET-DIP-2025-0003',mat:'21G0044',nom:'NGONO Paul Rodrigue',filiere:'Génie Civil',etape:3,depuis:'20 fév.',ref:'PARA-2025-024'},
+  {id:'ENSET-DIP-2025-0004',mat:'21G0045',nom:'BIYA Sylvie Carole',filiere:'Génie Informatique',etape:5,depuis:'12 fév.',ref:'PARA-2025-001'},
+  {id:'ENSET-DIP-2025-0005',mat:'21G0046',nom:'ATEBA Marc Fabrice',filiere:'Sciences Industrielles',etape:2,depuis:'22 fév.',ref:'PARA-2025-038'},
+  {id:'ENSET-DIP-2025-0006',mat:'21G0047',nom:'KOAGNE Bernard',filiere:'Génie Civil',etape:1,depuis:'24 fév.',ref:'—'},
+  {id:'ENSET-DIP-2025-0007',mat:'21G0048',nom:'NKOULOU Marie-José',filiere:'Génie Mécanique',etape:3,depuis:'19 fév.',ref:'PARA-2025-031'},
+  {id:'ENSET-DIP-2025-0008',mat:'21G0049',nom:'ESSAMA Roger Thierry',filiere:'Génie Électrique',etape:4,depuis:'16 fév.',ref:'PARA-2025-018'},
+  {id:'ENSET-DIP-2025-0009',mat:'21G0051',nom:'TABI Claude Aurélien',filiere:'Génie Informatique',etape:2,depuis:'23 fév.',ref:'PARA-2025-041'},
+  {id:'ENSET-DIP-2025-0010',mat:'21G0052',nom:'FOUDA Patrick Francis',filiere:'Sciences Industrielles',etape:1,depuis:'25 fév.',ref:'—'},
+  {id:'ENSET-DIP-2025-0011',mat:'21G0053',nom:'ABANDA Victoire Aline',filiere:'Génie Électrique',etape:3,depuis:'21 fév.',ref:'PARA-2025-029'},
+  {id:'ENSET-DIP-2025-0012',mat:'21G0054',nom:'MANGA Éric Stéphane',filiere:'Génie Informatique',etape:5,depuis:'10 fév.',ref:'PARA-2025-001'},
+];
+
+const journalData = [
+  {type:'g',icon:'bi-patch-check-fill',text:'40 diplômes finalisés — Génie Info',sub:'Prêts à remettre aux étudiants',ts:'Auj. 09h14'},
+  {type:'t',icon:'bi-building-check',text:'64 diplômes signés par le Ministre (MINESUP)',sub:'Bordereau BORDER-MINESUP-2025-014 · 64 diplômes',ts:'Hier 16h30'},
+  {type:'p',icon:'bi-person-badge-fill',text:'98 diplômes signés par le Recteur',sub:'Lot Génie Info + Génie Élec.',ts:'23 fév. 11h20'},
+  {type:'b',icon:'bi-pen',text:'143 diplômes visés par le Directeur',sub:'Parapheur PARA-2025-038 · 1ʳᵉ vague',ts:'22 fév. 14h05'},
+  {type:'b',icon:'bi-file-earmark-pdf-fill',text:'592 diplômes officiels produits',sub:'Génération depuis production officielle',ts:'21 fév. 08h00'},
+];
+
+let dt;
+let currentDipId = null;
+let currentAutorite = null;
+let filtreEtapeActive = null;
+
+/* ── DATATABLES ── */
+$(document).ready(function(){
+  dt=$('#sigTable').DataTable({
+    language:{url:'https://cdn.datatables.net/plug-ins/1.13.8/i18n/fr-FR.json'},
+    pageLength:10,order:[[0,'asc']],
+    columnDefs:[{orderable:false,targets:[0,4,7]}],
+    data:diplomes,
+    columns:[
+      {data:null,render:d=>`<input type="checkbox" class="row-cb" data-id="${d.id}"/>`},
+      {data:'id',render:d=>`<code style="color:var(--teal);font-size:.75rem;">${d}</code>`},
+      {data:'nom',render:d=>`<span style="font-weight:600;font-size:.83rem;">${d}</span>`},
+      {data:'filiere',render:d=>`<span style="font-size:.76rem;">${d}</span>`},
+      {data:'etape',render:(e,_,row)=>buildStepper(e,row.id)},
+      {data:'etape',render:e=>`<span class="bs ${bsCls[e]}">${etapes[e-1].label}</span>`},
+      {data:'depuis',render:d=>`<span style="font-size:.76rem;color:var(--gris-dark);">${d}</span>`},
+      {data:null,render:d=>`<button class="btn-upd btn-upd-blue" onclick="ouvrirMaj('${d.id}','${d.nom}',${d.etape})"><i class="bi bi-pen"></i>MàJ</button>`}
+    ]
+  });
+  renderJournal();
+  buildLotEtapes();
+});
+
+function buildStepper(etapeCourante, dipId){
+  return `<div class="dip-stepper">${etapes.map((e,i)=>{
+    const st = i+1<etapeCourante?'done':i+1===etapeCourante?'current':i+1===etapeCourante+1?'pending':'blocked';
+    const conn = i<4?(i+1<etapeCourante?'<div class="dip-connector done"></div>':'<div class="dip-connector"></div>'):'';
+    return `<div class="dip-step ${st}" title="${e.label}">${st==='done'?'<i class="bi bi-check-lg" style="font-size:.55rem;"></i>':i+1}</div>${conn}`;
+  }).join('')}</div>`;
+}
+
+function filtrerEtape(n, el){
+  filtreEtapeActive = n;
+  document.querySelectorAll('.sig-stage').forEach(s=>s.classList.remove('active-filter'));
+  el.classList.add('active-filter');
+  dt.search(etapes[n-1].label).draw();
+  document.getElementById('filtreLabel').textContent=`Filtre : ${etapes[n-1].label}`;
+}
+function resetFiltreEtape(){
+  filtreEtapeActive=null;
+  document.querySelectorAll('.sig-stage').forEach(s=>s.classList.remove('active-filter'));
+  dt.search('').draw();
+  document.getElementById('filtreLabel').textContent='592 diplômes affichés';
+}
+
+/* ── MÀJ INDIVIDUELLE ── */
+function ouvrirMaj(id,nom,etapeCourante){
+  currentDipId=id;
+  document.getElementById('majDipInfo').textContent=`${id} — ${nom}`;
+  document.getElementById('majDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('majRef').value='';
+  document.getElementById('majObs').value='';
+  const cont=document.getElementById('etapesContainer');
+  cont.innerHTML=etapes.map((e,i)=>{
+    const isNext=i+1===etapeCourante+1;
+    const isPast=i+1<=etapeCourante;
+    return `<div class="etape-sel${isNext?' active':''} ${isPast?'opacity-50':''}" ${isPast?'':'onclick="selEtape(this)"'} style="${isPast?'cursor:default;':''}" data-etape="${e.id}">
+      <div class="etape-radio">${isNext?'<span style="width:7px;height:7px;border-radius:50%;background:var(--blue);display:block;"></span>':''}</div>
+      <div class="etape-icon" style="background:${e.bg};color:${e.color};"><i class="bi ${e.icon}"></i></div>
+      <div>
+        <div style="font-size:.85rem;font-weight:700;color:var(--dark);">${isPast?'✓ ':''} ${e.label}</div>
+        <div style="font-size:.74rem;color:var(--gris-dark);">${e.sub}${isPast?' — Déjà atteinte':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  new bootstrap.Modal(document.getElementById('majModal')).show();
+}
+
+function selEtape(el){
+  document.querySelectorAll('.etape-sel').forEach(e=>{e.classList.remove('active');e.querySelector('.etape-radio').innerHTML='';});
+  el.classList.add('active');
+  el.querySelector('.etape-radio').innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--blue);display:block;"></span>';
+}
+
+function enregistrerMaj(){
+  const selEl=document.querySelector('.etape-sel.active:not(.opacity-50)');
+  if(!selEl){alert('Sélectionnez une étape.');return;}
+  const newEtape=parseInt(selEl.dataset.etape);
+  const d=diplomes.find(x=>x.id===currentDipId);
+  if(d){
+    d.etape=newEtape;
+    d.depuis='Auj.';
+    journalData.unshift({type:newEtape===5?'g':newEtape===4?'t':'b',icon:etapes[newEtape-1].icon,
+      text:`${d.nom} → ${etapes[newEtape-1].label}`,sub:`Diplôme ${d.id}`,ts:'À l\'instant'});
+    dt.rows().invalidate().draw();
+    renderJournal();
+  }
+  bootstrap.Modal.getInstance(document.getElementById('majModal')).hide();
+  showToast(`✓ Statut mis à jour : ${etapes[newEtape-1].label}`);
+}
+
+/* ── MÀJ PAR AUTORITÉ ── */
+const autoriteConfig={
+  directeur:{title:'Saisir retour — Directeur ENSET',color:'var(--s2)',bg:'.auth-card.dir'},
+  recteur:{title:'Saisir retour — Recteur Université de Douala',color:'var(--s3)',bg:'.auth-card.rect'},
+  ministre:{title:'Saisir retour — Ministre MINESUP',color:'var(--s4)',bg:'.auth-card.min'},
+};
+
+function ouvrirMajAutorite(type){
+  currentAutorite=type;
+  const cfg=autoriteConfig[type];
+  document.getElementById('majAutTitle').innerHTML=`<i class="bi bi-pen-fill me-2" style="color:${cfg.color};"></i>${cfg.title}`;
+  document.getElementById('autDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('autCount').value='';
+  document.getElementById('autRef').value='';
+  document.getElementById('autObs').value='';
+  const btn=document.getElementById('autSaveBtn');
+  btn.style.background=cfg.color;
+  new bootstrap.Modal(document.getElementById('majAutoriteModal')).show();
+}
+
+function enregistrerAutorite(){
+  const count=parseInt(document.getElementById('autCount').value)||0;
+  const ref=document.getElementById('autRef').value||'—';
+  const typeLabel={directeur:'Visé Directeur',recteur:'Signé Recteur',ministre:'Signé Ministre'}[currentAutorite];
+  const icn={directeur:'bi-pen',recteur:'bi-person-badge-fill',ministre:'bi-building-check'}[currentAutorite];
+  bootstrap.Modal.getInstance(document.getElementById('majAutoriteModal')).hide();
+  if(count>0){
+    journalData.unshift({type:'b',icon:icn,text:`${count} diplômes — ${typeLabel}`,sub:`Réf : ${ref}`,ts:'À l\'instant'});
+    renderJournal();
+  }
+  showToast(`✓ Retour ${typeLabel} enregistré pour ${count} diplôme(s).`);
+}
+
+/* ── LOT ── */
+function buildLotEtapes(){
+  document.getElementById('lotEtapesContainer').innerHTML=etapes.map((e,i)=>`
+    <div class="etape-sel ${i===0?'active':''}" onclick="selLotEtape(this)" data-etape="${e.id}" style="padding:10px 12px;margin-bottom:6px;">
+      <div class="etape-radio">${i===0?'<span style="width:7px;height:7px;border-radius:50%;background:var(--blue);display:block;"></span>':''}</div>
+      <div class="etape-icon" style="background:${e.bg};color:${e.color};width:30px;height:30px;font-size:.8rem;"><i class="bi ${e.icon}"></i></div>
+      <div><div style="font-size:.83rem;font-weight:700;color:var(--dark);">${e.label}</div><div style="font-size:.72rem;color:var(--gris-dark);">${e.sub}</div></div>
+    </div>`).join('');
+}
+function selLotEtape(el){
+  document.querySelectorAll('#lotEtapesContainer .etape-sel').forEach(e=>{e.classList.remove('active');e.querySelector('.etape-radio').innerHTML='';});
+  el.classList.add('active');
+  el.querySelector('.etape-radio').innerHTML='<span style="width:7px;height:7px;border-radius:50%;background:var(--blue);display:block;"></span>';
+}
+function appliquerLot(){
+  const sel=document.querySelector('#lotEtapesContainer .etape-sel.active');
+  const filiere=document.getElementById('lotFiliere').value;
+  const etape=sel?parseInt(sel.dataset.etape):1;
+  const cibles=diplomes.filter(d=>!filiere||d.filiere===filiere);
+  cibles.forEach(d=>{d.etape=etape;d.depuis='Auj.';});
+  dt.rows().invalidate().draw();
+  bootstrap.Modal.getInstance(document.getElementById('majLotModal')).hide();
+  showToast(`✓ ${cibles.length} diplôme(s) mis à jour → ${etapes[etape-1].label}`);
+}
+
+/* ── JOURNAL ── */
+function renderJournal(){
+  const colMap={g:'background:var(--green-bg);color:var(--green);',t:'background:var(--teal-bg);color:var(--teal);',b:'background:var(--blue-xlight);color:var(--blue);',p:'background:var(--purple-bg);color:var(--purple);'};
+  document.getElementById('journal').innerHTML=journalData.slice(0,6).map(j=>`
+    <div class="jnl-item">
+      <div class="jnl-dot" style="${colMap[j.type]||colMap.b}"><i class="bi ${j.icon}"></i></div>
+      <div style="flex:1;">
+        <div class="jnl-text">${j.text}</div>
+        <div class="jnl-sub">${j.sub}</div>
+      </div>
+      <div class="jnl-time">${j.ts}</div>
+    </div>`).join('');
+}
+
+function toggleAll(m){document.querySelectorAll('.row-cb').forEach(c=>c.checked=m.checked);}
+
+function exporterEtat(){
+  showToast('Export de l\'état des signatures en cours…');
+}
+
+function showToast(msg,ok=true){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:20px;right:20px;background:${ok?'var(--green)':'var(--yellow)'};color:#fff;padding:12px 20px;border-radius:10px;font-size:.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:340px;`;
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3200);
+}
+
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+window.addEventListener('resize',()=>{if(!isMobile()){sidebar.classList.remove('mobile-open');overlay.classList.remove('show');}});
+</script>
+</body>
+</html>

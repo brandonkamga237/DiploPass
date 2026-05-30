@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Notifications</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;
+      --white-pure:#ffffff;--dark:#4b4b4b;
+      --sidebar-w:240px;
+      --green:#2da06e;--yellow:#e8a020;--red:#e05252;
+    }
+    *{box-sizing:border-box;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* ── SIDEBAR ── */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue);z-index:1040;display:flex;flex-direction:column;transition:transform .28s ease,width .28s ease;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sidebar-label,#sidebar.collapsed .sidebar-brand-text,#sidebar.collapsed .sidebar-section{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.25rem;}
+    .sidebar-brand{padding:18px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.12);min-height:64px;text-decoration:none;}
+    .sidebar-brand-icon{width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--blue);font-weight:800;font-size:.85rem;}
+    .sidebar-brand-text{color:#fff;font-weight:700;font-size:.95rem;line-height:1.2;white-space:nowrap;}
+    .sidebar-brand-text small{font-weight:400;opacity:.75;font-size:.72rem;}
+    .sidebar-nav{flex:1;overflow-y:auto;padding:10px 0;}
+    .sidebar-section{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);padding:14px 20px 4px;}
+    .sidebar-nav .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.78);padding:10px 20px;font-size:.875rem;transition:background .15s,color .15s;white-space:nowrap;text-decoration:none;}
+    .sidebar-nav .nav-link:hover{background:rgba(255,255,255,.1);color:#fff;}
+    .sidebar-nav .nav-link.active{background:var(--blue-dark);color:#fff;border-left:3px solid #fff;}
+    .sidebar-nav .nav-link i{font-size:1rem;flex-shrink:0;}
+    .notif-pill{background:#e05252;color:#fff;font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:99px;margin-left:auto;}
+    .sidebar-footer{padding:14px 16px;border-top:1px solid rgba(255,255,255,.12);}
+    .sidebar-footer .nav-link{display:flex;align-items:center;gap:12px;color:rgba(255,255,255,.65);font-size:.85rem;text-decoration:none;padding:6px 4px;}
+    .sidebar-footer .nav-link:hover{color:#fff;}
+
+    /* ── TOPBAR ── */
+    #topbar{position:fixed;top:0;right:0;height:64px;left:var(--sidebar-w);background:#fff;border-bottom:1px solid rgba(0,0,0,.08);z-index:1030;display:flex;align-items:center;padding:0 24px;gap:12px;transition:left .28s ease;}
+    #topbar.sidebar-collapsed{left:64px;}
+    #sidebarToggle{background:none;border:none;color:var(--gris-dark);font-size:1.35rem;cursor:pointer;padding:4px 8px;border-radius:6px;transition:background .15s;flex-shrink:0;}
+    #sidebarToggle:hover{background:var(--gris-bg);}
+    .topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .topbar-icon-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.2rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .topbar-icon-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .badge-dot{position:absolute;top:5px;right:5px;width:9px;height:9px;background:#e05252;border-radius:50%;border:2px solid #fff;}
+    .topbar-avatar{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:8px;transition:background .15s;text-decoration:none;}
+    .topbar-avatar-fallback{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .topbar-name{font-size:.83rem;font-weight:600;color:var(--dark);white-space:nowrap;}
+
+    /* ── MAIN ── */
+    #main{margin-left:var(--sidebar-w);margin-top:64px;padding:28px;transition:margin-left .28s ease;min-height:calc(100vh - 64px);}
+    #main.sidebar-collapsed{margin-left:64px;}
+    .page-title{font-size:1.4rem;font-weight:700;color:var(--dark);margin:0;}
+    .page-subtitle{font-size:.83rem;color:var(--gris-dark);margin-top:3px;}
+
+    /* ── FILTER BAR ── */
+    .filter-bar{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+    .filter-btn{border:2px solid #e0e3e8;border-radius:99px;padding:6px 16px;font-size:.8rem;font-weight:600;color:var(--gris-dark);background:#fff;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;}
+    .filter-btn:hover{border-color:var(--blue);color:var(--blue);}
+    .filter-btn.active{border-color:var(--blue);background:var(--blue);color:#fff;}
+    .filter-btn.info.active{border-color:var(--blue);background:var(--blue);color:#fff;}
+    .filter-btn.warning.active{border-color:var(--yellow);background:var(--yellow);color:#fff;}
+    .filter-btn.danger.active{border-color:var(--red);background:var(--red);color:#fff;}
+    .filter-btn.success.active{border-color:var(--green);background:var(--green);color:#fff;}
+    .filter-search{flex:1;min-width:180px;max-width:280px;}
+    .filter-search input{border:1px solid #e0e3e8;border-radius:8px;padding:7px 12px;font-size:.82rem;background:var(--gris-bg);color:var(--dark);width:100%;}
+    .filter-search input:focus{outline:none;border-color:var(--blue);background:#fff;}
+    .mark-all-btn{margin-left:auto;font-size:.8rem;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;white-space:nowrap;}
+    .mark-all-btn:hover{text-decoration:underline;}
+
+    /* ── NOTIF CARDS ── */
+    .notif-group-title{font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gris-dark);padding:0 4px;margin:20px 0 10px;}
+    .notif-card{background:#fff;border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.06);margin-bottom:10px;display:flex;gap:0;overflow:hidden;border:2px solid transparent;transition:box-shadow .18s,border-color .18s;cursor:pointer;position:relative;}
+    .notif-card:hover{box-shadow:0 4px 18px rgba(0,0,0,.1);border-color:#e4e8ef;}
+    .notif-card.unread{border-left:4px solid var(--blue);}
+    .notif-card.unread-warning{border-left:4px solid var(--yellow);}
+    .notif-card.unread-danger{border-left:4px solid var(--red);}
+    .notif-card.unread-success{border-left:4px solid var(--green);}
+
+    .notif-icon-col{width:64px;min-width:64px;display:flex;align-items:flex-start;justify-content:center;padding:18px 0 18px 4px;}
+    .notif-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+    .notif-icon.info{background:#e8f0fc;color:var(--blue);}
+    .notif-icon.warning{background:#fff4e0;color:var(--yellow);}
+    .notif-icon.danger{background:#fdecea;color:var(--red);}
+    .notif-icon.success{background:#e6f5ef;color:var(--green);}
+
+    .notif-body{flex:1;padding:16px 16px 16px 0;}
+    .notif-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .notif-title{font-size:.92rem;font-weight:700;color:var(--dark);line-height:1.3;}
+    .notif-card.read .notif-title{font-weight:600;color:var(--gris-dark);}
+    .notif-date{font-size:.73rem;color:var(--gris-dark);white-space:nowrap;flex-shrink:0;margin-top:2px;}
+    .notif-text{font-size:.83rem;color:var(--gris-dark);margin-top:6px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .notif-footer{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+    .notif-tag{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;}
+    .notif-tag.info{background:#e8f0fc;color:var(--blue);}
+    .notif-tag.warning{background:#fff4e0;color:var(--yellow);}
+    .notif-tag.danger{background:#fdecea;color:var(--red);}
+    .notif-tag.success{background:#e6f5ef;color:var(--green);}
+    .notif-dest{font-size:.73rem;color:var(--gris-dark);display:flex;align-items:center;gap:4px;}
+    .notif-actions{display:flex;gap:8px;align-items:center;margin-left:auto;}
+    .notif-read-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0;margin-top:4px;}
+    .notif-read-dot.read{background:transparent;}
+
+    .notif-action-btn{font-size:.75rem;background:none;border:none;color:var(--gris-dark);cursor:pointer;padding:3px 7px;border-radius:6px;transition:background .12s;}
+    .notif-action-btn:hover{background:var(--gris-bg);color:var(--dark);}
+
+    /* ── EMPTY STATE ── */
+    .empty-state{text-align:center;padding:60px 20px;}
+    .empty-state i{font-size:3rem;color:#d0d4db;margin-bottom:12px;}
+    .empty-state p{font-size:.9rem;color:var(--gris-dark);}
+
+    /* ── MODAL DETAIL ── */
+    .modal-notif-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+    .modal-notif-icon.info{background:#e8f0fc;color:var(--blue);}
+    .modal-notif-icon.warning{background:#fff4e0;color:var(--yellow);}
+    .modal-notif-icon.danger{background:#fdecea;color:var(--red);}
+    .modal-notif-icon.success{background:#e6f5ef;color:var(--green);}
+    .modal-meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--gris-bg);border-radius:10px;padding:14px;}
+    .modal-meta-item label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);}
+    .modal-meta-item .val{font-size:.85rem;font-weight:600;color:var(--dark);margin-top:2px;}
+    .notif-full-text{font-size:.88rem;color:var(--dark);line-height:1.7;white-space:pre-line;}
+
+    /* ── STATS BANNER ── */
+    .stats-banner{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+    .stat-mini{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 5px rgba(0,0,0,.05);text-align:center;}
+    .stat-mini-val{font-size:1.4rem;font-weight:800;color:var(--dark);}
+    .stat-mini-label{font-size:.72rem;color:var(--gris-dark);margin-top:2px;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+
+    @media(max-width:991px){
+      #sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}
+      #sidebar.mobile-open{transform:translateX(0);}
+      #topbar{left:0!important;}
+      #main{margin-left:0!important;padding:16px;}
+    }
+    @media(max-width:767px){
+      .stats-banner{grid-template-columns:repeat(2,1fr);}
+      .modal-meta-grid{grid-template-columns:1fr;}
+    }
+    @media(max-width:575px){
+      .topbar-name{display:none;}
+      #main{padding:12px;}
+      .filter-search{min-width:120px;}
+      .notif-icon-col{width:50px;min-width:50px;}
+      .notif-icon{width:36px;height:36px;font-size:.95rem;}
+    }
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <a href="etudiant.html" class="sidebar-brand">
+    <div class="sidebar-brand-icon">EN</div>
+    <div class="sidebar-brand-text">ENSET Douala<br><small>Espace Étudiant</small></div>
+  </a>
+  <div class="sidebar-nav">
+    <div class="sidebar-section">Mon espace</div>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-person-circle"></i><span class="sidebar-label">Profil</span></a>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-signpost-2"></i><span class="sidebar-label">Étapes du parcours</span></a>
+    <div class="sidebar-section">Dossiers</div>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sidebar-label">Dépôt — Diplomation</span></a>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-file-earmark-text"></i><span class="sidebar-label">Dépôt — Formalisation</span></a>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-building-check"></i><span class="sidebar-label">Dossier intégration</span></a>
+    <div class="sidebar-section">Autres</div>
+    <a href="notifications.html" class="nav-link active"><i class="bi bi-bell"></i><span class="sidebar-label">Notifications</span><span class="notif-pill" id="sidebarBadge">3</span></a>
+  </div>
+  <div class="sidebar-footer">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sidebar-label">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<header id="topbar">
+  <button id="sidebarToggle"><i class="bi bi-list"></i></button>
+  <div class="ms-2 d-none d-md-block" style="font-size:.83rem;color:var(--gris-dark);">
+    Matricule : <strong style="color:var(--blue);">21G0042</strong>
+  </div>
+  <div class="topbar-right">
+    <a href="notifications.html" class="topbar-icon-btn" title="Notifications">
+      <i class="bi bi-bell-fill" style="color:var(--blue);"></i>
+      <span class="badge-dot" id="topbarBadge"></span>
+    </a>
+    <a href="#" class="topbar-avatar">
+      <div class="topbar-avatar-fallback">MB</div>
+      <span class="topbar-name d-none d-md-block">MBALLA Jean</span>
+    </a>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-flex-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <h1 class="page-title"><i class="bi bi-bell-fill me-2" style="color:var(--blue);font-size:1.2rem;vertical-align:middle;"></i>Notifications</h1>
+      <p class="page-subtitle">Communiqués et alertes de la scolarité de l'ENSET</p>
+    </div>
+  </div>
+
+  <!-- STATS BANNER -->
+  <div class="stats-banner">
+    <div class="stat-mini">
+      <div class="stat-mini-val" id="totalCount">7</div>
+      <div class="stat-mini-label">Total reçus</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-val" style="color:var(--blue);" id="unreadCount">3</div>
+      <div class="stat-mini-label">Non lus</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-val" style="color:var(--red);" id="urgentCount">1</div>
+      <div class="stat-mini-label">Urgents</div>
+    </div>
+    <div class="stat-mini">
+      <div class="stat-mini-val" style="color:var(--green);" id="readCount">4</div>
+      <div class="stat-mini-label">Lus</div>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-search">
+      <input type="text" placeholder="Rechercher un communiqué…" id="searchInput" oninput="applyFilters()"/>
+    </div>
+    <button class="filter-btn active" data-filter="all" onclick="setFilter(this,'all')">
+      <i class="bi bi-grid-3x3-gap"></i> Tous
+    </button>
+    <button class="filter-btn info" data-filter="info" onclick="setFilter(this,'info')">
+      <i class="bi bi-info-circle"></i> Info
+    </button>
+    <button class="filter-btn warning" data-filter="warning" onclick="setFilter(this,'warning')">
+      <i class="bi bi-exclamation-triangle"></i> Rappel
+    </button>
+    <button class="filter-btn danger" data-filter="danger" onclick="setFilter(this,'danger')">
+      <i class="bi bi-bell-fill"></i> Urgent
+    </button>
+    <button class="filter-btn success" data-filter="success" onclick="setFilter(this,'success')">
+      <i class="bi bi-check-circle"></i> Confirmation
+    </button>
+    <button class="mark-all-btn" onclick="markAllRead()">
+      <i class="bi bi-check2-all me-1"></i>Tout marquer comme lu
+    </button>
+  </div>
+
+  <!-- LISTE NOTIFICATIONS -->
+  <div id="notifContainer"></div>
+
+  <!-- Empty state -->
+  <div id="emptyState" class="empty-state" style="display:none;">
+    <i class="bi bi-bell-slash d-block"></i>
+    <p>Aucune notification ne correspond à vos critères.</p>
+    <button class="btn btn-sm btn-light" style="border-radius:8px;" onclick="resetFilters()">Afficher toutes les notifications</button>
+  </div>
+
+</main>
+
+<!-- ── MODAL DÉTAIL COMMUNIQUÉ ── -->
+<div class="modal fade" id="notifModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:16px;border:none;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <div class="d-flex align-items-flex-start gap-3">
+          <div class="modal-notif-icon" id="modalIcon"><i class="bi bi-megaphone"></i></div>
+          <div>
+            <h5 class="modal-title" id="modalTitle" style="font-weight:800;font-size:1.05rem;line-height:1.35;"></h5>
+            <div id="modalType" style="margin-top:4px;"></div>
+          </div>
+        </div>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div class="modal-meta-grid mb-4" id="modalMeta"></div>
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-bottom:10px;">Contenu du communiqué</div>
+        <div class="notif-full-text" id="modalText"></div>
+        <div id="modalAttach" class="mt-4" style="display:none;">
+          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-bottom:8px;">Pièces jointes</div>
+          <div id="modalAttachList"></div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Fermer</button>
+        <button class="btn" id="modalDeleteBtn" style="background:#fdecea;color:var(--red);border:2px solid var(--red);border-radius:8px;font-weight:600;" onclick="deleteNotif()">
+          <i class="bi bi-trash me-1"></i>Supprimer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ══════════════════════════════════════════
+   DONNÉES — communiqués
+══════════════════════════════════════════ */
+const communiques = [
+  {
+    id: 1,
+    type: 'danger',
+    titre: 'URGENT — Clôture des dépôts de dossiers le 31 janvier 2025',
+    texte: `Chers étudiants finissants,
+
+Nous vous rappelons que la date limite de dépôt des dossiers de diplomation est fixée au 31 janvier 2025 à 16h00.
+
+Passé ce délai, aucun dossier ne sera accepté, quelle que soit la raison invoquée. Les étudiants n'ayant pas soumis leur dossier complet ne pourront pas bénéficier de la présente vague de transmission au Ministère.
+
+Veuillez vérifier dès maintenant que les pièces suivantes sont bien déposées dans votre espace numérique :
+• Certificat médical d'aptitude (validité 3 mois)
+• Fiche de fin d'études signée par le Directeur et le Doyen
+• Tous les reçus de paiement depuis la 1ʳᵉ année
+
+Pour toute question, contactez la scolarité au bureau 04, bâtiment A.
+
+La Direction`,
+    date: '22 Jan 2025',
+    heure: '08h14',
+    auteur: 'Direction ENSET',
+    destinataires: 'Tous les finissants',
+    lu: false,
+    piecesJointes: ['liste_pieces_diplomation.pdf']
+  },
+  {
+    id: 2,
+    type: 'warning',
+    titre: 'Rappel — 2 pièces manquantes dans votre dossier',
+    texte: `Cher(e) étudiant(e),
+
+Suite à la vérification préliminaire de votre dossier de diplomation (matricule : 21G0042), il a été constaté que les pièces suivantes sont encore manquantes :
+
+1. Certificat médical de visite d'aptitude (délivré par un médecin agréé, validité 3 mois)
+2. Fiche de fin d'études signée par le Directeur et le Doyen de l'ENSET
+
+Nous vous invitons à régulariser votre situation dans les meilleurs délais, avant la clôture du 31 janvier 2025.
+
+Votre représentant de filière a été informé de ces manquements.
+
+Le Service de la Scolarité`,
+    date: '20 Jan 2025',
+    heure: '11h32',
+    auteur: 'Service de la Scolarité',
+    destinataires: 'Dossiers incomplets',
+    lu: false,
+    piecesJointes: []
+  },
+  {
+    id: 3,
+    type: 'warning',
+    titre: 'Rappel — Paiement frais de dossier de diplomation',
+    texte: `Chers étudiants finissants,
+
+Nous vous rappelons que les frais de constitution du dossier de diplomation s'élèvent à 25 000 FCFA et doivent être acquittés avant le dépôt du dossier.
+
+Le reçu de paiement est à joindre obligatoirement à votre dossier. Les paiements s'effectuent auprès de l'Agent Comptable, bureau 12, bâtiment B, du lundi au vendredi de 7h30 à 14h00.
+
+Le Service de la Scolarité`,
+    date: '18 Jan 2025',
+    heure: '09h05',
+    auteur: 'Service de la Scolarité',
+    destinataires: 'Tous les finissants',
+    lu: false,
+    piecesJointes: []
+  },
+  {
+    id: 4,
+    type: 'info',
+    titre: 'Clôture des dépôts — 31 janvier 2025 à 16h00',
+    texte: `Chers étudiants,
+
+La période de dépôt des dossiers de diplomation pour la promotion 2024-2025 prendra fin le 31 janvier 2025 à 16h00.
+
+Passé ce délai, aucun dossier ne sera accepté. Nous vous encourageons à vous y prendre suffisamment à l'avance afin d'éviter tout désagrément de dernière minute.
+
+Pour rappel, le dépôt s'effectue directement dans votre espace numérique étudiant, accessible à l'adresse indiquée lors de votre inscription.
+
+La Direction`,
+    date: '15 Jan 2025',
+    heure: '14h20',
+    auteur: 'Direction ENSET',
+    destinataires: 'Tous les étudiants',
+    lu: true,
+    piecesJointes: ['calendrier_diplomation_2025.pdf', 'guide_depot_dossier.pdf']
+  },
+  {
+    id: 5,
+    type: 'success',
+    titre: 'Ouverture officielle du dépôt des dossiers de diplomation',
+    texte: `Chers étudiants finissants de la promotion 2024-2025,
+
+Nous avons le plaisir de vous informer que la période de dépôt des dossiers de diplomation est officiellement ouverte à compter du 15 janvier 2025.
+
+Vous pouvez dès à présent accéder à votre espace numérique étudiant pour déposer vos pièces en ligne. Un guide détaillant les documents requis et la procédure de dépôt est disponible en téléchargement.
+
+Rappel des pièces obligatoires :
+• Fiche d'inscription officielle signée
+• Acte de naissance légalisé (moins de 3 mois)
+• Copie CNI recto-verso
+• Diplôme du Baccalauréat
+• Reçus de paiement (toutes les années)
+• 4 photos d'identité
+• Certificat médical
+• Fiche de fin d'études signée
+
+La date limite de dépôt est fixée au 31 janvier 2025 à 16h00.
+
+Bonne chance à toutes et à tous !
+
+La Direction de l'ENSET Douala`,
+    date: '15 Jan 2025',
+    heure: '08h00',
+    auteur: 'Direction ENSET',
+    destinataires: 'Tous les finissants',
+    lu: true,
+    piecesJointes: ['guide_depot_dossier.pdf', 'liste_pieces_obligatoires.pdf']
+  },
+  {
+    id: 6,
+    type: 'info',
+    titre: 'Réunion d\'information — Diplomation 2024-2025',
+    texte: `Chers étudiants finissants,
+
+Une réunion d'information relative à la procédure de diplomation et d'intégration dans la fonction publique se tiendra le mercredi 10 janvier 2025 à 10h00 dans l'Amphithéâtre A.
+
+La présence de tous les étudiants en fin de cycle est fortement recommandée.
+
+Sujets abordés :
+• Présentation des pièces à fournir
+• Délais et procédures de dépôt
+• Calendrier de transmission au Ministère
+• Questions/Réponses
+
+La Direction`,
+    date: '08 Jan 2025',
+    heure: '10h15',
+    auteur: 'Direction ENSET',
+    destinataires: 'Tous les finissants',
+    lu: true,
+    piecesJointes: []
+  },
+  {
+    id: 7,
+    type: 'success',
+    titre: 'Résultats de délibération — Session Décembre 2024',
+    texte: `Chers étudiants,
+
+Les résultats de la session de délibération de décembre 2024 sont disponibles. Vous pouvez les consulter dans votre espace étudiant à la rubrique "Vie académique".
+
+Les relevés de notes définitifs seront disponibles sous 10 jours ouvrés auprès du Service de la Scolarité.
+
+Félicitations à toutes et à tous !
+
+Le Service de la Scolarité`,
+    date: '05 Jan 2025',
+    heure: '16h45',
+    auteur: 'Service de la Scolarité',
+    destinataires: 'Tous les étudiants',
+    lu: true,
+    piecesJointes: []
+  }
+];
+
+/* ══════════════════════════════════════════
+   ÉTAT
+══════════════════════════════════════════ */
+let currentFilter = 'all';
+let currentOpenId = null;
+const modal = new bootstrap.Modal(document.getElementById('notifModal'));
+
+const typeConfig = {
+  info:    { label: 'Informatif',    icon: 'bi-info-circle-fill',         borderClass: 'unread' },
+  warning: { label: 'Rappel',        icon: 'bi-exclamation-triangle-fill', borderClass: 'unread-warning' },
+  danger:  { label: 'Urgent',        icon: 'bi-bell-fill',                 borderClass: 'unread-danger' },
+  success: { label: 'Confirmation',  icon: 'bi-check-circle-fill',         borderClass: 'unread-success' },
+};
+
+/* ══════════════════════════════════════════
+   RENDU
+══════════════════════════════════════════ */
+function render() {
+  const search  = document.getElementById('searchInput').value.toLowerCase();
+  const list    = communiques.filter(c => {
+    const matchType   = currentFilter === 'all' || c.type === currentFilter;
+    const matchSearch = c.titre.toLowerCase().includes(search) || c.texte.toLowerCase().includes(search);
+    return matchType && matchSearch;
+  });
+
+  const unread = list.filter(c => !c.lu);
+  const read   = list.filter(c => c.lu);
+  const container = document.getElementById('notifContainer');
+  const empty     = document.getElementById('emptyState');
+
+  if (list.length === 0) {
+    container.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    let html = '';
+
+    if (unread.length) {
+      html += `<div class="notif-group-title"><i class="bi bi-circle-fill me-2" style="color:var(--blue);font-size:.55rem;vertical-align:middle;"></i>Non lus (${unread.length})</div>`;
+      unread.forEach(c => { html += cardHTML(c); });
+    }
+    if (read.length) {
+      html += `<div class="notif-group-title" style="margin-top:${unread.length?'':'0'}"><i class="bi bi-check2 me-2" style="color:var(--gris-dark);"></i>Lus (${read.length})</div>`;
+      read.forEach(c => { html += cardHTML(c); });
+    }
+    container.innerHTML = html;
+  }
+  updateStats();
+}
+
+function cardHTML(c) {
+  const cfg = typeConfig[c.type] || typeConfig.info;
+  const borderCls = c.lu ? '' : cfg.borderClass;
+  const readCls   = c.lu ? 'read' : '';
+  const attach    = c.piecesJointes.length ? `<span class="notif-dest"><i class="bi bi-paperclip"></i>${c.piecesJointes.length} p.j.</span>` : '';
+  return `
+    <div class="notif-card ${borderCls} ${readCls}" onclick="openNotif(${c.id})">
+      <div class="notif-icon-col">
+        <div class="notif-icon ${c.type}">
+          <i class="bi ${cfg.icon}"></i>
+        </div>
+      </div>
+      <div class="notif-body">
+        <div class="notif-header">
+          <div class="notif-title">${c.titre}</div>
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="notif-date"><i class="bi bi-clock me-1"></i>${c.date} · ${c.heure}</span>
+            ${c.lu ? '' : '<div class="notif-read-dot"></div>'}
+          </div>
+        </div>
+        <div class="notif-text">${c.texte.replace(/\n/g,' ')}</div>
+        <div class="notif-footer">
+          <span class="notif-tag ${c.type}">${cfg.label}</span>
+          <span class="notif-dest"><i class="bi bi-people me-1"></i>${c.destinataires}</span>
+          <span class="notif-dest"><i class="bi bi-person me-1"></i>${c.auteur}</span>
+          ${attach}
+          <div class="notif-actions ms-auto" onclick="event.stopPropagation()">
+            ${c.lu ? '' : `<button class="notif-action-btn" title="Marquer comme lu" onclick="markRead(${c.id})"><i class="bi bi-check2"></i></button>`}
+            <button class="notif-action-btn" title="Supprimer" onclick="deleteById(${c.id})"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════
+   ACTIONS
+══════════════════════════════════════════ */
+function openNotif(id) {
+  const c = communiques.find(x => x.id === id);
+  if (!c) return;
+  currentOpenId = id;
+
+  // Marquer comme lu
+  if (!c.lu) { c.lu = true; render(); }
+
+  const cfg = typeConfig[c.type] || typeConfig.info;
+
+  // Icône
+  const iconEl = document.getElementById('modalIcon');
+  iconEl.className = `modal-notif-icon ${c.type}`;
+  iconEl.innerHTML = `<i class="bi ${cfg.icon}"></i>`;
+
+  document.getElementById('modalTitle').textContent = c.titre;
+  document.getElementById('modalType').innerHTML = `<span class="notif-tag ${c.type}" style="font-size:.8rem;">${cfg.label}</span>`;
+  document.getElementById('modalText').textContent = c.texte;
+
+  document.getElementById('modalMeta').innerHTML = `
+    <div class="modal-meta-item"><label>Date</label><div class="val">${c.date} à ${c.heure}</div></div>
+    <div class="modal-meta-item"><label>Auteur</label><div class="val">${c.auteur}</div></div>
+    <div class="modal-meta-item"><label>Destinataires</label><div class="val">${c.destinataires}</div></div>
+    <div class="modal-meta-item"><label>Statut</label><div class="val" style="color:var(--green);">✓ Lu</div></div>`;
+
+  const attachBlock = document.getElementById('modalAttach');
+  const attachList  = document.getElementById('modalAttachList');
+  if (c.piecesJointes.length) {
+    attachBlock.style.display = 'block';
+    attachList.innerHTML = c.piecesJointes.map(f => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--gris-bg);border-radius:8px;margin-bottom:6px;">
+        <i class="bi bi-file-earmark-pdf" style="color:var(--red);font-size:1rem;"></i>
+        <span style="font-size:.84rem;flex:1;">${f}</span>
+        <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;border:1px solid #dde;">
+          <i class="bi bi-download me-1"></i>Télécharger
+        </button>
+      </div>`).join('');
+  } else {
+    attachBlock.style.display = 'none';
+  }
+
+  modal.show();
+}
+
+function deleteNotif() {
+  if (!currentOpenId) return;
+  modal.hide();
+  deleteById(currentOpenId);
+}
+
+function deleteById(id) {
+  const idx = communiques.findIndex(c => c.id === id);
+  if (idx > -1) {
+    if (!confirm('Supprimer cette notification ?')) return;
+    communiques.splice(idx, 1);
+    render();
+  }
+}
+
+function markRead(id) {
+  const c = communiques.find(x => x.id === id);
+  if (c) { c.lu = true; render(); }
+}
+
+function markAllRead() {
+  communiques.forEach(c => c.lu = true);
+  render();
+}
+
+function setFilter(btn, type) {
+  currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+
+function applyFilters() { render(); }
+
+function resetFilters() {
+  currentFilter = 'all';
+  document.getElementById('searchInput').value = '';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-filter="all"]').classList.add('active');
+  render();
+}
+
+function updateStats() {
+  const total  = communiques.length;
+  const unread = communiques.filter(c => !c.lu).length;
+  const urgent = communiques.filter(c => c.type === 'danger' && !c.lu).length;
+  const read   = communiques.filter(c => c.lu).length;
+
+  document.getElementById('totalCount').textContent  = total;
+  document.getElementById('unreadCount').textContent = unread;
+  document.getElementById('urgentCount').textContent = urgent;
+  document.getElementById('readCount').textContent   = read;
+
+  const badge = document.getElementById('sidebarBadge');
+  const dot   = document.getElementById('topbarBadge');
+  if (unread > 0) {
+    badge.textContent = unread;
+    badge.style.display = 'inline-flex';
+    dot.style.display = 'block';
+  } else {
+    badge.style.display = 'none';
+    dot.style.display = 'none';
+  }
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR TOGGLE
+══════════════════════════════════════════ */
+const sidebar  = document.getElementById('sidebar');
+const topbar   = document.getElementById('topbar');
+const mainEl   = document.getElementById('main');
+const toggle   = document.getElementById('sidebarToggle');
+const overlay  = document.getElementById('sidebarOverlay');
+const isMobile = () => window.innerWidth < 992;
+
+toggle.addEventListener('click', () => {
+  if (isMobile()) {
+    sidebar.classList.toggle('mobile-open');
+    overlay.classList.toggle('show');
+  } else {
+    sidebar.classList.toggle('collapsed');
+    topbar.classList.toggle('sidebar-collapsed');
+    mainEl.classList.toggle('sidebar-collapsed');
+  }
+});
+overlay.addEventListener('click', () => {
+  sidebar.classList.remove('mobile-open');
+  overlay.classList.remove('show');
+});
+window.addEventListener('resize', () => {
+  if (!isMobile()) { sidebar.classList.remove('mobile-open'); overlay.classList.remove('show'); }
+});
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+render();
+</script>
+</body>
+</html>

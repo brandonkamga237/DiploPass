@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Registre de remise</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --gold:#b8860b;--gold-bg:#fdf6e3;
+      --purple:#7b5ea7;--purple-bg:#f0ebf8;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .tb-btn:hover{background:var(--gris-bg);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--blue));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+
+    /* REGISTRE OFFICIEL BANNER */
+    .reg-banner{background:linear-gradient(135deg,var(--blue-dark) 0%,var(--purple) 100%);border-radius:14px;padding:20px 26px;margin-bottom:24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;box-shadow:0 4px 20px rgba(26,79,122,.25);}
+    .reg-icon{width:58px;height:58px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff;flex-shrink:0;}
+    .reg-title{font-size:1.2rem;font-weight:900;color:#fff;}
+    .reg-sub{font-size:.82rem;color:rgba(255,255,255,.8);margin-top:3px;line-height:1.5;}
+    .reg-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+    .reg-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:.73rem;font-weight:700;padding:4px 12px;border-radius:99px;}
+    .reg-actions{margin-left:auto;display:flex;flex-direction:column;gap:8px;}
+    .btn-reg{background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.5);border-radius:9px;padding:9px 16px;font-size:.82rem;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;white-space:nowrap;}
+    .btn-reg:hover{background:rgba(255,255,255,.28);}
+    .btn-reg-primary{background:#fff;border-color:#fff;color:var(--blue-dark);}
+    .btn-reg-primary:hover{background:rgba(255,255,255,.9);}
+
+    /* STAT CARDS */
+    .scard{background:var(--white);border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:16px 18px;border-left:4px solid transparent;display:flex;align-items:center;justify-content:space-between;transition:box-shadow .2s,transform .2s;}
+    .scard:hover{box-shadow:0 5px 18px rgba(0,0,0,.1);transform:translateY(-1px);}
+    .scard.green{border-color:var(--green);}.scard.blue{border-color:var(--blue);}.scard.yellow{border-color:var(--yellow);}.scard.purple{border-color:var(--purple);}.scard.gold{border-color:var(--gold);}
+    .sc-lbl{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);}
+    .sc-val{font-size:1.55rem;font-weight:900;color:var(--dark);margin-top:3px;}
+    .sc-sub{font-size:.72rem;color:var(--gris-dark);margin-top:2px;}
+    .sc-icon{font-size:1.8rem;opacity:.14;}
+    .scard.green .sc-icon{color:var(--green);}.scard.blue .sc-icon{color:var(--blue);}.scard.yellow .sc-icon{color:var(--yellow);}.scard.purple .sc-icon{color:var(--purple);}.scard.gold .sc-icon{color:var(--gold);}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:14px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* TOOLBAR FILTRES */
+    .toolbar{background:var(--white);border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.05);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+    .t-search{flex:1;min-width:160px;border:1px solid var(--gris-border);border-radius:9px;padding:7px 13px;font-size:.85rem;color:var(--dark);}
+    .t-search:focus{outline:none;border-color:var(--blue);}
+    .filter-pill{border:2px solid var(--gris-border);border-radius:99px;padding:5px 14px;font-size:.77rem;font-weight:700;color:var(--gris-dark);background:#fff;cursor:pointer;transition:all .14s;white-space:nowrap;}
+    .filter-pill:hover{border-color:var(--blue);color:var(--blue);}
+    .filter-pill.fa{border-color:var(--blue);background:var(--blue);color:#fff;}
+    .filter-pill.fg{border-color:var(--green);background:var(--green);color:#fff;}
+    .filter-pill.fy{border-color:var(--yellow);background:var(--yellow);color:#fff;}
+
+    /* DATATABLES */
+    #regTable thead th{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border-bottom:2px solid var(--gris-bg)!important;border:none;padding:9px 11px;white-space:nowrap;}
+    #regTable tbody td{font-size:.83rem;border:none;padding:9px 11px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    #regTable tbody tr:hover td{background:#f5f7fb;}
+    #regTable tbody tr.complet-row td{background:rgba(45,160,110,.03);}
+    .dt-length label,.dt-search label{font-size:.82rem;color:var(--gris-dark);}
+    .dt-length select,.dt-search input{border:1px solid var(--gris-border)!important;border-radius:7px!important;padding:5px 10px!important;font-size:.82rem!important;}
+    .dt-search input:focus{border-color:var(--blue)!important;outline:none!important;}
+    .dataTables_paginate .paginate_button{border-radius:7px!important;font-size:.82rem!important;}
+    .dataTables_paginate .paginate_button.current,.dataTables_paginate .paginate_button.current:hover{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important;}
+
+    /* BADGES */
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .bs-red{background:var(--red-bg);color:var(--red);}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+    .bs-gray{background:var(--gris-bg);color:var(--gris-dark);}
+    .bs-gold{background:var(--gold-bg);color:var(--gold);}
+
+    /* INDICATEURS TOGE / JOURNAL */
+    .ind-cell{display:flex;align-items:center;gap:5px;}
+    .ind-ok{width:22px;height:22px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;}
+    .ind-no{width:22px;height:22px;border-radius:50%;background:var(--gris-bg);color:var(--gris-dark);display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;}
+    .ind-warn{width:22px;height:22px;border-radius:50%;background:var(--yellow-bg);color:var(--yellow);display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0;}
+
+    /* SIGNATURE PREVIEW */
+    .sig-thumb{width:80px;height:36px;border:1px solid var(--gris-border);border-radius:5px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.65rem;color:var(--blue);overflow:hidden;}
+    .sig-thumb:hover{border-color:var(--blue);}
+    .fp-indicator{width:28px;height:28px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:.85rem;cursor:pointer;}
+    .fp-indicator.no{background:var(--gris-bg);color:var(--gris-dark);}
+
+    /* ROW ACTIONS */
+    .rb{border:none;border-radius:7px;padding:4px 9px;font-size:.74rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .14s;white-space:nowrap;}
+    .rb-view{background:var(--blue-xlight);color:var(--blue);}
+    .rb-view:hover{background:var(--blue);color:#fff;}
+    .rb-edit{background:var(--yellow-bg);color:var(--yellow);}
+    .rb-edit:hover{background:var(--yellow);color:#fff;}
+    .rb-print{background:var(--gris-bg);color:var(--gris-dark);}
+    .rb-print:hover{background:var(--gris-border);color:var(--dark);}
+
+    /* STAT PROGRÈS REMISE */
+    .rem-prog-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--gris-bg);}
+    .rem-prog-row:last-child{border-bottom:none;}
+    .rem-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .rem-label{font-size:.83rem;font-weight:600;color:var(--dark);flex:1;}
+    .rem-bar{flex:1;height:7px;border-radius:99px;background:var(--gris-bg);overflow:hidden;}
+    .rem-fill{height:100%;border-radius:99px;}
+    .rem-count{font-size:.78rem;font-weight:800;width:28px;text-align:right;}
+    .rem-pct{font-size:.71rem;color:var(--gris-dark);width:32px;text-align:right;}
+
+    /* JOURNAL ACTIVITÉ */
+    .jact-item{display:flex;gap:11px;padding:10px 0;border-bottom:1px solid var(--gris-bg);}
+    .jact-item:last-child{border-bottom:none;}
+    .jact-dot{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;}
+    .jact-text{font-size:.83rem;font-weight:600;color:var(--dark);}
+    .jact-sub{font-size:.74rem;color:var(--gris-dark);margin-top:1px;}
+    .jact-time{font-size:.7rem;color:var(--gris-dark);white-space:nowrap;flex-shrink:0;margin-top:2px;}
+
+    /* MODAL DÉTAIL */
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .detail-item label{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);}
+    .detail-item .val{font-size:.88rem;font-weight:600;color:var(--dark);margin-top:3px;}
+    .sig-preview-box{border:1px solid var(--gris-border);border-radius:9px;padding:16px;background:#fdfdfd;text-align:center;min-height:90px;display:flex;align-items:center;justify-content:center;}
+    .fp-preview-box{border:1px solid var(--gris-border);border-radius:9px;padding:16px;background:#fdfdfd;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;}
+
+    /* AJOUTER ENTRÉE */
+    .add-entry-bar{background:var(--white);border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;border:2px dashed var(--gris-border);}
+    .add-entry-bar:hover{border-color:var(--blue);}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:767px){.detail-grid{grid-template-columns:1fr;}.reg-banner{flex-direction:column;}.reg-actions{margin-left:0;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <a href="chef_diplomation.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Scolarité / Diplomation</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Formalisation</div>
+    <a href="representant.html" class="nav-link"><i class="bi bi-people"></i><span class="sl">Tableau de bord</span></a>
+    <a href="verification_formalisation.html" class="nav-link"><i class="bi bi-file-earmark-check"></i><span class="sl">Vérif. formalisation</span></a>
+    <a href="registre_remise.html" class="nav-link active"><i class="bi bi-journal-bookmark-fill"></i><span class="sl">Registre de remise</span></a>
+    <div class="ss">Production</div>
+    <a href="suivi_signatures.html" class="nav-link"><i class="bi bi-pen-fill"></i><span class="sl">Suivi signatures</span></a>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Bureau Diplomation</span></a>
+    <div class="ss">Navigation</div>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+    <a href="dashboard_directeur.html" class="nav-link"><i class="bi bi-building"></i><span class="sl">Direction</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Registre de remise des diplômes</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Promotion 2024-2025 · Enregistrement officiel des remises</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-c">CS</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Scolarité</div><div class="av-role">Scolarité</div></div>
+    </a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="bc">
+    <a href="chef_diplomation.html">Bureau Diplomation</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Registre de remise</span>
+  </div>
+
+  <!-- BANNIÈRE OFFICIELLE -->
+  <div class="reg-banner">
+    <div class="reg-icon"><i class="bi bi-journal-bookmark-fill"></i></div>
+    <div style="flex:1;">
+      <div class="reg-title">Registre officiel de remise des diplômes</div>
+      <div class="reg-sub">Document numérique officiel authentifiant la remise de chaque diplôme, avec signature manuscrite et empreinte biométrique enregistrées. Ce registre a valeur probatoire.</div>
+      <div class="reg-chips">
+        <span class="reg-chip"><i class="bi bi-shield-fill-check"></i> Certifié ENSET 2025</span>
+        <span class="reg-chip"><i class="bi bi-hash"></i> REF: REG-ENSET-2025-001</span>
+        <span class="reg-chip"><i class="bi bi-people"></i> 592 inscrits</span>
+        <span class="reg-chip"><i class="bi bi-calendar3"></i> Cérémonie : 20 mars 2025</span>
+      </div>
+    </div>
+    <div class="reg-actions">
+      <button class="btn-reg btn-reg-primary" onclick="imprimerRegistre()"><i class="bi bi-printer"></i>Imprimer le registre</button>
+      <button class="btn-reg" onclick="exporterRegistre()"><i class="bi bi-download"></i>Exporter PDF officiel</button>
+      <button class="btn-reg" data-bs-toggle="modal" data-bs-target="#ajoutManuelModal"><i class="bi bi-plus-lg"></i>Ajouter une entrée</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl" style="flex:1;">
+      <div class="scard green">
+        <div><div class="sc-lbl">Diplômes remis</div><div class="sc-val" id="statRemis">247</div><div class="sc-sub">Signatures enregistrées</div></div>
+        <i class="bi bi-mortarboard-fill sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl" style="flex:1;">
+      <div class="scard yellow">
+        <div><div class="sc-lbl">En attente remise</div><div class="sc-val" id="statAttente">345</div><div class="sc-sub">Diplômes finalisés non remis</div></div>
+        <i class="bi bi-hourglass-split sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl" style="flex:1;">
+      <div class="scard purple">
+        <div><div class="sc-lbl">Toges remises</div><div class="sc-val" id="statToges">198</div><div class="sc-sub">Sur 247 remises</div></div>
+        <i class="bi bi-mortarboard sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl" style="flex:1;">
+      <div class="scard blue">
+        <div><div class="sc-lbl">Journaux remis</div><div class="sc-val" id="statJournaux">231</div><div class="sc-sub">Livret de sortie</div></div>
+        <i class="bi bi-journal-text sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl" style="flex:1;">
+      <div class="scard gold">
+        <div><div class="sc-lbl">Taux de remise</div><div class="sc-val">42%</div><div class="sc-sub">247 / 592 finissants</div></div>
+        <i class="bi bi-percent sc-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- TABLE PRINCIPALE -->
+    <div class="col-12 col-xl-8">
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <input type="text" class="t-search" id="searchInp" placeholder="Matricule, nom, filière…" oninput="applyFilter()"/>
+        <button class="filter-pill fa" id="fp-all" onclick="setFilter('all',this)">Tous (247)</button>
+        <button class="filter-pill" id="fp-complet" onclick="setFilter('Complet',this)"><i class="bi bi-check2-all me-1"></i>Complets</button>
+        <button class="filter-pill" id="fp-partiel" onclick="setFilter('Partiel',this)"><i class="bi bi-dash-circle me-1"></i>Partiels</button>
+        <button class="filter-pill fy" id="fp-toge" onclick="setFilter('toge',this)"><i class="bi bi-mortarboard me-1"></i>Toge manquante</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-list-ol me-2" style="color:var(--blue);"></i>Registre des remises — <span id="regCount">247 entrées</span></span>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.76rem;border:1px solid var(--gris-border);" data-bs-toggle="modal" data-bs-target="#ajoutManuelModal">
+              <i class="bi bi-plus-lg me-1" style="color:var(--blue);"></i>Nouvelle entrée
+            </button>
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.76rem;border:1px solid var(--gris-border);" onclick="exporterRegistre()">
+              <i class="bi bi-download me-1"></i>Export
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive px-2 pb-2 pt-2">
+          <table id="regTable" class="table w-100">
+            <thead>
+              <tr>
+                <th>N° Reg.</th>
+                <th>N° Diplôme</th>
+                <th>Matricule</th>
+                <th>Étudiant</th>
+                <th>Filière</th>
+                <th>Date remise</th>
+                <th>Signature</th>
+                <th>Empreinte</th>
+                <th>Toge</th>
+                <th>Journal</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="regBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-12 col-xl-4">
+
+      <!-- PROGRESSION PAR FILIÈRE -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-pie-chart me-2" style="color:var(--blue);"></i>Remises par filière</span></div>
+        <div class="panel-bd py-1">
+          <div class="rem-prog-row"><div class="rem-dot" style="background:var(--blue);"></div><div class="rem-label">Génie Informatique</div><div class="rem-bar"><div class="rem-fill" style="width:58%;background:var(--blue);"></div></div><div class="rem-count" style="color:var(--blue);">130</div><div class="rem-pct">58%</div></div>
+          <div class="rem-prog-row"><div class="rem-dot" style="background:var(--yellow);"></div><div class="rem-label">Génie Électrique</div><div class="rem-bar"><div class="rem-fill" style="width:44%;background:var(--yellow);"></div></div><div class="rem-count" style="color:var(--yellow);">74</div><div class="rem-pct">44%</div></div>
+          <div class="rem-prog-row"><div class="rem-dot" style="background:var(--teal);"></div><div class="rem-label">Génie Civil</div><div class="rem-bar"><div class="rem-fill" style="width:29%;background:var(--teal);"></div></div><div class="rem-count" style="color:var(--teal);">34</div><div class="rem-pct">29%</div></div>
+          <div class="rem-prog-row"><div class="rem-dot" style="background:var(--purple);"></div><div class="rem-label">Sciences Ind.</div><div class="rem-bar"><div class="rem-fill" style="width:12%;background:var(--purple);"></div></div><div class="rem-count" style="color:var(--purple);">8</div><div class="rem-pct">12%</div></div>
+          <div class="rem-prog-row"><div class="rem-dot" style="background:var(--red);"></div><div class="rem-label">Génie Mécanique</div><div class="rem-bar"><div class="rem-fill" style="width:3%;background:var(--red);"></div></div><div class="rem-count" style="color:var(--red);">1</div><div class="rem-pct">3%</div></div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--gris-bg);display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="background:var(--purple-bg);border-radius:9px;padding:10px;text-align:center;">
+              <div style="font-size:1.2rem;font-weight:900;color:var(--purple);">198 / 247</div>
+              <div style="font-size:.68rem;color:var(--gris-dark);font-weight:700;text-transform:uppercase;margin-top:2px;"><i class="bi bi-mortarboard me-1"></i>Toges rendues</div>
+            </div>
+            <div style="background:var(--blue-xlight);border-radius:9px;padding:10px;text-align:center;">
+              <div style="font-size:1.2rem;font-weight:900;color:var(--blue);">231 / 247</div>
+              <div style="font-size:.68rem;color:var(--gris-dark);font-weight:700;text-transform:uppercase;margin-top:2px;"><i class="bi bi-journal-text me-1"></i>Journaux remis</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOURNAL D'ACTIVITÉ -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-activity me-2" style="color:var(--blue);"></i>Journal d'activité</span>
+          <span style="font-size:.73rem;color:var(--gris-dark);">Aujourd'hui</span>
+        </div>
+        <div class="panel-bd py-0">
+          <div class="jact-item">
+            <div class="jact-dot" style="background:var(--green-bg);color:var(--green);"><i class="bi bi-mortarboard-fill"></i></div>
+            <div style="flex:1;"><div class="jact-text">MBALLA Jean-Baptiste — Diplôme remis</div><div class="jact-sub">Signature + empreinte · Toge restituée · Journal remis</div></div>
+            <div class="jact-time">09h47</div>
+          </div>
+          <div class="jact-item">
+            <div class="jact-dot" style="background:var(--green-bg);color:var(--green);"><i class="bi bi-mortarboard-fill"></i></div>
+            <div style="flex:1;"><div class="jact-text">BIYA Sylvie Carole — Diplôme remis</div><div class="jact-sub">Signature + empreinte · Journal remis</div></div>
+            <div class="jact-time">09h32</div>
+          </div>
+          <div class="jact-item">
+            <div class="jact-dot" style="background:var(--yellow-bg);color:var(--yellow);"><i class="bi bi-exclamation-triangle"></i></div>
+            <div style="flex:1;"><div class="jact-text">NKOULOU Marie — Toge non restituée</div><div class="jact-sub">Diplôme remis, toge manquante signalée</div></div>
+            <div class="jact-time">09h15</div>
+          </div>
+          <div class="jact-item">
+            <div class="jact-dot" style="background:var(--green-bg);color:var(--green);"><i class="bi bi-mortarboard-fill"></i></div>
+            <div style="flex:1;"><div class="jact-text">FOUDA Patrick — Diplôme remis</div><div class="jact-sub">Signature + empreinte · Complet</div></div>
+            <div class="jact-time">08h58</div>
+          </div>
+          <div class="jact-item">
+            <div class="jact-dot" style="background:var(--blue-xlight);color:var(--blue);"><i class="bi bi-pencil-fill"></i></div>
+            <div style="flex:1;"><div class="jact-text">Entrée manuelle — TABI Claude</div><div class="jact-sub">Ajouté manuellement par Chef Scolarité</div></div>
+            <div class="jact-time">08h30</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALERTES -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-exclamation-triangle me-2" style="color:var(--yellow);"></i>Points d'attention</span></div>
+        <div class="panel-bd d-flex flex-column gap-3">
+          <div style="background:var(--yellow-bg);border-radius:10px;padding:12px 14px;font-size:.82rem;">
+            <div style="font-weight:700;color:var(--yellow);margin-bottom:3px;"><i class="bi bi-mortarboard me-1"></i>49 toges non restituées</div>
+            <div style="color:var(--dark);">198 toges récupérées sur 247 remises. Relancer les étudiants concernés.</div>
+          </div>
+          <div style="background:var(--blue-xlight);border-radius:10px;padding:12px 14px;font-size:.82rem;">
+            <div style="font-weight:700;color:var(--blue);margin-bottom:3px;"><i class="bi bi-journal-text me-1"></i>16 journaux non remis</div>
+            <div style="color:var(--dark);">231 journaux distribués sur 247. 16 étudiants à contacter.</div>
+          </div>
+          <div style="background:var(--red-bg);border-radius:10px;padding:12px 14px;font-size:.82rem;">
+            <div style="font-weight:700;color:var(--red);margin-bottom:3px;"><i class="bi bi-clock me-1"></i>345 diplômes non encore remis</div>
+            <div style="color:var(--dark);">58% des finissants n'ont pas encore récupéré leur diplôme.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- MODAL DÉTAIL ENTRÉE -->
+<div class="modal fade" id="detailModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pt-4 px-4 pb-0">
+        <div>
+          <h5 class="modal-title" id="detailTitle" style="font-weight:800;font-size:1rem;"></h5>
+          <div id="detailSub" style="font-size:.76rem;color:var(--gris-dark);margin-top:2px;"></div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div class="detail-grid mb-4" id="detailInfos"></div>
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div style="font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);margin-bottom:8px;"><i class="bi bi-pen me-1"></i>Signature manuscrite</div>
+            <div class="sig-preview-box" id="detailSig">
+              <!-- SVG signature simulée -->
+              <svg width="200" height="70" viewBox="0 0 200 70" style="opacity:.8;">
+                <path d="M 20 50 Q 40 20 60 40 Q 80 60 100 35 Q 120 10 140 40 Q 160 65 180 45" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div style="font-size:.72rem;color:var(--gris-dark);margin-top:5px;text-align:center;" id="detailSigDate"></div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div style="font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);margin-bottom:8px;"><i class="bi bi-fingerprint me-1"></i>Empreinte digitale</div>
+            <div class="fp-preview-box" id="detailFp">
+              <i class="bi bi-fingerprint" style="font-size:3rem;color:var(--green);opacity:.7;"></i>
+              <div style="font-size:.73rem;color:var(--gris-dark);">Hash : <code id="detailFpHash" style="font-size:.7rem;"></code></div>
+              <div style="font-size:.7rem;color:var(--gris-dark);" id="detailFpDate"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-4">
+            <div style="padding:12px;border-radius:10px;text-align:center;" id="detailTogeBox">
+              <i class="bi bi-mortarboard-fill" style="font-size:1.5rem;"></i>
+              <div style="font-size:.78rem;font-weight:700;margin-top:5px;" id="detailTogeLabel"></div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div style="padding:12px;border-radius:10px;text-align:center;" id="detailJournalBox">
+              <i class="bi bi-journal-text" style="font-size:1.5rem;"></i>
+              <div style="font-size:.78rem;font-weight:700;margin-top:5px;" id="detailJournalLabel"></div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div style="padding:12px;background:var(--gris-bg);border-radius:10px;text-align:center;">
+              <i class="bi bi-qr-code" style="font-size:1.5rem;color:var(--gris-dark);"></i>
+              <div style="font-size:.78rem;font-weight:700;margin-top:5px;color:var(--gris-dark);" id="detailQr"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Fermer</button>
+        <button class="btn btn-light" style="border-radius:8px;" onclick="imprimerRecepisse()"><i class="bi bi-printer me-1"></i>Imprimer récépissé</button>
+        <button class="btn" id="editToggleBtn" style="background:var(--yellow-bg);color:var(--yellow);border:2px solid var(--yellow);border-radius:8px;font-weight:700;" onclick="ouvrirEdition()">
+          <i class="bi bi-pencil me-1"></i>Modifier
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AJOUT MANUEL -->
+<div class="modal fade" id="ajoutManuelModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pt-4 px-4 pb-0">
+        <h5 class="modal-title" style="font-weight:800;font-size:1rem;color:var(--blue);"><i class="bi bi-plus-circle-fill me-2"></i>Ajouter une entrée manuellement</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Matricule *</label>
+            <input type="text" class="form-control" id="am-mat" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="21G0042"/>
+          </div>
+          <div class="col-12 col-md-8">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">N° Diplôme *</label>
+            <input type="text" class="form-control" id="am-dip" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="ENSET-DIP-2025-0042"/>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Date de remise *</label>
+            <input type="date" class="form-control" id="am-date" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;"/>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Agent remettant</label>
+            <input type="text" class="form-control" id="am-agent" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Nom de l'agent"/>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:700;color:var(--dark);display:block;margin-bottom:8px;">Éléments remis</label>
+            <div class="d-flex gap-3 flex-wrap">
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="am-sig" checked/><label class="form-check-label" style="font-size:.82rem;" for="am-sig"><i class="bi bi-pen me-1"></i>Signature</label></div>
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="am-fp" checked/><label class="form-check-label" style="font-size:.82rem;" for="am-fp"><i class="bi bi-fingerprint me-1"></i>Empreinte</label></div>
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="am-toge"/><label class="form-check-label" style="font-size:.82rem;" for="am-toge"><i class="bi bi-mortarboard me-1"></i>Toge restituée</label></div>
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="am-journal"/><label class="form-check-label" style="font-size:.82rem;" for="am-journal"><i class="bi bi-journal-text me-1"></i>Journal remis</label></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:4px;">Observations</label>
+            <textarea class="form-control" rows="2" id="am-obs" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.85rem;" placeholder="Observations optionnelles…"></textarea>
+          </div>
+          <div class="col-12">
+            <div class="alert mb-0" style="background:var(--yellow-bg);border:none;border-radius:9px;font-size:.78rem;">
+              <i class="bi bi-exclamation-triangle-fill me-2" style="color:var(--yellow);"></i>
+              L'ajout manuel nécessite l'apposition physique ultérieure de la signature et de l'empreinte dans le registre papier complémentaire.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" style="background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;" onclick="ajouterEntree()">
+          <i class="bi bi-plus-lg me-1"></i>Enregistrer l'entrée
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+/* ══ DONNÉES ══ */
+const registre = [
+  {n:1,dip:'ENSET-DIP-2025-0001',mat:'21G0042',nom:'MBALLA Jean-Baptiste',filiere:'Génie Informatique',niveau:'Licence 3',date:'20/02/2025',heure:'09h47',sig:true,fp:true,fpHash:'FP-2025-0042-A3F9',toge:true,journal:true,statut:'Complet',agent:'M. FOUDA Eric'},
+  {n:2,dip:'ENSET-DIP-2025-0002',mat:'21G0043',nom:'FOMO EKOTTO Claire',filiere:'Génie Électrique',niveau:'Licence 3',date:'20/02/2025',heure:'09h32',sig:true,fp:true,fpHash:'FP-2025-0043-B7C2',toge:false,journal:true,statut:'Partiel',agent:'M. FOUDA Eric'},
+  {n:3,dip:'ENSET-DIP-2025-0004',mat:'21G0045',nom:'BIYA Sylvie Carole',filiere:'Génie Informatique',niveau:'Master 2',date:'20/02/2025',heure:'09h21',sig:true,fp:true,fpHash:'FP-2025-0045-D1E6',toge:true,journal:true,statut:'Complet',agent:'Mme EBENE Claire'},
+  {n:4,dip:'ENSET-DIP-2025-0007',mat:'21G0048',nom:'NKOULOU Marie-José',filiere:'Génie Mécanique',niveau:'Master 2',date:'20/02/2025',heure:'09h15',sig:true,fp:true,fpHash:'FP-2025-0048-F4A8',toge:false,journal:false,statut:'Partiel',agent:'M. FOUDA Eric'},
+  {n:5,dip:'ENSET-DIP-2025-0010',mat:'21G0052',nom:'FOUDA Patrick Francis',filiere:'Sciences Industrielles',niveau:'Licence 3',date:'20/02/2025',heure:'08h58',sig:true,fp:true,fpHash:'FP-2025-0052-G9B1',toge:true,journal:true,statut:'Complet',agent:'Mme EBENE Claire'},
+  {n:6,dip:'ENSET-DIP-2025-0009',mat:'21G0051',nom:'TABI Claude Aurélien',filiere:'Génie Informatique',niveau:'Licence 3',date:'20/02/2025',heure:'08h30',sig:true,fp:false,fpHash:'',toge:true,journal:true,statut:'Partiel',agent:'Manuel — Chef Scolarité'},
+  {n:7,dip:'ENSET-DIP-2025-0012',mat:'21G0054',nom:'MANGA Éric Stéphane',filiere:'Génie Informatique',niveau:'Master 2',date:'19/02/2025',heure:'14h45',sig:true,fp:true,fpHash:'FP-2025-0054-H2C5',toge:true,journal:true,statut:'Complet',agent:'M. FOUDA Eric'},
+  {n:8,dip:'ENSET-DIP-2025-0008',mat:'21G0049',nom:'ESSAMA Roger Thierry',filiere:'Génie Électrique',niveau:'Licence 3',date:'19/02/2025',heure:'11h20',sig:true,fp:true,fpHash:'FP-2025-0049-I5D7',toge:false,journal:true,statut:'Partiel',agent:'Mme EBENE Claire'},
+  {n:9,dip:'ENSET-DIP-2025-0011',mat:'21G0053',nom:'ABANDA Victoire Aline',filiere:'Génie Électrique',niveau:'Licence 3',date:'19/02/2025',heure:'10h05',sig:true,fp:true,fpHash:'FP-2025-0053-J3K4',toge:true,journal:false,statut:'Partiel',agent:'M. FOUDA Eric'},
+];
+
+let currentEntry = null;
+let dt;
+
+$(document).ready(function(){
+  dt=$('#regTable').DataTable({
+    language:{url:'https://cdn.datatables.net/plug-ins/1.13.8/i18n/fr-FR.json'},
+    pageLength:10,order:[[0,'asc']],
+    columnDefs:[{orderable:false,targets:[6,7,8,9,11]}],
+    data:registre,
+    columns:[
+      {data:'n',render:d=>`<span style="font-size:.78rem;color:var(--gris-dark);font-weight:700;">REG-${String(d).padStart(3,'0')}</span>`},
+      {data:'dip',render:d=>`<code style="color:var(--teal);font-size:.75rem;">${d}</code>`},
+      {data:'mat',render:d=>`<code style="color:var(--blue);font-size:.78rem;">${d}</code>`},
+      {data:'nom',render:d=>`<span style="font-weight:600;font-size:.83rem;">${d}</span>`},
+      {data:'filiere',render:d=>`<span style="font-size:.76rem;">${d}</span>`},
+      {data:'date',render:(d,_,row)=>`<span style="font-size:.78rem;">${d}</span><div style="font-size:.69rem;color:var(--gris-dark);">${row.heure}</div>`},
+      // Signature
+      {data:'sig',render:(v,_,row)=>v?`<div class="sig-thumb" onclick="voirDetail(${row.n})">
+          <svg width="75" height="32" viewBox="0 0 75 32" style="opacity:.8;">
+            <path d="M8 22 Q18 8 28 18 Q38 28 48 14 Q58 2 68 16" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+          </svg></div>`
+        :`<div class="ind-no" style="width:75px;height:32px;border-radius:5px;font-size:.72rem;">Manquante</div>`},
+      // Empreinte
+      {data:'fp',render:(v,_,row)=>v?`<div class="fp-indicator" title="Hash: ${row.fpHash}" onclick="voirDetail(${row.n})"><i class="bi bi-fingerprint"></i></div>`
+        :`<div class="fp-indicator no"><i class="bi bi-fingerprint"></i></div>`},
+      // Toge
+      {data:'toge',render:v=>v
+        ?`<div class="ind-ok" title="Toge restituée"><i class="bi bi-check-lg"></i></div>`
+        :`<div class="ind-warn" title="Toge non restituée"><i class="bi bi-exclamation-lg"></i></div>`},
+      // Journal
+      {data:'journal',render:v=>v
+        ?`<div class="ind-ok" title="Journal remis"><i class="bi bi-check-lg"></i></div>`
+        :`<div class="ind-no" title="Journal non remis"><i class="bi bi-x-lg"></i></div>`},
+      // Statut
+      {data:'statut',render:v=>v==='Complet'?'<span class="bs bs-green">Complet</span>':'<span class="bs bs-yellow">Partiel</span>'},
+      // Actions
+      {data:null,render:d=>`<div style="display:flex;gap:4px;">
+        <button class="rb rb-view" onclick="voirDetail(${d.n})"><i class="bi bi-eye"></i></button>
+        <button class="rb rb-edit" onclick="voirDetail(${d.n})"><i class="bi bi-pencil"></i></button>
+        <button class="rb rb-print" onclick="imprimerRecepisse()"><i class="bi bi-printer"></i></button>
+      </div>`}
+    ],
+    rowCallback:function(row,data){
+      $(row).removeClass('complet-row');
+      if(data.statut==='Complet') $(row).addClass('complet-row');
+    }
+  });
+  document.getElementById('am-date').value=new Date().toISOString().split('T')[0];
+});
+
+function applyFilter(){dt.search(document.getElementById('searchInp').value).draw();}
+function setFilter(f,btn){
+  document.querySelectorAll('.filter-pill').forEach(b=>{b.className='filter-pill';});
+  btn.classList.add(f==='all'?'fa':f==='Complet'?'fg':'fy');
+  if(f==='toge') dt.search('').draw(); // custom
+  else dt.search(f==='all'?'':f).draw();
+}
+
+function voirDetail(n){
+  const e=registre.find(r=>r.n===n);
+  if(!e) return;
+  currentEntry=e;
+  document.getElementById('detailTitle').textContent=`${e.nom} — ${e.mat}`;
+  document.getElementById('detailSub').textContent=`${e.dip} · ${e.filiere} · ${e.niveau}`;
+  document.getElementById('detailInfos').innerHTML=`
+    <div class="detail-item"><label>Date de remise</label><div class="val">${e.date} à ${e.heure}</div></div>
+    <div class="detail-item"><label>Agent remettant</label><div class="val">${e.agent}</div></div>
+    <div class="detail-item"><label>N° Registre</label><div class="val" style="color:var(--blue);">REG-${String(e.n).padStart(3,'0')}</div></div>
+    <div class="detail-item"><label>Statut</label><div class="val">${e.statut==='Complet'?'<span class="bs bs-green">Complet</span>':'<span class="bs bs-yellow">Partiel</span>'}</div></div>`;
+  document.getElementById('detailSigDate').textContent=e.sig?`Capturée le ${e.date} à ${e.heure}`:'Signature non enregistrée';
+  document.getElementById('detailFpHash').textContent=e.fpHash||'—';
+  document.getElementById('detailFpDate').textContent=e.fp?`Capturée le ${e.date}`:'Empreinte non enregistrée';
+  // Toge
+  const tb=document.getElementById('detailTogeBox');
+  tb.style.background=e.toge?'var(--purple-bg)':'var(--gris-bg)';
+  document.getElementById('detailTogeLabel').textContent=e.toge?'Toge restituée':'Toge non restituée';
+  document.getElementById('detailTogeLabel').style.color=e.toge?'var(--purple)':'var(--gris-dark)';
+  tb.querySelector('i').style.color=e.toge?'var(--purple)':'var(--gris-dark)';
+  // Journal
+  const jb=document.getElementById('detailJournalBox');
+  jb.style.background=e.journal?'var(--blue-xlight)':'var(--gris-bg)';
+  document.getElementById('detailJournalLabel').textContent=e.journal?'Journal remis':'Journal non remis';
+  document.getElementById('detailJournalLabel').style.color=e.journal?'var(--blue)':'var(--gris-dark)';
+  jb.querySelector('i').style.color=e.journal?'var(--blue)':'var(--gris-dark)';
+  document.getElementById('detailQr').textContent=`QR: ENSET-VRF-2025-${String(e.n).padStart(3,'0')}`;
+  new bootstrap.Modal(document.getElementById('detailModal')).show();
+}
+
+function ouvrirEdition(){
+  bootstrap.Modal.getInstance(document.getElementById('detailModal')).hide();
+  showToast('Mode édition — Modifiez le statut et enregistrez.');
+}
+
+function ajouterEntree(){
+  const mat=document.getElementById('am-mat').value.trim();
+  const dip=document.getElementById('am-dip').value.trim();
+  const date=document.getElementById('am-date').value;
+  if(!mat||!dip||!date){alert('Veuillez remplir les champs obligatoires (*)');return;}
+  const newN=registre.length+1;
+  const now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  registre.push({
+    n:newN,dip,mat,nom:`(${mat}) — À compléter`,filiere:'—',niveau:'—',
+    date:new Date(date).toLocaleDateString('fr-FR'),heure:now,
+    sig:document.getElementById('am-sig').checked,fp:document.getElementById('am-fp').checked,
+    fpHash:`FP-2025-${mat.replace(/\D/g,'')}-XXXX`,
+    toge:document.getElementById('am-toge').checked,journal:document.getElementById('am-journal').checked,
+    statut:'Partiel',agent:'Chef Scolarité — Manuel'
+  });
+  dt.clear().rows.add(registre).draw();
+  bootstrap.Modal.getInstance(document.getElementById('ajoutManuelModal')).hide();
+  document.getElementById('statRemis').textContent=parseInt(document.getElementById('statRemis').textContent)+1;
+  showToast('✓ Entrée ajoutée au registre de remise.');
+}
+
+function imprimerRegistre(){ window.print(); }
+function exporterRegistre(){ showToast('Export PDF officiel en cours de génération…'); }
+function imprimerRecepisse(){ showToast('Impression du récépissé de remise en cours…'); }
+
+function showToast(msg,ok=true){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:20px;right:20px;background:${ok?'var(--green)':'var(--yellow)'};color:#fff;padding:12px 20px;border-radius:10px;font-size:.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);max-width:340px;`;
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3200);
+}
+
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+window.addEventListener('resize',()=>{if(!isMobile()){sidebar.classList.remove('mobile-open');overlay.classList.remove('show');}});
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}Chef Service — Tableau de bord{% endblock %}
+{% block page_title %}Tableau de bord{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('chef_service.tous_dossiers') }}" class="btn btn-sm"
+   style="border:1px solid rgba(37,102,158,.4);color:var(--blue);border-radius:8px">
+  <i class="bi bi-archive me-1"></i>Tous les dossiers
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1 class="page-title"><i class="bi bi-clipboard2-data me-2"></i>Chef Service Scolarité</h1>
+    <p class="text-muted mb-0" style="font-size:.85rem">Vue d'ensemble de tous les dossiers de diplomation.</p>
+  </div>
+</div>
+
+{% set stat_colors = {
+  'DEPOSE': 'blue', 'EN_VERIFICATION': 'blue', 'AUTHENTIFICATION': 'blue',
+  'LISTE_FINISSANTS': 'blue', 'IMPRESSION_PROVISOIRE': 'yellow',
+  'PRODUCTION_DEFINITIVE': 'yellow', 'SIGNATURE_DIRECTEUR': 'red',
+  'SIGNATURE_RECTEUR': 'red', 'SIGNATURE_MINISTRE': 'red',
+  'FORMALISATION': 'yellow', 'CLOTURE': 'green', 'REJETE': 'red'
+} %}
+
+<div class="row g-3 mb-4">
+  {% for statut, nb in stats.items() %}
+  {% if nb > 0 %}
+  <div class="col-6 col-md-4 col-xl-3">
+    <a href="{{ url_for('chef_service.tous_dossiers', statut=statut) }}" style="text-decoration:none">
+      <div class="stat-card {{ stat_colors.get(statut, 'blue') }}">
+        <div>
+          <div class="stat-label">{{ statut.replace('_', ' ') }}</div>
+          <div class="stat-value">{{ nb }}</div>
+        </div>
+        <i class="bi bi-folder2 stat-icon"></i>
+      </div>
+    </a>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <h2 class="panel-title"><i class="bi bi-bar-chart-line me-2" style="color:var(--blue)"></i>Avancement global</h2>
+    <span class="badge" style="background:var(--gris-bg);color:var(--gris-dark);font-size:.75rem">{{ total }} dossier(s)</span>
+  </div>
+  <div class="panel-body">
+    {% set clotures = stats.get('CLOTURE', 0) %}
+    {% set pct = ((clotures / total) * 100)|round|int if total > 0 else 0 %}
+    <div class="progress-item">
+      <div class="progress-label">
+        <span>Diplômes remis</span>
+        <span style="font-weight:700;color:var(--green)">{{ pct }}%</span>
+      </div>
+      <div class="progress">
+        <div class="progress-bar" style="width:{{ pct }}%;background:var(--green)"></div>
+      </div>
+      <div style="font-size:.72rem;color:var(--gris-dark);margin-top:4px">
+        {{ clotures }} / {{ total }} dossiers clôturés
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

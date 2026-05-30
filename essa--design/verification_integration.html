@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Vérification dossier intégration</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{--blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;--gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;--white:#fff;--dark:#4b4b4b;--green:#2da06e;--green-bg:#e6f5ef;--yellow:#e8a020;--yellow-bg:#fff4e0;--red:#e05252;--red-bg:#fdecea;--teal:#1a9090;--teal-bg:#e2f5f5;--sidebar-w:250px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;flex-shrink:0;}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;text-decoration:none;}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}
+
+    /* STICKY PROGRESS */
+    .sticky-bar{position:sticky;top:66px;z-index:100;background:var(--white);border-bottom:1px solid var(--gris-bg);padding:10px 26px;margin:-26px -26px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+    .sp-fill{flex:1;height:8px;border-radius:99px;background:var(--gris-bg);overflow:hidden;min-width:100px;}
+    .sp-bar{height:100%;border-radius:99px;background:var(--teal);transition:width .4s;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:14px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* ÉTUDIANT FICHE */
+    .etd-fiche{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:16px 20px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;}
+    .etd-av{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--blue-dark));color:#fff;font-size:1rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .chip{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:99px;}
+
+    /* PIÈCE CARD */
+    .vc{border:2px solid var(--gris-border);border-radius:11px;padding:14px;margin-bottom:10px;transition:all .18s;}
+    .vc.ok{border-color:var(--green);background:rgba(45,160,110,.03);}
+    .vc.ko{border-color:var(--red);background:rgba(224,82,82,.03);}
+    .vc-hd{display:flex;align-items:flex-start;gap:10px;}
+    .vc-num{width:25px;height:25px;border-radius:50%;background:var(--teal);color:#fff;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+    .vc-num.ok{background:var(--green);}
+    .vc-num.ko{background:var(--red);}
+    .vc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;background:var(--gris-bg);color:var(--gris-dark);}
+    .vc-icon.ok{background:var(--green-bg);color:var(--green);}
+    .vc-name{font-size:.87rem;font-weight:700;color:var(--dark);}
+    .vc-req{font-size:.73rem;color:var(--gris-dark);margin-top:2px;}
+    .file-link{display:inline-flex;align-items:center;gap:5px;background:var(--teal-bg);color:var(--teal);font-size:.75rem;font-weight:600;padding:4px 10px;border-radius:7px;margin-top:7px;cursor:pointer;transition:all .14s;}
+    .file-link:hover{background:var(--teal);color:#fff;}
+    .btn-val{background:var(--green);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .14s;}
+    .btn-val:hover{background:#228a5c;}
+    .btn-rej{background:var(--red-bg);color:var(--red);border:2px solid var(--red);border-radius:8px;padding:6px 13px;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .14s;}
+    .btn-rej:hover{background:var(--red);color:#fff;}
+    .btn-rst{background:var(--gris-bg);color:var(--gris-dark);border:none;border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer;}
+    .motif-area{margin-top:8px;display:none;}
+    .motif-area.show{display:block;}
+    .motif-area textarea{border:1px solid var(--gris-border);border-radius:9px;padding:7px 11px;font-size:.83rem;width:100%;resize:vertical;min-height:60px;}
+    .motif-area textarea:focus{outline:none;border-color:var(--red);}
+
+    /* DECISION BAR */
+    .decision-bar{background:var(--white);border-radius:13px;box-shadow:0 2px 14px rgba(0,0,0,.1);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border:2px solid var(--gris-border);position:sticky;bottom:12px;}
+    .btn-approve{background:var(--teal);color:#fff;border:none;border-radius:11px;padding:12px 26px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s;}
+    .btn-approve:hover{background:var(--blue-dark);}
+    .btn-approve:disabled{background:#b0cac0;cursor:not-allowed;}
+    .btn-reject{background:var(--red-bg);color:var(--red);border:2px solid var(--red);border-radius:11px;padding:12px 20px;font-size:.9rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;}
+    .btn-reject:hover{background:var(--red);color:#fff;}
+
+    /* RECAP */
+    .recap-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gris-bg);}
+    .recap-item:last-child{border-bottom:none;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}.sticky-bar{margin:-16px -16px 16px;padding:10px 16px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+<nav id="sidebar">
+  <a href="representant.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Représentant filière</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Mon espace</div>
+    <a href="representant.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Tableau de bord</span></a>
+    <a href="verification_dossier.html" class="nav-link"><i class="bi bi-folder2-open"></i><span class="sl">Dossiers diplomation</span></a>
+    <a href="verification_integration.html" class="nav-link active"><i class="bi bi-building-check"></i><span class="sl">Vérif. intégration</span></a>
+    <a href="liste_integration.html" class="nav-link"><i class="bi bi-list-check"></i><span class="sl">Liste intégration</span></a>
+    <a href="notifications.html" class="nav-link"><i class="bi bi-bell"></i><span class="sl">Notifications</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div style="font-size:.85rem;font-weight:700;color:var(--dark);">Vérification — Dossier intégration</div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar"><div class="av-c">RF</div><span class="av-name d-none d-md-block">M. FOUDA Eric</span></a>
+  </div>
+</header>
+<main id="main">
+  <!-- STICKY -->
+  <div class="sticky-bar">
+    <span style="font-size:.8rem;font-weight:700;flex-shrink:0;">Vérification intégration</span>
+    <div class="sp-fill"><div class="sp-bar" id="spBar" style="width:0%;"></div></div>
+    <span style="font-size:.78rem;font-weight:700;color:var(--green);flex-shrink:0;"><i class="bi bi-check-circle-fill me-1"></i><span id="spOk">0</span></span>
+    <span style="font-size:.78rem;font-weight:700;color:var(--red);flex-shrink:0;"><i class="bi bi-x-circle-fill me-1"></i><span id="spKo">0</span></span>
+    <span style="font-size:.78rem;font-weight:700;color:var(--gris-dark);flex-shrink:0;"><i class="bi bi-circle me-1"></i><span id="spPend">9</span></span>
+  </div>
+
+  <div class="bc">
+    <a href="liste_integration.html">Dossiers intégration</a><i class="bi bi-chevron-right" style="font-size:.7rem;"></i>
+    <span style="color:var(--dark);font-weight:600;">Vérification — 21G0042 MBALLA Jean-Baptiste</span>
+  </div>
+
+  <!-- FICHE ÉTUDIANT -->
+  <div class="etd-fiche">
+    <div class="etd-av">MB</div>
+    <div style="flex:1;">
+      <div style="font-size:1rem;font-weight:800;color:var(--dark);">MBALLA Jean-Baptiste</div>
+      <div style="font-size:.8rem;color:var(--teal);font-weight:700;margin-top:2px;">21G0042</div>
+      <div class="mt-1">
+        <span class="chip" style="background:var(--teal-bg);color:var(--teal);"><i class="bi bi-cpu"></i> Génie Informatique</span>
+        <span class="chip" style="background:var(--blue-xlight);color:var(--blue);">Licence 3</span>
+        <span class="chip" style="background:var(--yellow-bg);color:var(--yellow);margin-top:4px;"><i class="bi bi-hourglass-split"></i> En vérification</span>
+      </div>
+      <div style="font-size:.76rem;color:var(--gris-dark);margin-top:6px;"><i class="bi bi-calendar3 me-1"></i>Soumis le 10 mars 2025 · 9 pièces déposées</div>
+    </div>
+    <a href="detail_dossier.html" style="font-size:.78rem;color:var(--blue);text-decoration:none;align-self:flex-start;"><i class="bi bi-eye me-1"></i>Dossier complet</a>
+  </div>
+
+  <!-- ALERTE INFO -->
+  <div class="alert mb-4" style="background:var(--teal-bg);border:none;border-radius:11px;font-size:.83rem;display:flex;gap:10px;align-items:flex-start;">
+    <i class="bi bi-info-circle-fill mt-1" style="color:var(--teal);flex-shrink:0;"></i>
+    <div><strong style="color:var(--teal);">Vérification dossier MINFOPRA.</strong> Contrôlez chaque pièce avec attention — ce dossier sera transmis au Ministère de la Fonction Publique pour intégration officielle. Toute erreur bloquera la procédure d'intégration de l'étudiant. En cas de rejet, l'étudiant est automatiquement notifié.</div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-xl-8">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-paperclip me-2" style="color:var(--teal);"></i>Pièces du dossier d'intégration — 9 pièces</span>
+          <div style="display:flex;gap:6px;">
+            <span style="font-size:.7rem;background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:99px;font-weight:700;" id="nbOk">0 OK</span>
+            <span style="font-size:.7rem;background:var(--red-bg);color:var(--red);padding:3px 8px;border-radius:99px;font-weight:700;" id="nbKo">0 KO</span>
+          </div>
+        </div>
+        <div class="panel-bd py-0" id="verifContainer"></div>
+      </div>
+
+      <!-- OBSERVATIONS -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-chat-text me-2" style="color:var(--blue);"></i>Observations du représentant</span></div>
+        <div class="panel-bd">
+          <textarea class="form-control" rows="3" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.85rem;" placeholder="Observations générales sur ce dossier d'intégration (optionnel)…"></textarea>
+        </div>
+      </div>
+
+      <div class="decision-bar">
+        <div>
+          <div style="font-size:.88rem;font-weight:700;color:var(--dark);" id="decisionLbl">Vérifiez toutes les pièces avant de décider</div>
+          <div style="font-size:.75rem;color:var(--gris-dark);margin-top:2px;"><i class="bi bi-bell me-1"></i>L'étudiant et le Chef Scolarité seront notifiés automatiquement</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn-reject" onclick="rejeterGlobal()"><i class="bi bi-x-circle"></i>Rejeter</button>
+          <button class="btn-approve" id="btnApprouver" disabled onclick="approuver()"><i class="bi bi-check-circle-fill"></i>Valider & Transmettre</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RÉCAPITULATIF -->
+    <div class="col-12 col-xl-4">
+      <div class="panel" style="position:sticky;top:90px;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-clipboard-data me-2" style="color:var(--blue);"></i>Récapitulatif</span></div>
+        <div class="panel-bd">
+          <div id="recapEl"></div>
+          <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gris-bg);">
+            <div style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);margin-bottom:8px;">Points de vigilance MINFOPRA</div>
+            <div style="display:flex;flex-direction:column;gap:7px;font-size:.78rem;color:var(--dark);">
+              <div><i class="bi bi-exclamation-diamond-fill me-2" style="color:var(--yellow);"></i>Légalisations : toutes &lt; 3 mois</div>
+              <div><i class="bi bi-exclamation-diamond-fill me-2" style="color:var(--yellow);"></i>Photos : fond blanc, récentes</div>
+              <div><i class="bi bi-exclamation-diamond-fill me-2" style="color:var(--yellow);"></i>Fiche MINFOPRA : toutes cases remplies</div>
+              <div><i class="bi bi-exclamation-diamond-fill me-2" style="color:var(--yellow);"></i>Casier judiciaire : original exigé</div>
+              <div><i class="bi bi-exclamation-diamond-fill me-2" style="color:var(--yellow);"></i>DIPET : copie conforme + original</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+const pieces=[
+  {id:1,name:'Carte Nationale d\'Identité',req:'Copie certifiée conforme et lisible',icon:'bi-credit-card-2-front',file:'cni_21G0042.pdf'},
+  {id:2,name:'Acte de naissance légalisé',req:'Légalisé il y a moins de 3 mois',icon:'bi-file-earmark-person',file:'acte_naissance.pdf'},
+  {id:3,name:'Diplôme DIPET I',req:'Copie conforme + présentation original',icon:'bi-mortarboard',file:'dipet_21G0042.pdf'},
+  {id:4,name:'Relevé de notes officiel',req:'Signé et tamponné Chef Scolarité',icon:'bi-journal-text',file:'releve_notes.pdf'},
+  {id:5,name:'4 photos d\'identité',req:'Format 4×4 fond blanc < 3 mois',icon:'bi-camera',file:'photos_21G0042.zip'},
+  {id:6,name:'Certificat de nationalité',req:'Tribunal de 1ère Instance',icon:'bi-flag',file:'cert_nationalite.pdf'},
+  {id:7,name:'Casier judiciaire N°3',req:'Original — moins de 3 mois',icon:'bi-shield-check',file:'casier_jud.pdf'},
+  {id:8,name:'Fiche de renseignements MINFOPRA',req:'Formulaire officiel complet',icon:'bi-ui-checks',file:'fiche_minfopra.pdf'},
+  {id:9,name:'Attestation bonne vie et mœurs',req:'Commissariat de résidence',icon:'bi-patch-check',file:'attestation_bvm.pdf'},
+];
+const statuts={};
+pieces.forEach(p=>statuts[p.id]='pending');
+
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+function renderPieces(){
+  const c=document.getElementById('verifContainer');
+  c.innerHTML=pieces.map(p=>{
+    const st=statuts[p.id];
+    return `<div class="vc ${st}" id="vc-${p.id}" style="padding:12px 0;border-radius:0;border:none;border-bottom:1px solid var(--gris-bg);">
+      <div class="vc-hd">
+        <div class="vc-num ${st}">${st==='ok'?'<i class="bi bi-check-lg" style="font-size:.7rem;"></i>':st==='ko'?'<i class="bi bi-x-lg" style="font-size:.7rem;"></i>':p.id}</div>
+        <div class="vc-icon ${st==='ok'?'ok':''}"><i class="bi ${p.icon}"></i></div>
+        <div style="flex:1;"><div class="vc-name">${p.name}</div><div class="vc-req">${p.req}</div>
+          <a class="file-link" onclick="previewFile('${p.file}')"><i class="bi bi-eye me-1"></i>${p.file}</a>
+        </div>
+        ${st!=='pending'?`<span style="font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;flex-shrink:0;background:${st==='ok'?'var(--green-bg)':'var(--red-bg)'};color:${st==='ok'?'var(--green)':'var(--red)'};">${st==='ok'?'✓ Valide':'✗ Rejeté'}</span>`:''}
+      </div>
+      ${st==='pending'?`<div style="display:flex;gap:6px;margin-top:9px;margin-left:37px;">
+        <button class="btn-val" onclick="valider(${p.id})"><i class="bi bi-check-circle-fill"></i>Valider</button>
+        <button class="btn-rej" onclick="affMotif(${p.id})"><i class="bi bi-x-circle"></i>Rejeter</button>
+      </div>
+      <div class="motif-area" id="ma-${p.id}" style="margin-left:37px;">
+        <label style="font-size:.78rem;font-weight:700;color:var(--red);margin-bottom:4px;margin-top:8px;display:block;">Motif *</label>
+        <textarea id="mt-${p.id}" placeholder="Décrivez le problème constaté…"></textarea>
+        <div style="display:flex;gap:6px;margin-top:7px;">
+          <button class="btn-rej" onclick="rejeter(${p.id})"><i class="bi bi-send"></i>Confirmer</button>
+          <button class="btn-rst" onclick="annuler(${p.id})">Annuler</button>
+        </div>
+      </div>`
+      :st==='ok'?`<div style="font-size:.75rem;color:var(--green);margin-top:7px;margin-left:37px;font-weight:600;"><i class="bi bi-check-circle-fill me-1"></i>Conforme <button class="btn-rst" style="font-size:.73rem;margin-left:6px;" onclick="reset(${p.id})">Modifier</button></div>`
+      :`<div style="font-size:.75rem;color:var(--red);margin-top:7px;margin-left:37px;font-weight:600;" id="obs-${p.id}"></div>
+        <button class="btn-rst" style="font-size:.73rem;margin-left:37px;margin-top:4px;" onclick="reset(${p.id})">Modifier</button>`}
+    </div>`;
+  }).join('');
+  updateProgress();
+  renderRecap();
+}
+
+function valider(id){statuts[id]='ok';renderPieces();}
+function affMotif(id){document.getElementById(`ma-${id}`).classList.add('show');}
+function annuler(id){document.getElementById(`ma-${id}`).classList.remove('show');}
+function rejeter(id){
+  const t=document.getElementById(`mt-${id}`).value.trim();
+  if(!t){alert('Motif requis.');return;}
+  statuts[id]='ko';pieces.find(p=>p.id===id)._motif=t;
+  renderPieces();
+  setTimeout(()=>{const o=document.getElementById(`obs-${id}`);if(o)o.textContent=`Motif : ${t}`;},50);
+}
+function reset(id){statuts[id]='pending';renderPieces();}
+
+function updateProgress(){
+  const ok=Object.values(statuts).filter(s=>s==='ok').length;
+  const ko=Object.values(statuts).filter(s=>s==='ko').length;
+  const total=pieces.length;
+  const done=ok+ko;
+  document.getElementById('spBar').style.width=(done/total*100)+'%';
+  document.getElementById('spOk').textContent=ok;
+  document.getElementById('spKo').textContent=ko;
+  document.getElementById('spPend').textContent=total-done;
+  document.getElementById('nbOk').textContent=ok+' OK';
+  document.getElementById('nbKo').textContent=ko+' KO';
+  const lbl=document.getElementById('decisionLbl');
+  if(done<total){lbl.textContent=`${total-done} pièce(s) restant(es) à vérifier`;lbl.style.color='var(--dark)';}
+  else if(ko>0){lbl.textContent=`${ko} pièce(s) rejetée(s) — dossier incomplet`;lbl.style.color='var(--red)';}
+  else{lbl.textContent='✓ Toutes les pièces sont conformes';lbl.style.color='var(--green)';}
+  document.getElementById('btnApprouver').disabled=!(done===total&&ko===0);
+}
+
+function renderRecap(){
+  const ok=Object.values(statuts).filter(s=>s==='ok').length;
+  const ko=Object.values(statuts).filter(s=>s==='ko').length;
+  const pend=pieces.length-ok-ko;
+  document.getElementById('recapEl').innerHTML=`
+    <div class="recap-item"><span style="font-size:.82rem;">Pièces validées</span><strong style="color:var(--green);">${ok}/${pieces.length}</strong></div>
+    <div class="recap-item"><span style="font-size:.82rem;">Pièces rejetées</span><strong style="color:var(--red);">${ko}</strong></div>
+    <div class="recap-item"><span style="font-size:.82rem;">Restantes</span><strong style="color:var(--gris-dark);">${pend}</strong></div>
+    <div class="recap-item"><span style="font-size:.82rem;">Statut global</span>${ko>0?'<span style="font-size:.75rem;font-weight:700;background:var(--red-bg);color:var(--red);padding:3px 8px;border-radius:99px;">Incomplet</span>':ok===pieces.length?'<span style="font-size:.75rem;font-weight:700;background:var(--green-bg);color:var(--green);padding:3px 8px;border-radius:99px;">Complet</span>':'<span style="font-size:.75rem;font-weight:700;background:var(--gris-bg);color:var(--gris-dark);padding:3px 8px;border-radius:99px;">En cours</span>'}</div>`;
+}
+
+function previewFile(name){showToast(`Ouverture de ${name}…`);}
+function approuver(){
+  if(confirm('Valider et transmettre ce dossier pour intégration MINFOPRA ? L\'étudiant sera notifié.'))
+    showToast('✓ Dossier validé et transmis au Chef Scolarité pour envoi MINFOPRA.');
+}
+function rejeterGlobal(){
+  const ko=Object.values(statuts).filter(s=>s==='ko').length;
+  if(confirm(`Rejeter ce dossier ? ${ko} pièce(s) non conforme(s). L'étudiant sera notifié.`))
+    showToast('Dossier rejeté. Notification envoyée à MBALLA Jean-Baptiste.',false);
+}
+
+function showToast(msg,ok=true){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:20px;right:20px;background:${ok?'var(--green)':'var(--red)'};color:#fff;padding:12px 20px;border-radius:10px;font-size:.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);`;
+  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200);
+}
+renderPieces();
+</script>
+</body>
+</html>

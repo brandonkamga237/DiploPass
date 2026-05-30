@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Mon affectation</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --gold:#b8860b;--gold-bg:#fdf6e3;
+      --sidebar-w:240px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.12);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--blue);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.6);font-size:.7rem;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.75);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.1);color:#fff;}
+    .nav-link.active{background:var(--blue-dark);color:#fff;border-left:3px solid #fff;}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .np{background:#e05252;color:#fff;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:auto;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.1);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;text-decoration:none;}
+    .av-c{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}
+
+    /* HERO AFFECTATION */
+    .hero{background:linear-gradient(135deg,var(--teal) 0%,var(--blue-dark) 60%,#0a2a4a 100%);border-radius:18px;padding:32px;margin-bottom:24px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(26,144,144,.3);}
+    .hero::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.05);}
+    .hero::after{content:'';position:absolute;bottom:-60px;right:60px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.04);}
+    .hero-label{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6);margin-bottom:8px;}
+    .hero-lieu{font-size:1.6rem;font-weight:900;color:#fff;line-height:1.3;margin-bottom:4px;}
+    .hero-region{font-size:.9rem;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:6px;}
+    .hero-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+    .hero-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:5px 14px;font-size:.78rem;font-weight:700;color:#fff;display:flex;align-items:center;gap:6px;}
+    .hero-chip.highlight{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5);}
+    .hero-ref{font-size:.72rem;color:rgba(255,255,255,.5);margin-top:12px;}
+
+    /* COUNTDOWN */
+    .countdown-bar{background:rgba(255,255,255,.1);border-radius:12px;padding:16px 20px;margin-top:20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+    .cd-unit{text-align:center;min-width:56px;}
+    .cd-val{font-size:1.8rem;font-weight:900;color:#fff;line-height:1;}
+    .cd-lbl{font-size:.65rem;color:rgba(255,255,255,.6);font-weight:700;text-transform:uppercase;margin-top:3px;}
+    .cd-sep{font-size:1.6rem;font-weight:900;color:rgba(255,255,255,.4);align-self:flex-start;padding-top:6px;}
+    .countdown-label{font-size:.82rem;color:rgba(255,255,255,.75);flex:1;min-width:150px;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* INFO GRID */
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;}
+    .info-item{background:var(--gris-bg);border-radius:11px;padding:14px 16px;}
+    .info-item label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);display:block;}
+    .info-item .val{font-size:.95rem;font-weight:700;color:var(--dark);margin-top:5px;display:flex;align-items:center;gap:7px;}
+    .info-item .val i{color:var(--teal);font-size:1rem;}
+
+    /* STEPS PRÉPARATION */
+    .prep-step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--gris-bg);}
+    .prep-step:last-child{border-bottom:none;}
+    .prep-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800;flex-shrink:0;}
+    .prep-num.done{background:var(--green-bg);color:var(--green);border:2px solid var(--green);}
+    .prep-num.todo{background:var(--teal-bg);color:var(--teal);border:2px solid var(--teal);}
+    .prep-num.warn{background:var(--yellow-bg);color:var(--yellow);border:2px solid var(--yellow);}
+    .prep-title{font-size:.88rem;font-weight:700;color:var(--dark);}
+    .prep-sub{font-size:.76rem;color:var(--gris-dark);margin-top:3px;line-height:1.4;}
+    .prep-badge{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;margin-top:6px;display:inline-block;}
+
+    /* CARTE AFFECTATION */
+    .carte{background:linear-gradient(135deg,#1a2a3a,#0a1a2a);border-radius:14px;padding:24px;color:#fff;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.2);}
+    .carte::before{content:'';position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:rgba(26,144,144,.15);}
+    .carte-logo{font-size:.72rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:16px;}
+    .carte-name{font-size:1.1rem;font-weight:800;color:#fff;}
+    .carte-mat{font-size:.75rem;color:rgba(255,255,255,.6);margin-top:2px;}
+    .carte-divider{border:none;border-top:1px solid rgba(255,255,255,.1);margin:14px 0;}
+    .carte-lieu{font-size:1rem;font-weight:800;color:var(--teal);margin-bottom:4px;}
+    .carte-date{font-size:.82rem;color:rgba(255,255,255,.8);}
+    .carte-ref{font-size:.68rem;color:rgba(255,255,255,.4);margin-top:12px;}
+    .carte-qr{position:absolute;bottom:16px;right:16px;width:44px;height:44px;background:rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:rgba(255,255,255,.6);}
+
+    /* ACTIONS */
+    .action-card{background:var(--white);border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:16px 18px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;border:2px solid transparent;transition:all .15s;text-decoration:none;}
+    .action-card:hover{border-color:var(--gris-border);box-shadow:0 4px 16px rgba(0,0,0,.09);}
+    .action-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+    .action-title{font-size:.88rem;font-weight:700;color:var(--dark);}
+    .action-sub{font-size:.76rem;color:var(--gris-dark);margin-top:2px;}
+    .action-arrow{margin-left:auto;color:var(--gris-dark);font-size:1rem;flex-shrink:0;margin-top:3px;transition:transform .15s;}
+    .action-card:hover .action-arrow{transform:translateX(3px);color:var(--teal);}
+
+    /* BADGE */
+    .bs{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-teal{background:var(--teal-bg);color:var(--teal);}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:767px){.info-grid{grid-template-columns:1fr 1fr;}.countdown-bar{gap:12px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name{display:none;}.hero{padding:22px;}.hero-lieu{font-size:1.3rem;}.info-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="etudiant.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Espace Étudiant</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Mon espace</div>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-person-circle"></i><span class="sl">Profil</span></a>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-signpost-2"></i><span class="sl">Étapes du parcours</span></a>
+    <div class="ss">Dossiers</div>
+    <a href="etudiant.html" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sl">Diplomation</span></a>
+    <a href="depot_formalisation.html" class="nav-link"><i class="bi bi-file-earmark-text"></i><span class="sl">Formalisation</span></a>
+    <a href="depot_integration.html" class="nav-link"><i class="bi bi-building-check"></i><span class="sl">Intégration</span></a>
+    <a href="detail_affectation.html" class="nav-link active"><i class="bi bi-geo-alt-fill"></i><span class="sl">Mon affectation</span></a>
+    <div class="ss">Autres</div>
+    <a href="notifications.html" class="nav-link"><i class="bi bi-bell"></i><span class="sl">Notifications</span><span class="np">1</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div style="font-size:.85rem;font-weight:700;color:var(--dark);">Mon affectation</div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar"><div class="av-c">MB</div><span class="av-name d-none d-md-block">MBALLA Jean</span></a>
+  </div>
+</header>
+
+<main id="main">
+  <div class="bc">
+    <a href="etudiant.html">Mon espace</a><i class="bi bi-chevron-right" style="font-size:.7rem;"></i>
+    <span style="color:var(--dark);font-weight:600;">Mon affectation</span>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label"><i class="bi bi-geo-alt-fill me-2"></i>Lieu d'affectation officiel</div>
+    <div class="hero-lieu">Lycée Bilingue de Yaoundé Centre</div>
+    <div class="hero-region"><i class="bi bi-map me-1"></i>Région du Centre · Yaoundé</div>
+    <div class="hero-chips">
+      <span class="hero-chip highlight"><i class="bi bi-calendar-check"></i>01 juin 2025 à 07h30</span>
+      <span class="hero-chip"><i class="bi bi-person-badge"></i>Professeur de Génie Informatique</span>
+      <span class="hero-chip"><i class="bi bi-shield-check"></i>Réf : ARRETE-MINFOPRA-2025-0421</span>
+    </div>
+
+    <!-- COMPTE À REBOURS -->
+    <div class="countdown-bar">
+      <div class="countdown-label"><i class="bi bi-alarm me-2" style="font-size:1.1rem;"></i>Temps restant avant prise de service</div>
+      <div class="cd-unit"><div class="cd-val" id="cd-j">--</div><div class="cd-lbl">Jours</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-val" id="cd-h">--</div><div class="cd-lbl">Heures</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-val" id="cd-m">--</div><div class="cd-lbl">Min</div></div>
+      <div class="cd-sep">:</div>
+      <div class="cd-unit"><div class="cd-val" id="cd-s">--</div><div class="cd-lbl">Sec</div></div>
+    </div>
+
+    <div class="hero-ref"><i class="bi bi-hash me-1"></i>Code affectation : AFF-2025-GI-0042 · Arrêté MINFOPRA n° 421/MINFOPRA/2025 du 15 avril 2025</div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-7">
+
+      <!-- INFORMATIONS COMPLÈTES -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-info-circle me-2" style="color:var(--teal);"></i>Détails de l'affectation</span>
+          <span class="bs bs-teal"><i class="bi bi-check-circle-fill me-1"></i>Confirmée</span>
+        </div>
+        <div class="panel-bd">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Établissement d'affectation</label>
+              <div class="val"><i class="bi bi-building"></i>Lycée Bilingue de Yaoundé Centre</div>
+            </div>
+            <div class="info-item">
+              <label>Type d'établissement</label>
+              <div class="val"><i class="bi bi-mortarboard"></i>Lycée d'Enseignement Général</div>
+            </div>
+            <div class="info-item">
+              <label>Ville</label>
+              <div class="val"><i class="bi bi-geo-alt"></i>Yaoundé</div>
+            </div>
+            <div class="info-item">
+              <label>Région</label>
+              <div class="val"><i class="bi bi-map"></i>Centre</div>
+            </div>
+            <div class="info-item">
+              <label>Date de prise de service</label>
+              <div class="val" style="color:var(--teal);"><i class="bi bi-calendar-check"></i>01 juin 2025</div>
+            </div>
+            <div class="info-item">
+              <label>Heure de prise de service</label>
+              <div class="val" style="color:var(--teal);"><i class="bi bi-clock"></i>07h30 (heure locale)</div>
+            </div>
+            <div class="info-item">
+              <label>Poste / Matière enseignée</label>
+              <div class="val"><i class="bi bi-person-workspace"></i>Génie Informatique</div>
+            </div>
+            <div class="info-item">
+              <label>Grade d'intégration</label>
+              <div class="val"><i class="bi bi-award"></i>Professeur de l'Enseignement Secondaire · Indice 375</div>
+            </div>
+            <div class="info-item">
+              <label>N° Arrêté MINFOPRA</label>
+              <div class="val"><i class="bi bi-file-earmark-text"></i>421/MINFOPRA/2025</div>
+            </div>
+            <div class="info-item">
+              <label>Date de l'arrêté</label>
+              <div class="val"><i class="bi bi-calendar3"></i>15 avril 2025</div>
+            </div>
+          </div>
+
+          <div class="alert mt-4 mb-0" style="background:var(--yellow-bg);border:none;border-radius:11px;font-size:.83rem;">
+            <i class="bi bi-exclamation-triangle-fill me-2" style="color:var(--yellow);"></i>
+            <strong>Important :</strong> Présentez-vous muni(e) de votre diplôme original, d'une pièce d'identité valide et d'une copie de l'arrêté d'affectation. Tout retard non justifié peut entraîner des sanctions administratives.
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTE DE PRÉPARATION -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-list-check me-2" style="color:var(--blue);"></i>Liste de préparation avant la prise de service</span>
+        </div>
+        <div class="panel-bd py-0">
+          <div class="prep-step">
+            <div class="prep-num done"><i class="bi bi-check-lg"></i></div>
+            <div>
+              <div class="prep-title">Diplôme DIPET obtenu</div>
+              <div class="prep-sub">Votre diplôme a été produit et signé. Récupérez-le à la scolarité.</div>
+              <span class="prep-badge" style="background:var(--green-bg);color:var(--green);">✓ Complété</span>
+            </div>
+          </div>
+          <div class="prep-step">
+            <div class="prep-num done"><i class="bi bi-check-lg"></i></div>
+            <div>
+              <div class="prep-title">Dossier d'intégration déposé et validé</div>
+              <div class="prep-sub">Toutes les pièces ont été vérifiées par votre représentant de filière.</div>
+              <span class="prep-badge" style="background:var(--green-bg);color:var(--green);">✓ Validé</span>
+            </div>
+          </div>
+          <div class="prep-step">
+            <div class="prep-num todo">3</div>
+            <div>
+              <div class="prep-title">Visite médicale d'aptitude</div>
+              <div class="prep-sub">À effectuer auprès d'un médecin agréé avant votre prise de service. Le certificat sera demandé à votre établissement d'accueil.</div>
+              <span class="prep-badge" style="background:var(--teal-bg);color:var(--teal);">À faire</span>
+            </div>
+          </div>
+          <div class="prep-step">
+            <div class="prep-num todo">4</div>
+            <div>
+              <div class="prep-title">Contacter le Proviseur de l'établissement</div>
+              <div class="prep-sub">Informez votre futur établissement de votre arrivée prévue. Coordonnées disponibles auprès du MINESEC région Centre.</div>
+              <span class="prep-badge" style="background:var(--teal-bg);color:var(--teal);">À faire</span>
+            </div>
+          </div>
+          <div class="prep-step">
+            <div class="prep-num warn">5</div>
+            <div>
+              <div class="prep-title">Attestation d'intégration provisoire</div>
+              <div class="prep-sub">Téléchargez votre attestation provisoire ci-dessous pour justifier votre prise de service auprès de l'administration.</div>
+              <span class="prep-badge" style="background:var(--yellow-bg);color:var(--yellow);"><i class="bi bi-download me-1"></i>Disponible</span>
+            </div>
+          </div>
+          <div class="prep-step">
+            <div class="prep-num todo">6</div>
+            <div>
+              <div class="prep-title">Signer le registre de prise de service</div>
+              <div class="prep-sub">À effectuer le jour J à 07h30 auprès du secrétariat de l'établissement.</div>
+              <span class="prep-badge" style="background:var(--gris-bg);color:var(--gris-dark);">Le 01/06/2025</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-12 col-lg-5">
+
+      <!-- CARTE D'AFFECTATION VISUELLE -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-credit-card me-2" style="color:var(--teal);"></i>Carte d'affectation numérique</span>
+          <button onclick="imprimerCarte()" style="background:var(--gris-bg);border:none;border-radius:8px;padding:5px 12px;font-size:.76rem;font-weight:700;cursor:pointer;"><i class="bi bi-printer me-1"></i>Imprimer</button>
+        </div>
+        <div class="panel-bd" style="background:#0e1a2a;">
+          <div class="carte">
+            <div class="carte-logo">ENSET Douala · République du Cameroun · MINFOPRA</div>
+            <div class="carte-name">MBALLA Jean-Baptiste</div>
+            <div class="carte-mat">Matricule : 21G0042 · Génie Informatique · Promotion 2024-2025</div>
+            <hr class="carte-divider"/>
+            <div style="font-size:.68rem;color:rgba(255,255,255,.5);margin-bottom:6px;">EST AFFECTÉ(E) À</div>
+            <div class="carte-lieu">Lycée Bilingue de Yaoundé Centre</div>
+            <div class="carte-date"><i class="bi bi-calendar-check me-1"></i>Prise de service le <strong>01 juin 2025 à 07h30</strong></div>
+            <div style="margin-top:8px;font-size:.78rem;color:rgba(255,255,255,.7);"><i class="bi bi-geo-alt me-1"></i>Yaoundé · Région du Centre</div>
+            <div style="margin-top:8px;font-size:.78rem;color:rgba(255,255,255,.65);"><i class="bi bi-person-workspace me-1"></i>Professeur de Génie Informatique · Indice 375</div>
+            <div class="carte-ref">Réf : AFF-2025-GI-0042 · Arrêté n° 421/MINFOPRA/2025 du 15/04/2025</div>
+            <div class="carte-qr"><i class="bi bi-qr-code"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACTIONS RAPIDES -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-lightning-charge me-2" style="color:var(--yellow);"></i>Actions rapides</span></div>
+        <div class="panel-bd d-flex flex-column gap-2">
+          <a href="generation_attestation.html" class="action-card">
+            <div class="action-icon" style="background:var(--teal-bg);color:var(--teal);"><i class="bi bi-file-earmark-text-fill"></i></div>
+            <div><div class="action-title">Télécharger attestation provisoire</div><div class="action-sub">Justificatif de prise de service</div></div>
+            <i class="bi bi-chevron-right action-arrow"></i>
+          </a>
+          <a href="depot_integration.html" class="action-card">
+            <div class="action-icon" style="background:var(--blue-xlight);color:var(--blue);"><i class="bi bi-folder2-open"></i></div>
+            <div><div class="action-title">Consulter mon dossier d'intégration</div><div class="action-sub">8/9 pièces validées</div></div>
+            <i class="bi bi-chevron-right action-arrow"></i>
+          </a>
+          <a href="#" class="action-card" onclick="imprimerCarte()">
+            <div class="action-icon" style="background:var(--gold-bg);color:var(--gold);"><i class="bi bi-credit-card-fill"></i></div>
+            <div><div class="action-title">Imprimer la carte d'affectation</div><div class="action-sub">Version imprimable officielle</div></div>
+            <i class="bi bi-chevron-right action-arrow"></i>
+          </a>
+          <a href="notifications.html" class="action-card">
+            <div class="action-icon" style="background:var(--green-bg);color:var(--green);"><i class="bi bi-bell-fill"></i></div>
+            <div><div class="action-title">Voir toutes les notifications</div><div class="action-sub">1 nouveau message de la scolarité</div></div>
+            <i class="bi bi-chevron-right action-arrow"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- CONTACT UTILES -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-telephone me-2" style="color:var(--blue);"></i>Contacts utiles</span></div>
+        <div class="panel-bd d-flex flex-column gap-3" style="font-size:.83rem;">
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div style="width:34px;height:34px;background:var(--blue-xlight);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--blue);"><i class="bi bi-building"></i></div>
+            <div><div style="font-weight:700;">Scolarité ENSET Douala</div><div style="color:var(--gris-dark);">Bureau 04 · Bât. A · Lun–Ven 7h30–15h</div><div style="color:var(--blue);">scolarite@enset-douala.cm</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div style="width:34px;height:34px;background:var(--teal-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--teal);"><i class="bi bi-person-badge"></i></div>
+            <div><div style="font-weight:700;">MINFOPRA — Direction Intégration</div><div style="color:var(--gris-dark);">Quartier Hippodrome, Yaoundé</div><div style="color:var(--teal);">integration@minfopra.cm</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px;">
+            <div style="width:34px;height:34px;background:var(--green-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--green);"><i class="bi bi-geo-alt"></i></div>
+            <div><div style="font-weight:700;">Délégation Régionale MINESEC Centre</div><div style="color:var(--gris-dark);">Yaoundé · Quartier Bastos</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  /* SIDEBAR */
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+  window.addEventListener('resize',()=>{if(!isMobile()){sidebar.classList.remove('mobile-open');overlay.classList.remove('show');}});
+
+  /* COMPTE À REBOURS */
+  const targetDate = new Date('2025-06-01T07:30:00');
+  function updateCountdown(){
+    const now = new Date();
+    const diff = targetDate - now;
+    if(diff <= 0){
+      ['cd-j','cd-h','cd-m','cd-s'].forEach(id=>document.getElementById(id).textContent='00');
+      return;
+    }
+    const j = Math.floor(diff/86400000);
+    const h = Math.floor((diff%86400000)/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    document.getElementById('cd-j').textContent=String(j).padStart(2,'0');
+    document.getElementById('cd-h').textContent=String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent=String(m).padStart(2,'0');
+    document.getElementById('cd-s').textContent=String(s).padStart(2,'0');
+  }
+  updateCountdown();
+  setInterval(updateCountdown,1000);
+
+  function imprimerCarte(){ window.print(); }
+</script>
+</body>
+</html>

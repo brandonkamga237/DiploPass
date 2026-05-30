@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Correction liste finissants</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:14px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:18px;}
+
+    /* STAT MINI */
+    .sm{background:var(--white);border-radius:11px;box-shadow:0 1px 5px rgba(0,0,0,.06);padding:14px 16px;border-left:4px solid transparent;}
+    .sm.blue{border-color:var(--blue);}
+    .sm.green{border-color:var(--green);}
+    .sm.red{border-color:var(--red);}
+    .sm.yellow{border-color:var(--yellow);}
+    .sm-val{font-size:1.55rem;font-weight:900;color:var(--dark);}
+    .sm-lbl{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-top:2px;}
+
+    /* TOOLBAR */
+    .toolbar{background:var(--white);border-radius:12px;box-shadow:0 1px 5px rgba(0,0,0,.06);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+    .tb-search{flex:1;min-width:160px;border:1px solid var(--gris-border);border-radius:9px;padding:7px 12px;font-size:.85rem;}
+    .tb-search:focus{outline:none;border-color:var(--blue);}
+    .filter-pill{border:2px solid var(--gris-border);border-radius:99px;padding:5px 13px;font-size:.77rem;font-weight:700;color:var(--gris-dark);background:#fff;cursor:pointer;transition:all .14s;white-space:nowrap;}
+    .filter-pill:hover{border-color:var(--blue);color:var(--blue);}
+    .filter-pill.a-all{border-color:var(--blue);background:var(--blue);color:#fff;}
+    .filter-pill.a-err{border-color:var(--red);background:var(--red);color:#fff;}
+    .filter-pill.a-warn{border-color:var(--yellow);background:var(--yellow);color:#fff;}
+    .filter-pill.a-ok{border-color:var(--green);background:var(--green);color:#fff;}
+    .filter-pill.a-corr{border-color:var(--blue-dark);background:var(--blue-dark);color:#fff;}
+
+    /* TABLE ÉDITABLE */
+    #corrTable thead th{font-size:.67rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border:none;padding:9px 10px;white-space:nowrap;}
+    #corrTable tbody td{font-size:.84rem;border:none;border-top:1px solid var(--gris-bg);padding:6px 8px;vertical-align:middle;}
+    #corrTable tbody tr:hover td{background:#f7f9fb;}
+    #corrTable tbody tr.r-err td{background:rgba(224,82,82,.04);}
+    #corrTable tbody tr.r-warn td{background:rgba(232,160,32,.04);}
+    #corrTable tbody tr.r-corr td{background:rgba(37,102,158,.04);}
+    #corrTable tbody tr.r-ok td{background:rgba(45,160,110,.03);}
+
+    /* CHAMPS ÉDITABLES */
+    .edit-cell{position:relative;}
+    .edit-field{border:1.5px solid transparent;border-radius:7px;padding:4px 8px;font-size:.83rem;color:var(--dark);background:transparent;width:100%;min-width:90px;transition:all .15s;font-family:inherit;}
+    .edit-field:hover{border-color:var(--gris-border);background:var(--white);}
+    .edit-field:focus{outline:none;border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(37,102,158,.1);}
+    .edit-field.modified{border-color:var(--blue)!important;background:#f0f6ff!important;}
+    .edit-field.error-field{border-color:var(--red)!important;background:var(--red-bg)!important;}
+    .field-err-msg{font-size:.68rem;color:var(--red);margin-top:2px;font-weight:600;}
+    .original-val{font-size:.67rem;color:var(--gris-dark);text-decoration:line-through;margin-top:1px;}
+
+    /* ROW ACTIONS */
+    .row-btns{display:flex;gap:5px;align-items:center;}
+    .rbtn{border:none;border-radius:7px;padding:4px 9px;font-size:.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;transition:all .14s;white-space:nowrap;}
+    .rbtn-save{background:var(--blue);color:#fff;}
+    .rbtn-save:hover{background:var(--blue-dark);}
+    .rbtn-reset{background:var(--gris-bg);color:var(--gris-dark);}
+    .rbtn-reset:hover{background:var(--gris-border);}
+    .rbtn-hist{background:var(--blue-xlight);color:var(--blue);}
+    .rbtn-hist:hover{background:var(--blue);color:#fff;}
+
+    /* BADGE */
+    .bs{font-size:.69rem;font-weight:700;padding:2px 8px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-red{background:var(--red-bg);color:var(--red);}
+    .bs-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .bs-gray{background:var(--gris-bg);color:var(--gris-dark);}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+    .bs-dark{background:#e8eaed;color:var(--dark);}
+
+    /* HISTORIQUE TIMELINE */
+    .hist-timeline{display:flex;flex-direction:column;gap:0;}
+    .ht-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--gris-bg);}
+    .ht-item:last-child{border-bottom:none;}
+    .ht-dot{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;}
+    .ht-dot.edit{background:var(--blue-xlight);color:var(--blue);}
+    .ht-dot.fix{background:var(--green-bg);color:var(--green);}
+    .ht-dot.flag{background:var(--yellow-bg);color:var(--yellow);}
+    .ht-body{flex:1;}
+    .ht-action{font-size:.83rem;font-weight:600;color:var(--dark);}
+    .ht-detail{font-size:.76rem;color:var(--gris-dark);margin-top:2px;line-height:1.4;}
+    .ht-meta{font-size:.7rem;color:var(--gris-dark);display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;}
+    .ht-time{font-size:.7rem;color:var(--gris-dark);white-space:nowrap;flex-shrink:0;text-align:right;margin-top:2px;}
+
+    /* FLOATING SAVE BAR */
+    .save-bar{position:sticky;bottom:12px;background:var(--white);border:2px solid var(--gris-border);border-radius:13px;box-shadow:0 4px 20px rgba(0,0,0,.12);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;z-index:50;}
+    .btn-save-all{background:var(--green);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:.87rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s;}
+    .btn-save-all:hover{background:#228a5c;}
+    .btn-validate{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-size:.87rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s;}
+    .btn-validate:hover{background:var(--blue-dark);}
+    .btn-light-sm{background:var(--gris-bg);color:var(--dark);border:none;border-radius:10px;padding:10px 18px;font-size:.87rem;font-weight:700;cursor:pointer;transition:background .15s;}
+    .btn-light-sm:hover{background:var(--gris-border);}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="chef_scolarite.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Représentant filière</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Gestion listes</div>
+    <a href="import_finissants.html" class="nav-link"><i class="bi bi-cloud-upload"></i><span class="sl">Import liste finissants</span></a>
+    <a href="correction_liste.html" class="nav-link active"><i class="bi bi-pencil-square"></i><span class="sl">Correction liste</span></a>
+    <a href="liste_validee.html" class="nav-link"><i class="bi bi-check2-square"></i><span class="sl">Liste validée</span></a>
+    <div class="ss">Navigation</div>
+    <a href="representant.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Mon tableau de bord</span></a>
+    <a href="tables.html" class="nav-link"><i class="bi bi-folder2-open"></i><span class="sl">Dossiers finissants</span></a>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Correction liste finissants</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Tableau éditable · Génie Informatique · Promotion 2024-2025</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-c">RF</div>
+      <div class="d-none d-md-block"><div class="av-name">M. FOUDA Eric</div><div class="av-role">Représentant GInfo</div></div>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+  <div class="bc">
+    <a href="import_finissants.html">Import</a>
+    <i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Correction liste</span>
+  </div>
+
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="sm blue"><div class="sm-val" id="stTotal">12</div><div class="sm-lbl">Total lignes</div></div></div>
+    <div class="col-6 col-xl-3"><div class="sm red"><div class="sm-val" id="stErr" style="color:var(--red);">3</div><div class="sm-lbl">Erreurs à corriger</div></div></div>
+    <div class="col-6 col-xl-3"><div class="sm yellow"><div class="sm-val" id="stWarn" style="color:var(--yellow);">3</div><div class="sm-lbl">Avertissements</div></div></div>
+    <div class="col-6 col-xl-3"><div class="sm green"><div class="sm-val" id="stCorr" style="color:var(--green);">0</div><div class="sm-lbl">Corrections apportées</div></div></div>
+  </div>
+
+  <!-- ALERTE -->
+  <div class="alert mb-4" style="background:var(--yellow-bg);border:none;border-radius:11px;font-size:.83rem;">
+    <i class="bi bi-pencil-fill me-2" style="color:var(--yellow);"></i>
+    <strong>Mode correction actif.</strong> Cliquez sur n'importe quel champ pour l'éditer. Les modifications sont tracées avec votre identité et un horodatage. La liste ne pourra être validée qu'une fois toutes les erreurs critiques corrigées.
+  </div>
+
+  <div class="row g-4">
+    <!-- TABLEAU CORRECTION -->
+    <div class="col-12 col-xl-8">
+
+      <!-- TOOLBAR -->
+      <div class="toolbar">
+        <input type="text" class="tb-search" placeholder="Rechercher matricule, nom…" oninput="filtrer()"/>
+        <button class="filter-pill a-all" id="fp-all" onclick="setFP('all',this)">Tous</button>
+        <button class="filter-pill" id="fp-err" onclick="setFP('err',this)"><i class="bi bi-x-circle me-1"></i>Erreurs</button>
+        <button class="filter-pill" id="fp-warn" onclick="setFP('warn',this)"><i class="bi bi-exclamation-triangle me-1"></i>Alertes</button>
+        <button class="filter-pill" id="fp-corr" onclick="setFP('corr',this)"><i class="bi bi-pencil me-1"></i>Corrigées</button>
+        <button class="filter-pill" id="fp-ok" onclick="setFP('ok',this)"><i class="bi bi-check2 me-1"></i>Valides</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-pencil-square me-2" style="color:var(--blue);"></i>Liste brute — édition directe</span>
+          <span style="font-size:.75rem;color:var(--gris-dark);" id="countLabel">12 lignes affichées</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table mb-0" id="corrTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Matricule</th>
+                <th>Nom</th>
+                <th>Prénoms</th>
+                <th>Date naiss.</th>
+                <th>Lieu naiss.</th>
+                <th>Filière</th>
+                <th>Niv.</th>
+                <th>Statut</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="corrBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SAVE BAR -->
+      <div class="save-bar">
+        <div>
+          <div style="font-size:.88rem;font-weight:700;color:var(--dark);" id="pendingLabel">0 modification(s) non enregistrée(s)</div>
+          <div style="font-size:.76rem;color:var(--gris-dark);margin-top:2px;">Enregistrez avant de valider la liste.</div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn-light-sm" onclick="exporterListe()"><i class="bi bi-download me-1"></i>Exporter</button>
+          <button class="btn-save-all" onclick="enregistrerTout()"><i class="bi bi-floppy-fill"></i>Enregistrer tout</button>
+          <button class="btn-validate" onclick="validerListe()"><i class="bi bi-check2-circle"></i>Valider la liste</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORIQUE CORRECTIONS -->
+    <div class="col-12 col-xl-4">
+      <div class="panel" style="position:sticky;top:80px;">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-clock-history me-2" style="color:var(--blue);"></i>Historique des corrections</span>
+          <span class="bs bs-blue" id="histCount" style="font-size:.72rem;">0 correction(s)</span>
+        </div>
+        <div style="max-height:520px;overflow-y:auto;">
+          <div class="panel-bd py-0 hist-timeline" id="histContainer">
+            <div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:.83rem;">
+              <i class="bi bi-clock" style="font-size:1.8rem;display:block;margin-bottom:8px;opacity:.4;"></i>
+              Aucune correction pour l'instant.<br>Cliquez sur un champ pour commencer.
+            </div>
+          </div>
+        </div>
+        <div class="panel-hd" style="border-top:1px solid var(--gris-bg);border-bottom:none;margin-top:0;">
+          <div style="font-size:.74rem;color:var(--gris-dark);">
+            <i class="bi bi-person me-1"></i>Auteur : <strong>M. FOUDA Eric</strong> · Représentant GInfo
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL HISTORIQUE LIGNE -->
+<div class="modal fade" id="histModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pt-4 px-4 pb-0">
+        <h5 class="modal-title" style="font-weight:800;font-size:1rem;"><i class="bi bi-clock-history me-2" style="color:var(--blue);"></i>Historique — <span id="histModalName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4" id="histModalBody"></div>
+      <div class="modal-footer border-0 pb-4 px-4">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+  <div id="fbToast" class="toast align-items-center border-0" style="border-radius:10px;">
+    <div class="d-flex">
+      <div class="toast-body" id="fbToastBody" style="font-size:.85rem;font-weight:600;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ══ DONNÉES ══ */
+const rows = [
+  {id:1,mat:'21G0042',nom:'MBALLA',prenoms:'Jean-Baptiste',dob:'14/03/2000',lieu:'Yaoundé',filiere:'Génie Informatique',niveau:'Licence 3',status:'ok',errors:[],modified:{},history:[]},
+  {id:2,mat:'21G0043',nom:'FOMO EKOTTO',prenoms:'Claire',dob:'22/07/1999',lieu:'Douala',filiere:'Génie Électrique',niveau:'Licence 3',status:'ok',errors:[],modified:{},history:[]},
+  {id:3,mat:'21G-044',nom:'NGONO',prenoms:'Paul Rodrigue',dob:'08/13/2000',lieu:'Bafoussam',filiere:'Génie Civil',niveau:'Master 2',status:'err',errors:['Matricule invalide (format: 21G0044)','Date naissance: mois 13 invalide'],modified:{},history:[]},
+  {id:4,mat:'21G0045',nom:'biya',prenoms:'Sylvie Carole',dob:'01/11/1999',lieu:'Yaoundé',filiere:'Génie Informatique',niveau:'Master 2',status:'warn',errors:['Nom en minuscule'],modified:{},history:[]},
+  {id:5,mat:'21G0046',nom:'ATEBA',prenoms:'Marc Fabrice',dob:'30/02/2001',lieu:'Bertoua',filiere:'Sciences Industrielles',niveau:'Licence 3',status:'err',errors:['Date invalide: 30/02 inexistant'],modified:{},history:[]},
+  {id:6,mat:'21G0047',nom:'KOAGNE',prenoms:'Bernard',dob:'17/05/2000',lieu:'',filiere:'Génie Civil',niveau:'Licence 3',status:'warn',errors:['Lieu de naissance vide'],modified:{},history:[]},
+  {id:7,mat:'21G0048',nom:'NKOULOU',prenoms:'Marie-José',dob:'03/09/1998',lieu:'Kribi',filiere:'Génie Mécanique',niveau:'Master 2',status:'ok',errors:[],modified:{},history:[]},
+  {id:8,mat:'21G0049',nom:'ESSAMA',prenoms:'Roger Thierry',dob:'11/12/2000',lieu:'Ngaoundéré',filiere:'Génie Électrique',niveau:'Licence 3',status:'ok',errors:[],modified:{},history:[]},
+  {id:9,mat:'21G0042',nom:'OWONA',prenoms:'Hélène Pascale',dob:'25/04/1999',lieu:'Edéa',filiere:'Génie Civil',niveau:'Master 2',status:'err',errors:['Doublon matricule (ligne 1)'],modified:{},history:[]},
+  {id:10,mat:'21G0051',nom:'TABI',prenoms:'Claude Aurélien',dob:'09/06/2001',lieu:'Douala',filiere:'Génie Informatique',niveau:'Licence 3',status:'ok',errors:[],modified:{},history:[]},
+  {id:11,mat:'21G0052',nom:'FOUDA',prenoms:'Patrick Francis',dob:'14/08/1999',lieu:'Yaoundé',filiere:'Sciences Industrielles',niveau:'Licence 3',status:'ok',errors:[],modified:{},history:[]},
+  {id:12,mat:'21G0053',nom:'ABANDA',prenoms:'Victoire Aline',dob:'22/10/2000',lieu:'Limbé',filiere:'Génie Électrique',niveau:'Licence 3',status:'warn',errors:['Vérifier le prénom'],modified:{},history:[]},
+];
+
+// Corrections pré-remplies pour démo
+rows[3].modified={nom:{old:'biya',new:'BIYA',saved:true,ts:'09h12',author:'M. FOUDA Eric'}};
+rows[3].status='corr';rows[3].errors=[];
+rows[3].history=[{champ:'Nom',from:'biya',to:'BIYA',ts:'09h12',author:'M. FOUDA Eric',type:'fix'}];
+
+let globalHistory = [
+  {champ:'Nom',ligne:4,etudiant:'BIYA Sylvie',from:'biya',to:'BIYA',ts:'09h12',type:'fix'},
+];
+let pendingCount = 0;
+let currentFilter = 'all';
+const AUTHOR = 'M. FOUDA Eric';
+
+const fieldKeys = ['mat','nom','prenoms','dob','lieu','filiere','niveau'];
+const fieldLabels = {mat:'Matricule',nom:'Nom',prenoms:'Prénoms',dob:'Date naiss.',lieu:'Lieu naiss.',filiere:'Filière',niveau:'Niveau'};
+
+const validators = {
+  mat: v=>/^\d{2}[A-Z]\d{4}$/.test(v)?null:'Format attendu: AAXNNNN (ex: 21G0042)',
+  dob: v=>{
+    const m=v.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if(!m) return 'Format: JJ/MM/AAAA';
+    const d=parseInt(m[1]),mo=parseInt(m[2]),y=parseInt(m[3]);
+    if(mo<1||mo>12) return 'Mois invalide';
+    if(d<1||d>31) return 'Jour invalide';
+    if(y<1980||y>2010) return 'Année suspecte';
+    return null;
+  },
+  nom: v=>v&&v===v.toUpperCase()?null:'Nom doit être en majuscules',
+  lieu: v=>v&&v.trim().length>1?null:'Lieu de naissance requis',
+};
+
+/* ══ RENDU ══ */
+function render(){
+  const search = document.querySelector('.tb-search')?.value?.toLowerCase()||'';
+  const filtered = rows.filter(r=>{
+    const matchF = currentFilter==='all'
+      ||currentFilter===r.status
+      ||(currentFilter==='err'&&r.status==='err')
+      ||(currentFilter==='corr'&&r.status==='corr');
+    const matchS = !search||(r.mat+r.nom+r.prenoms+r.filiere).toLowerCase().includes(search);
+    return matchF&&matchS;
+  });
+
+  document.getElementById('countLabel').textContent=`${filtered.length} ligne(s) affichée(s)`;
+  const tbody=document.getElementById('corrBody');
+  tbody.innerHTML=filtered.map(r=>{
+    const rowCls=r.status==='err'?'r-err':r.status==='warn'?'r-warn':r.status==='corr'?'r-corr':'r-ok';
+    const badge=r.status==='err'?'<span class="bs bs-red">Erreur</span>':r.status==='warn'?'<span class="bs bs-yellow">Alerte</span>':r.status==='corr'?'<span class="bs bs-blue">Corrigé</span>':'<span class="bs bs-green">Valide</span>';
+
+    const cells = fieldKeys.map(k=>{
+      const val = r.modified[k]?.saved ? r.modified[k].new : (r.modified[k]?.new || r[k]);
+      const origVal = r.modified[k]?.old;
+      const isModified = !!r.modified[k];
+      const errMsg = validators[k]?.(val)||null;
+      return `<td><div class="edit-cell">
+        <input class="edit-field ${isModified?'modified':''} ${errMsg&&isModified?'error-field':''}"
+          data-id="${r.id}" data-field="${k}"
+          value="${val||''}"
+          oninput="onFieldChange(${r.id},'${k}',this.value,this)"
+          style="width:${k==='nom'||k==='prenoms'?'130px':k==='lieu'||k==='filiere'?'130px':'95px'};"/>
+        ${isModified&&origVal?`<div class="original-val">${origVal}</div>`:''}
+        ${errMsg&&isModified?`<div class="field-err-msg"><i class="bi bi-exclamation-circle me-1"></i>${errMsg}</div>`:''}
+      </div></td>`;
+    }).join('');
+
+    const hasHistory = r.history.length>0;
+    return `<tr class="${rowCls}" id="tr-${r.id}">
+      <td style="font-size:.75rem;color:var(--gris-dark);">${r.id}</td>
+      ${cells}
+      <td>${badge}</td>
+      <td><div class="row-btns">
+        <button class="rbtn rbtn-save" onclick="saveLigne(${r.id})" title="Enregistrer">
+          <i class="bi bi-floppy"></i>
+        </button>
+        <button class="rbtn rbtn-reset" onclick="resetLigne(${r.id})" title="Annuler les changements">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+        <button class="rbtn rbtn-hist" onclick="showHist(${r.id})" title="Historique${hasHistory?' ('+r.history.length+')':''}">
+          <i class="bi bi-clock-history"></i>${hasHistory?r.history.length:''}
+        </button>
+      </div></td>
+    </tr>`;
+  }).join('');
+  updateStats();
+}
+
+function onFieldChange(id, field, value, input){
+  const r = rows.find(x=>x.id===id);
+  if(!r) return;
+  const origVal = r.modified[field]?.old||r[field];
+  if(!r.modified[field]) r.modified[field]={old:origVal,new:value,saved:false};
+  else r.modified[field].new=value;
+  input.classList.add('modified');
+  pendingCount++;
+  document.getElementById('pendingLabel').textContent=`${pendingCount} modification(s) non enregistrée(s)`;
+  const errMsg=validators[field]?.(value)||null;
+  const errEl=input.parentNode.querySelector('.field-err-msg');
+  if(errMsg){
+    input.classList.add('error-field');
+    if(!errEl){const d=document.createElement('div');d.className='field-err-msg';d.innerHTML=`<i class="bi bi-exclamation-circle me-1"></i>${errMsg}`;input.parentNode.appendChild(d);}
+    else errEl.innerHTML=`<i class="bi bi-exclamation-circle me-1"></i>${errMsg}`;
+  } else {
+    input.classList.remove('error-field');
+    if(errEl) errEl.remove();
+  }
+}
+
+function saveLigne(id){
+  const r = rows.find(x=>x.id===id);
+  if(!r) return;
+  const now=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  let saved=0;
+  Object.keys(r.modified).forEach(k=>{
+    if(!r.modified[k].saved&&r.modified[k].new!==r.modified[k].old){
+      const from=r.modified[k].old, to=r.modified[k].new;
+      r.modified[k].saved=true;r.modified[k].ts=now;r.modified[k].author=AUTHOR;
+      r[k]=to;
+      r.history.push({champ:fieldLabels[k],from,to,ts:now,author:AUTHOR,type:'fix'});
+      globalHistory.push({champ:fieldLabels[k],ligne:id,etudiant:r.nom+' '+r.prenoms,from,to,ts:now,type:'fix'});
+      saved++;
+    }
+  });
+  if(saved>0){
+    // Réévaluer le statut
+    const erreurs = fieldKeys.filter(k=>validators[k]&&validators[k](r[k]));
+    if(erreurs.length===0) r.status=(Object.keys(r.modified).length>0?'corr':'ok');
+    else r.status='err';
+    r.errors=erreurs.map(k=>validators[k](r[k]));
+    document.getElementById('stCorr').textContent=parseInt(document.getElementById('stCorr').textContent)+saved;
+    renderHistoire();
+    showToast(`✓ Ligne #${id} enregistrée (${saved} modification(s))`);
+  }
+  render();
+}
+
+function resetLigne(id){
+  const r=rows.find(x=>x.id===id);
+  if(!r||!Object.keys(r.modified).length) return;
+  r.modified={};
+  render();
+}
+
+function filtrer(){ render(); }
+
+function setFP(f,btn){
+  currentFilter=f;
+  document.querySelectorAll('.filter-pill').forEach(b=>b.className='filter-pill');
+  btn.classList.add(`a-${f}`);
+  render();
+}
+
+function updateStats(){
+  document.getElementById('stTotal').textContent=rows.length;
+  document.getElementById('stErr').textContent=rows.filter(r=>r.status==='err').length;
+  document.getElementById('stWarn').textContent=rows.filter(r=>r.status==='warn').length;
+  document.getElementById('stCorr').textContent=rows.filter(r=>r.status==='corr').length;
+}
+
+function renderHistoire(){
+  const c=document.getElementById('histContainer');
+  const cnt=document.getElementById('histCount');
+  cnt.textContent=`${globalHistory.length} correction(s)`;
+  if(!globalHistory.length){
+    c.innerHTML='<div style="padding:20px;text-align:center;color:var(--gris-dark);font-size:.83rem;"><i class="bi bi-clock" style="font-size:1.8rem;display:block;margin-bottom:8px;opacity:.4;"></i>Aucune correction.</div>';
+    return;
+  }
+  c.innerHTML=[...globalHistory].reverse().map(h=>`
+    <div class="ht-item">
+      <div class="ht-dot ${h.type==='fix'?'fix':'edit'}">
+        <i class="bi ${h.type==='fix'?'bi-check2':'bi-pencil'}"></i>
+      </div>
+      <div class="ht-body">
+        <div class="ht-action"><strong>${h.champ}</strong> modifié — Ligne #${h.ligne}</div>
+        <div class="ht-detail"><span style="text-decoration:line-through;color:var(--red);">${h.from||'(vide)'}</span> → <strong style="color:var(--green);">${h.to}</strong></div>
+        <div class="ht-meta">
+          <span><i class="bi bi-person me-1"></i>${h.author}</span>
+          <span><i class="bi bi-clock me-1"></i>${h.ts}</span>
+          <span><i class="bi bi-person-lines-fill me-1"></i>${h.etudiant}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function showHist(id){
+  const r=rows.find(x=>x.id===id);
+  if(!r) return;
+  document.getElementById('histModalName').textContent=`${r.nom} ${r.prenoms} (${r.mat})`;
+  const body=document.getElementById('histModalBody');
+  if(!r.history.length){
+    body.innerHTML='<p style="color:var(--gris-dark);font-size:.85rem;padding:12px 0;">Aucune correction enregistrée pour cet étudiant.</p>';
+  } else {
+    body.innerHTML=`<div style="display:flex;flex-direction:column;gap:0;">${[...r.history].reverse().map(h=>`
+      <div style="display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--gris-bg);">
+        <div style="width:32px;height:32px;border-radius:9px;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;">
+          <i class="bi bi-check2"></i></div>
+        <div style="flex:1;">
+          <div style="font-size:.84rem;font-weight:700;color:var(--dark);">Champ : ${h.champ}</div>
+          <div style="font-size:.78rem;color:var(--gris-dark);margin-top:3px;">
+            <span style="text-decoration:line-through;color:var(--red);">${h.from||'(vide)'}</span>
+            <i class="bi bi-arrow-right mx-2" style="font-size:.7rem;"></i>
+            <strong style="color:var(--green);">${h.to}</strong>
+          </div>
+          <div style="font-size:.72rem;color:var(--gris-dark);margin-top:4px;">
+            <i class="bi bi-person me-1"></i>${h.author} · <i class="bi bi-clock me-1"></i>${h.ts}
+          </div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+  new bootstrap.Modal(document.getElementById('histModal')).show();
+}
+
+function enregistrerTout(){
+  rows.forEach(r=>{if(Object.keys(r.modified).some(k=>!r.modified[k].saved)) saveLigne(r.id);});
+  pendingCount=0;
+  document.getElementById('pendingLabel').textContent='Toutes les modifications ont été enregistrées.';
+  showToast('✓ Toutes les corrections ont été enregistrées avec succès.');
+}
+
+function validerListe(){
+  const erreurs=rows.filter(r=>r.status==='err').length;
+  if(erreurs>0){
+    alert(`Impossible de valider : ${erreurs} erreur(s) critique(s) non corrigée(s). Corrigez toutes les erreurs avant de valider.`);
+    return;
+  }
+  if(confirm('Valider définitivement cette liste ? Elle sera transmise au Chef de Service et servira de base à la production des diplômes.')){
+    showToast('✓ Liste validée ! Redirection vers la liste validée…');
+    setTimeout(()=>{window.location.href='liste_validee.html';},1800);
+  }
+}
+
+function exporterListe(){
+  showToast('Export CSV de la liste en cours de génération…');
+}
+
+function showToast(msg,ok=true){
+  const t=document.getElementById('fbToast'),b=document.getElementById('fbToastBody');
+  t.style.background=ok?'var(--green)':'var(--red)';t.style.color='#fff';
+  b.textContent=msg;new bootstrap.Toast(t,{delay:3200}).show();
+}
+
+/* SIDEBAR */
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+/* INIT */
+render();
+renderHistoire();
+</script>
+</body>
+</html>

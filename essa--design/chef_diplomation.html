@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Chef Bureau Diplomation</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root {
+      --blue:#25669e; --blue-dark:#1a4f7a; --blue-light:#3a7fc1; --blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1; --gris-dark:#797a7c; --gris-border:#dde0e5;
+      --white:#ffffff; --dark:#4b4b4b;
+      --green:#2da06e; --green-bg:#e6f5ef;
+      --yellow:#e8a020; --yellow-bg:#fff4e0;
+      --red:#e05252; --red-bg:#fdecea;
+      --teal:#1a9090; --teal-bg:#e2f5f5;
+      --orange:#c96a1a; --orange-bg:#fdf0e0;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* ── SIDEBAR ── */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s ease,width .28s ease;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.2rem;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:var(--white);border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text{display:flex;flex-direction:column;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .np{background:#e05252;color:#fff;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:99px;margin-left:auto;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* ── TOPBAR ── */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s ease;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-title{font-size:.92rem;font-weight:700;color:var(--dark);}
+    .tb-sub{font-size:.74rem;color:var(--gris-dark);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.15rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-circle{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--green));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* ── MAIN ── */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s ease;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+
+    /* PAGE HEADER */
+    .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:24px;flex-wrap:wrap;}
+    .ph-title{font-size:1.45rem;font-weight:800;color:var(--dark);}
+    .ph-sub{font-size:.8rem;color:var(--gris-dark);margin-top:3px;}
+
+    /* STAT CARDS grandes */
+    .bigcard{background:var(--white);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,.07);padding:22px 22px 18px;display:flex;flex-direction:column;gap:4px;border-top:5px solid transparent;transition:box-shadow .2s,transform .2s;cursor:default;}
+    .bigcard:hover{box-shadow:0 6px 24px rgba(0,0,0,.1);transform:translateY(-2px);}
+    .bigcard.total  {border-color:var(--blue);}
+    .bigcard.attente{border-color:var(--yellow);}
+    .bigcard.sign   {border-color:var(--orange);}
+    .bigcard.conform{border-color:var(--green);}
+    .bigcard.ncform {border-color:var(--red);}
+    .bigcard.transmis{border-color:var(--teal);}
+    .bc-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:8px;}
+    .bigcard.total  .bc-icon{background:var(--blue-xlight);color:var(--blue);}
+    .bigcard.attente .bc-icon{background:var(--yellow-bg);color:var(--yellow);}
+    .bigcard.sign   .bc-icon{background:var(--orange-bg);color:var(--orange);}
+    .bigcard.conform .bc-icon{background:var(--green-bg);color:var(--green);}
+    .bigcard.ncform .bc-icon{background:var(--red-bg);color:var(--red);}
+    .bigcard.transmis .bc-icon{background:var(--teal-bg);color:var(--teal);}
+    .bc-label{font-size:.69rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--gris-dark);}
+    .bc-val{font-size:2rem;font-weight:900;color:var(--dark);line-height:1;}
+    .bc-sub{font-size:.73rem;color:var(--gris-dark);margin-top:2px;}
+    .bc-bar{height:5px;border-radius:99px;background:var(--gris-bg);margin-top:10px;overflow:hidden;}
+    .bc-fill{height:100%;border-radius:99px;}
+    .bigcard.total  .bc-fill{background:var(--blue);}
+    .bigcard.attente .bc-fill{background:var(--yellow);}
+    .bigcard.sign   .bc-fill{background:var(--orange);}
+    .bigcard.conform .bc-fill{background:var(--green);}
+    .bigcard.ncform .bc-fill{background:var(--red);}
+    .bigcard.transmis .bc-fill{background:var(--teal);}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* PIPELINE DIPLÔME */
+    .pipeline{display:flex;gap:0;align-items:flex-start;overflow-x:auto;padding-bottom:8px;}
+    .pipe-step{flex:1;min-width:130px;display:flex;flex-direction:column;align-items:center;position:relative;}
+    .pipe-step::after{content:'';position:absolute;right:0;top:24px;width:50%;height:2px;background:var(--gris-bg);z-index:0;}
+    .pipe-step::before{content:'';position:absolute;left:0;top:24px;width:50%;height:2px;background:var(--gris-bg);z-index:0;}
+    .pipe-step:first-child::before{display:none;}
+    .pipe-step:last-child::after{display:none;}
+    .pipe-step.done::after,.pipe-step.done::before{background:var(--green);}
+    .pipe-step.active::before{background:var(--green);}
+    .pipe-dot{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;z-index:1;border:3px solid;transition:all .2s;}
+    .pipe-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+    .pipe-dot.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 6px rgba(37,102,158,.15);}
+    .pipe-dot.pending{background:var(--white);border-color:var(--gris-border);color:var(--gris-dark);}
+    .pipe-dot.blocked{background:#f4f4f6;border-color:#ddd;color:#ccc;}
+    .pipe-label{font-size:.73rem;font-weight:700;text-align:center;margin-top:9px;color:var(--dark);max-width:110px;line-height:1.3;}
+    .pipe-count{font-size:.68rem;color:var(--gris-dark);text-align:center;margin-top:2px;}
+    .pipe-badge{font-size:.67rem;font-weight:700;padding:2px 8px;border-radius:99px;margin-top:4px;}
+    .pipe-badge.done{background:var(--green-bg);color:#1f7a52;}
+    .pipe-badge.active{background:var(--blue-xlight);color:var(--blue);}
+    .pipe-badge.pending{background:var(--gris-bg);color:var(--gris-dark);}
+
+    /* ACTIONS RAPIDES */
+    .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .act-card{background:var(--gris-bg);border-radius:11px;padding:16px;display:flex;flex-direction:column;gap:8px;cursor:pointer;border:2px solid transparent;transition:all .15s;text-decoration:none;}
+    .act-card:hover{background:var(--white);border-color:var(--gris-border);box-shadow:0 3px 12px rgba(0,0,0,.08);}
+    .act-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;}
+    .act-title{font-size:.86rem;font-weight:700;color:var(--dark);}
+    .act-sub{font-size:.74rem;color:var(--gris-dark);line-height:1.4;}
+    .act-cta{font-size:.75rem;font-weight:700;color:var(--blue);display:flex;align-items:center;gap:4px;margin-top:2px;}
+
+    /* TABLE */
+    .dtbl th{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border:none;padding:9px 14px;white-space:nowrap;}
+    .dtbl td{font-size:.84rem;color:var(--dark);border:none;padding:10px 14px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    .dtbl tbody tr:hover td{background:#f5f7fb;}
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:#1f7a52;}
+    .bs-yellow{background:var(--yellow-bg);color:#a06010;}
+    .bs-red{background:var(--red-bg);color:#a03030;}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+    .bs-orange{background:var(--orange-bg);color:var(--orange);}
+    .bs-teal{background:var(--teal-bg);color:var(--teal);}
+
+    /* CONFORMITÉ DONUT */
+    .conf-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--gris-bg);}
+    .conf-row:last-child{border-bottom:none;}
+    .conf-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .conf-label{font-size:.82rem;color:var(--dark);flex:1;}
+    .conf-val{font-size:.85rem;font-weight:800;color:var(--dark);}
+    .conf-pct{font-size:.73rem;color:var(--gris-dark);width:32px;text-align:right;}
+
+    /* ALERT BANNER */
+    .alert-banner{border-radius:12px;padding:14px 18px;display:flex;align-items:flex-start;gap:12px;border:none;margin-bottom:16px;}
+    .alert-banner.danger{background:var(--red-bg);}
+    .alert-banner.warning{background:var(--yellow-bg);}
+    .alert-banner.info{background:var(--blue-xlight);}
+    .alert-banner i{font-size:1.1rem;flex-shrink:0;margin-top:1px;}
+    .alert-banner.danger i{color:var(--red);}
+    .alert-banner.warning i{color:var(--yellow);}
+    .alert-banner.info i{color:var(--blue);}
+    .ab-title{font-size:.86rem;font-weight:700;color:var(--dark);}
+    .ab-sub{font-size:.78rem;color:var(--dark);margin-top:3px;line-height:1.5;}
+
+    /* MODAL PRODUCTION */
+    .prod-step{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--gris-bg);}
+    .prod-step:last-child{border-bottom:none;}
+    .prod-num{width:28px;height:28px;border-radius:50%;background:var(--blue);color:#fff;font-size:.78rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+    .prod-text{font-size:.85rem;color:var(--dark);line-height:1.5;}
+    .prod-sub{font-size:.76rem;color:var(--gris-dark);margin-top:2px;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:767px){.action-grid{grid-template-columns:1fr;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- ── SIDEBAR ── -->
+<nav id="sidebar">
+  <a href="#" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Bureau Diplomation</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Tableau de bord</div>
+    <a href="chef_diplomation.html" class="nav-link active"><i class="bi bi-speedometer2"></i><span class="sl">Vue d'ensemble</span></a>
+    <a href="notifications.html" class="nav-link"><i class="bi bi-bell"></i><span class="sl">Notifications</span><span class="np">2</span></a>
+    <div class="ss">Production</div>
+    <a href="#" class="nav-link"><i class="bi bi-mortarboard-fill"></i><span class="sl">Produire des diplômes</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-pen"></i><span class="sl">File de signature</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-shield-check"></i><span class="sl">Contrôle conformité</span></a>
+    <div class="ss">Dossiers</div>
+    <a href="tables.html" class="nav-link"><i class="bi bi-folder2-open"></i><span class="sl">Tous les dossiers</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-exclamation-triangle"></i><span class="sl">Non conformes</span><span class="np">23</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-send"></i><span class="sl">Transmissions Ministère</span></a>
+    <div class="ss">Rapports</div>
+    <a href="#" class="nav-link"><i class="bi bi-graph-up"></i><span class="sl">Statistiques production</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-printer"></i><span class="sl">Imprimer états</span></a>
+    <div class="ss">Liens</div>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-arrow-left-right"></i><span class="sl">Scolarité</span></a>
+    <a href="dashboard_directeur.html" class="nav-link"><i class="bi bi-building"></i><span class="sl">Direction</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-gear"></i><span class="sl">Paramètres</span></a>
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- ── TOPBAR ── -->
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div class="tb-title">Bureau de la Diplomation</div>
+    <div class="tb-sub">Production &amp; suivi des diplômes · Promotion 2024-2025</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-circle">BD</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Bureau</div><div class="av-role">Bureau Diplomation</div></div>
+    </a>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main id="main">
+
+  <!-- PAGE HEADER -->
+  <div class="ph">
+    <div>
+      <div class="ph-title">Tableau de bord — Bureau Diplomation</div>
+      <div class="ph-sub">Suivi de la production des diplômes · Promotion 2024-2025 · <strong>612 dossiers validés</strong> en attente de production</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-sm" style="background:var(--white);color:var(--dark);border:1px solid var(--gris-border);border-radius:9px;font-size:.8rem;font-weight:600;padding:7px 14px;">
+        <i class="bi bi-printer me-1"></i>État de production
+      </button>
+      <button class="btn btn-sm" style="background:var(--teal);color:#fff;border:none;border-radius:9px;font-size:.8rem;font-weight:600;padding:7px 16px;" data-bs-toggle="modal" data-bs-target="#prodModal">
+        <i class="bi bi-mortarboard-fill me-1"></i>Lancer une production
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERTES -->
+  <div class="alert-banner danger">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div>
+      <div class="ab-title">23 diplômes non conformes — Correction requise</div>
+      <div class="ab-sub">Des erreurs ont été détectées lors du contrôle qualité (fautes d'orthographe sur les noms, numéro de série en doublon, etc.). Ces diplômes ne peuvent pas être signés avant correction. <a href="#" style="color:var(--red);font-weight:700;">Voir la liste →</a></div>
+    </div>
+  </div>
+  <div class="alert-banner warning">
+    <i class="bi bi-pen-fill"></i>
+    <div>
+      <div class="ab-title">47 diplômes en attente de signature — Directeur</div>
+      <div class="ab-sub">Ces diplômes ont été produits et contrôlés mais attendent la signature du Directeur de l'ENSET. Délai moyen observé : 3 jours ouvrés.</div>
+    </div>
+  </div>
+
+  <!-- STAT CARDS GRANDES -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-4 col-xl-2">
+      <div class="bigcard total">
+        <div class="bc-icon"><i class="bi bi-folder2-open"></i></div>
+        <div class="bc-label">Dossiers reçus</div>
+        <div class="bc-val">612</div>
+        <div class="bc-sub">Validés par la Direction</div>
+        <div class="bc-bar"><div class="bc-fill" style="width:100%;"></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+      <div class="bigcard attente">
+        <div class="bc-icon"><i class="bi bi-hourglass-split"></i></div>
+        <div class="bc-label">En attente prod.</div>
+        <div class="bc-val">389</div>
+        <div class="bc-sub">Non encore traités</div>
+        <div class="bc-bar"><div class="bc-fill" style="width:63%;"></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+      <div class="bigcard sign">
+        <div class="bc-icon"><i class="bi bi-pen-fill"></i></div>
+        <div class="bc-label">En attente signature</div>
+        <div class="bc-val">47</div>
+        <div class="bc-sub">Produits, à signer</div>
+        <div class="bc-bar"><div class="bc-fill" style="width:7%;"></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+      <div class="bigcard conform">
+        <div class="bc-icon"><i class="bi bi-shield-check"></i></div>
+        <div class="bc-label">Conformes &amp; signés</div>
+        <div class="bc-val">153</div>
+        <div class="bc-sub">Prêts pour transmission</div>
+        <div class="bc-bar"><div class="bc-fill" style="width:25%;"></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+      <div class="bigcard ncform">
+        <div class="bc-icon"><i class="bi bi-shield-x"></i></div>
+        <div class="bc-label">Non conformes</div>
+        <div class="bc-val">23</div>
+        <div class="bc-sub">Correction urgente</div>
+        <div class="bc-bar"><div class="bc-fill" style="width:3%;"></div></div>
+      </div>
+    </div>
+    <div class="col-6 col-lg-4 col-xl-2">
+      <div class="bigcard transmis">
+        <div class="bc-icon"><i class="bi bi-send-check-fill"></i></div>
+        <div class="bc-label">Transmis Ministère</div>
+        <div class="bc-val">35</div>
+        <div class="bc-sub">Vague 1 — 05 Fév.</div>
+        <div class="bc-bar"><div class="bc-fill" style="width:5%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PIPELINE + ACTIONS -->
+  <div class="row g-4 mb-4">
+
+    <!-- PIPELINE PRODUCTION -->
+    <div class="col-12 col-lg-8">
+      <div class="panel mb-4">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-arrow-right-circle me-2" style="color:var(--teal);"></i>Pipeline de production des diplômes</span>
+          <span style="font-size:.75rem;color:var(--gris-dark);">Promotion 2024-2025</span>
+        </div>
+        <div class="panel-bd">
+          <div class="pipeline">
+            <div class="pipe-step done">
+              <div class="pipe-dot done"><i class="bi bi-check-lg"></i></div>
+              <div class="pipe-label">Réception dossiers validés</div>
+              <div class="pipe-count">612 dossiers</div>
+              <span class="pipe-badge done">✓ Complété</span>
+            </div>
+            <div class="pipe-step done">
+              <div class="pipe-dot done"><i class="bi bi-check-lg"></i></div>
+              <div class="pipe-label">Saisie données diplôme</div>
+              <div class="pipe-count">223 traités</div>
+              <span class="pipe-badge done">✓ En cours</span>
+            </div>
+            <div class="pipe-step active">
+              <div class="pipe-dot active"><i class="bi bi-shield-check"></i></div>
+              <div class="pipe-label">Contrôle conformité</div>
+              <div class="pipe-count">200 conformes · 23 KO</div>
+              <span class="pipe-badge active">→ Actif</span>
+            </div>
+            <div class="pipe-step pending">
+              <div class="pipe-dot pending"><i class="bi bi-pen"></i></div>
+              <div class="pipe-label">Signature Directeur</div>
+              <div class="pipe-count">47 en attente</div>
+              <span class="pipe-badge pending">Partiel</span>
+            </div>
+            <div class="pipe-step pending">
+              <div class="pipe-dot pending"><i class="bi bi-send"></i></div>
+              <div class="pipe-label">Transmission Ministère</div>
+              <div class="pipe-count">153 prêts</div>
+              <span class="pipe-badge pending">En attente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LISTE DIPLÔMES RÉCENTS -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-list-check me-2" style="color:var(--blue);"></i>Diplômes — Suivi récent</span>
+          <div class="d-flex gap-2 flex-wrap">
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;" onclick="filterDiplomes('')">Tous</button>
+            <button class="btn btn-sm" style="background:var(--yellow-bg);color:var(--yellow);border:none;border-radius:7px;font-size:.75rem;" onclick="filterDiplomes('signature')">Signature</button>
+            <button class="btn btn-sm" style="background:var(--red-bg);color:var(--red);border:none;border-radius:7px;font-size:.75rem;" onclick="filterDiplomes('non-conforme')">Non conformes</button>
+            <button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border:none;border-radius:7px;font-size:.75rem;" onclick="filterDiplomes('conforme')">Conformes</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table mb-0 dtbl" id="diplomesTable">
+            <thead>
+              <tr><th>N° Diplôme</th><th>Étudiant</th><th>Filière</th><th>Niveau</th><th>Statut conformité</th><th>Statut signature</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="diplomesBody">
+              <tr data-type="conforme"><td><code style="color:var(--teal);font-size:.8rem;">DIP-2025-001</code></td><td style="font-weight:600;">MBALLA Jean</td><td>Génie Info</td><td>Licence 3</td><td><span class="bs bs-green">Conforme</span></td><td><span class="bs bs-teal">Signé</span></td><td><button class="btn btn-sm" style="font-size:.73rem;background:var(--teal);color:#fff;border:none;border-radius:7px;padding:3px 10px;"><i class="bi bi-send me-1"></i>Transmettre</button></td></tr>
+              <tr data-type="signature"><td><code style="color:var(--teal);font-size:.8rem;">DIP-2025-002</code></td><td style="font-weight:600;">FOMO Claire</td><td>Génie Élec.</td><td>Licence 3</td><td><span class="bs bs-green">Conforme</span></td><td><span class="bs bs-orange">À signer</span></td><td><button class="btn btn-sm" style="font-size:.73rem;background:var(--orange);color:#fff;border:none;border-radius:7px;padding:3px 10px;"><i class="bi bi-pen me-1"></i>Soumettre</button></td></tr>
+              <tr data-type="non-conforme"><td><code style="color:var(--teal);font-size:.8rem;">DIP-2025-003</code></td><td style="font-weight:600;">NGONO Paul</td><td>Génie Civil</td><td>Master 2</td><td><span class="bs bs-red">Non conforme</span></td><td><span class="bs bs-yellow">Bloqué</span></td><td><button class="btn btn-sm" style="font-size:.73rem;background:var(--red);color:#fff;border:none;border-radius:7px;padding:3px 10px;"><i class="bi bi-pencil me-1"></i>Corriger</button></td></tr>
+              <tr data-type="conforme"><td><code style="color:var(--teal);font-size:.8rem;">DIP-2025-004</code></td><td style="font-weight:600;">BIYA Sylvie</td><td>Génie Info</td><td>Master 2</td><td><span class="bs bs-green">Conforme</span></td><td><span class="bs bs-teal">Signé</span></td><td><button class="btn btn-sm" style="font-size:.73rem;background:var(--teal);color:#fff;border:none;border-radius:7px;padding:3px 10px;"><i class="bi bi-send me-1"></i>Transmettre</button></td></tr>
+              <tr data-type="non-conforme"><td><code style="color:var(--teal);font-size:.8rem;">DIP-2025-005</code></td><td style="font-weight:600;">ESSAMA Roger</td><td>Génie Élec.</td><td>Licence 3</td><td><span class="bs bs-red">Non conforme</span></td><td><span class="bs bs-yellow">Bloqué</span></td><td><button class="btn btn-sm" style="font-size:.73rem;background:var(--red);color:#fff;border:none;border-radius:7px;padding:3px 10px;"><i class="bi bi-pencil me-1"></i>Corriger</button></td></tr>
+              <tr data-type="signature"><td><code style="color:var(--teal);font-size:.8rem;">DIP-2025-006</code></td><td style="font-weight:600;">OWONA Hélène</td><td>Génie Civil</td><td>Master 2</td><td><span class="bs bs-green">Conforme</span></td><td><span class="bs bs-orange">À signer</span></td><td><button class="btn btn-sm" style="font-size:.73rem;background:var(--orange);color:#fff;border:none;border-radius:7px;padding:3px 10px;"><i class="bi bi-pen me-1"></i>Soumettre</button></td></tr>
+              <tr data-type="conforme"><td><code style="color:var(--teal);font-size:.8rem;">DIP-2025-007</code></td><td style="font-weight:600;">TABI Claude</td><td>Génie Info</td><td>Licence 3</td><td><span class="bs bs-green">Conforme</span></td><td><span class="bs bs-teal">Signé</span></td><td><button class="btn btn-sm" style="font-size:.73rem;background:var(--teal);color:#fff;border:none;border-radius:7px;padding:3px 10px;"><i class="bi bi-send me-1"></i>Transmettre</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-12 col-lg-4">
+
+      <!-- ACTIONS RAPIDES -->
+      <div class="panel mb-4">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-lightning-charge me-2" style="color:var(--yellow);"></i>Accès rapide</span></div>
+        <div class="panel-bd">
+          <div class="action-grid">
+            <a href="#" class="act-card" data-bs-toggle="modal" data-bs-target="#prodModal">
+              <div class="act-icon" style="background:var(--teal-bg);color:var(--teal);"><i class="bi bi-mortarboard-fill"></i></div>
+              <div class="act-title">Produire un diplôme</div>
+              <div class="act-sub">Générer depuis dossier validé</div>
+              <div class="act-cta"><i class="bi bi-plus-lg"></i> Lancer</div>
+            </a>
+            <a href="#" class="act-card">
+              <div class="act-icon" style="background:var(--orange-bg);color:var(--orange);"><i class="bi bi-pen-fill"></i></div>
+              <div class="act-title">File de signature</div>
+              <div class="act-sub">47 diplômes en attente</div>
+              <div class="act-cta"><i class="bi bi-arrow-right"></i> Voir tout</div>
+            </a>
+            <a href="#" class="act-card">
+              <div class="act-icon" style="background:var(--red-bg);color:var(--red);"><i class="bi bi-shield-x"></i></div>
+              <div class="act-title">Non conformes</div>
+              <div class="act-sub">23 corrections urgentes</div>
+              <div class="act-cta"><i class="bi bi-arrow-right"></i> Corriger</div>
+            </a>
+            <a href="#" class="act-card">
+              <div class="act-icon" style="background:var(--blue-xlight);color:var(--blue);"><i class="bi bi-send-check-fill"></i></div>
+              <div class="act-title">Transmettre</div>
+              <div class="act-sub">153 prêts pour le Ministère</div>
+              <div class="act-cta"><i class="bi bi-arrow-right"></i> Préparer</div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFORMITÉ -->
+      <div class="panel mb-4">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-pie-chart me-2" style="color:var(--green);"></i>Répartition conformité</span></div>
+        <div class="panel-bd">
+
+          <!-- Mini donut SVG -->
+          <div class="d-flex justify-content-center mb-4" style="position:relative;height:150px;">
+            <svg viewBox="0 0 120 120" width="150" height="150">
+              <!-- Fond -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="var(--gris-bg)" stroke-width="16"/>
+              <!-- Conformes signés: 153/223 = 68.6% → 198deg -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="var(--green)" stroke-width="16"
+                stroke-dasharray="289" stroke-dashoffset="0"
+                stroke-linecap="butt" transform="rotate(-90 60 60)"/>
+              <!-- À signer: 47/223 = 21.1% → 75.9deg -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="var(--orange)" stroke-width="16"
+                stroke-dasharray="89 200" stroke-dashoffset="-289"
+                stroke-linecap="butt" transform="rotate(-90 60 60)"/>
+              <!-- Non conformes: 23/223 = 10.3% = reste -->
+              <circle cx="60" cy="60" r="46" fill="none" stroke="var(--red)" stroke-width="16"
+                stroke-dasharray="44 245" stroke-dashoffset="-378"
+                stroke-linecap="butt" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+              <div style="font-size:1.45rem;font-weight:900;color:var(--dark);">223</div>
+              <div style="font-size:.65rem;color:var(--gris-dark);">produits</div>
+            </div>
+          </div>
+
+          <div class="conf-row">
+            <div class="conf-dot" style="background:var(--green);"></div>
+            <div class="conf-label">Conformes &amp; signés</div>
+            <div class="conf-val">153</div>
+            <div class="conf-pct">69%</div>
+          </div>
+          <div class="conf-row">
+            <div class="conf-dot" style="background:var(--orange);"></div>
+            <div class="conf-label">En attente de signature</div>
+            <div class="conf-val">47</div>
+            <div class="conf-pct">21%</div>
+          </div>
+          <div class="conf-row">
+            <div class="conf-dot" style="background:var(--red);"></div>
+            <div class="conf-label">Non conformes</div>
+            <div class="conf-val">23</div>
+            <div class="conf-pct">10%</div>
+          </div>
+
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gris-bg);">
+            <div style="font-size:.73rem;color:var(--gris-dark);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;">Causes de non-conformité</div>
+            <div style="font-size:.78rem;color:var(--dark);margin-bottom:4px;display:flex;justify-content:space-between;"><span>• Erreur orthographique nom</span><strong>11</strong></div>
+            <div style="font-size:.78rem;color:var(--dark);margin-bottom:4px;display:flex;justify-content:space-between;"><span>• N° de série en doublon</span><strong>6</strong></div>
+            <div style="font-size:.78rem;color:var(--dark);margin-bottom:4px;display:flex;justify-content:space-between;"><span>• Date de naissance incorrecte</span><strong>4</strong></div>
+            <div style="font-size:.78rem;color:var(--dark);display:flex;justify-content:space-between;"><span>• Spécialité erronée</span><strong>2</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTION PAR FILIÈRE -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-bar-chart me-2" style="color:var(--blue);"></i>Production par filière</span></div>
+        <div class="panel-bd py-2">
+          <div class="conf-row">
+            <div style="font-size:.82rem;font-weight:600;flex:1;">Génie Informatique</div>
+            <span class="bs bs-green">87 prod.</span>
+          </div>
+          <div class="conf-row">
+            <div style="font-size:.82rem;font-weight:600;flex:1;">Génie Électrique</div>
+            <span class="bs bs-green">64 prod.</span>
+          </div>
+          <div class="conf-row">
+            <div style="font-size:.82rem;font-weight:600;flex:1;">Sciences Industrielles</div>
+            <span class="bs bs-yellow">42 prod.</span>
+          </div>
+          <div class="conf-row">
+            <div style="font-size:.82rem;font-weight:600;flex:1;">Génie Civil</div>
+            <span class="bs bs-yellow">21 prod.</span>
+          </div>
+          <div class="conf-row">
+            <div style="font-size:.82rem;font-weight:600;flex:1;">Génie Mécanique</div>
+            <span class="bs bs-red">9 prod.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<!-- MODAL LANCER PRODUCTION -->
+<div class="modal fade" id="prodModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="border-radius:16px;border:none;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:var(--teal-bg);border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--teal);font-size:1.3rem;flex-shrink:0;"><i class="bi bi-mortarboard-fill"></i></div>
+          <div>
+            <h5 class="modal-title" style="font-weight:800;font-size:1.05rem;">Lancer une production de diplômes</h5>
+            <div style="font-size:.78rem;color:var(--gris-dark);">Génération des diplômes à partir des dossiers validés</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-4">
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:4px;display:block;">Filière <span style="color:var(--red);">*</span></label>
+            <select class="form-select" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.875rem;">
+              <option value="">— Toutes les filières —</option>
+              <option>Génie Informatique (287 dossiers)</option>
+              <option>Génie Électrique (210 dossiers)</option>
+              <option>Génie Civil (198 dossiers)</option>
+              <option>Sciences Industrielles (231 dossiers)</option>
+              <option>Génie Mécanique (114 dossiers)</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:4px;display:block;">Niveau <span style="color:var(--red);">*</span></label>
+            <select class="form-select" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.875rem;">
+              <option value="">— Tous niveaux —</option>
+              <option>Licence 3</option>
+              <option>Master 2</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:4px;display:block;">Type de production</label>
+            <select class="form-select" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.875rem;">
+              <option>Diplôme original</option>
+              <option>Attestation provisoire</option>
+              <option>Duplicata</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:4px;display:block;">Date de production</label>
+            <input type="date" class="form-control" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.875rem;" value="2025-02-10"/>
+          </div>
+        </div>
+
+        <div style="background:var(--gris-bg);border-radius:11px;padding:16px;margin-bottom:16px;">
+          <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);margin-bottom:12px;">Étapes de production</div>
+          <div class="prod-step">
+            <div class="prod-num">1</div>
+            <div><div class="prod-text">Vérification des dossiers sélectionnés</div><div class="prod-sub">Contrôle automatique de complétude avant génération</div></div>
+          </div>
+          <div class="prod-step">
+            <div class="prod-num">2</div>
+            <div><div class="prod-text">Génération des fichiers diplôme (PDF sécurisé)</div><div class="prod-sub">Numérotation séquentielle, QR code de vérification</div></div>
+          </div>
+          <div class="prod-step">
+            <div class="prod-num">3</div>
+            <div><div class="prod-text">Contrôle qualité automatique + manuel</div><div class="prod-sub">Vérification orthographique, cohérence données</div></div>
+          </div>
+          <div class="prod-step">
+            <div class="prod-num">4</div>
+            <div><div class="prod-text">Soumission pour signature du Directeur</div><div class="prod-sub">Les diplômes conformes entrent dans la file de signature</div></div>
+          </div>
+        </div>
+
+        <div class="alert mb-0" style="background:var(--blue-xlight);border:none;border-radius:10px;font-size:.82rem;">
+          <i class="bi bi-info-circle-fill me-2" style="color:var(--blue);"></i>
+          Cette opération est <strong>irréversible</strong>. Les numéros de série seront attribués définitivement. Assurez-vous que les dossiers sont tous validés avant de lancer la production.
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" style="background:var(--teal);color:#fff;border:none;border-radius:8px;font-weight:700;padding:9px 22px;" onclick="lancerProduction()">
+          <i class="bi bi-mortarboard-fill me-2"></i>Lancer la production
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Sidebar toggle
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggler.addEventListener('click',()=>{
+    if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}
+    else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}
+  });
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+  window.addEventListener('resize',()=>{if(!isMobile()){sidebar.classList.remove('mobile-open');overlay.classList.remove('show');}});
+
+  // Filtre tableau diplômes
+  function filterDiplomes(type){
+    const rows=document.querySelectorAll('#diplomesBody tr');
+    rows.forEach(r=>{
+      r.style.display=(type===''||r.dataset.type===type)?'':'none';
+    });
+  }
+
+  // Lancer production
+  function lancerProduction(){
+    bootstrap.Modal.getInstance(document.getElementById('prodModal')).hide();
+    setTimeout(()=>{
+      alert('✓ Production lancée avec succès ! Les diplômes seront générés et soumis au contrôle qualité sous 24h.');
+    },300);
+  }
+</script>
+</body>
+</html>

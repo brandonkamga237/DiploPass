@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Liste finissants validée</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* ── SIDEBAR ── */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* ── TOPBAR ── */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--teal));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* ── MAIN ── */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+    .bc i{font-size:.7rem;}
+
+    /* ── CERTIFICATION BANNER ── */
+    .cert-banner{background:linear-gradient(135deg,var(--green) 0%,var(--teal) 100%);border-radius:16px;padding:24px 28px;margin-bottom:24px;display:flex;align-items:center;gap:20px;box-shadow:0 4px 20px rgba(45,160,110,.25);flex-wrap:wrap;}
+    .cert-icon{width:64px;height:64px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:#fff;flex-shrink:0;}
+    .cert-title{font-size:1.25rem;font-weight:900;color:#fff;}
+    .cert-sub{font-size:.84rem;color:rgba(255,255,255,.85);margin-top:4px;line-height:1.5;}
+    .cert-badge{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);border-radius:99px;padding:6px 16px;font-size:.78rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+    .cert-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;}
+    .cert-meta-item{display:flex;align-items:center;gap:6px;font-size:.78rem;color:rgba(255,255,255,.85);}
+    .cert-actions{margin-left:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+    .btn-cert{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.6);border-radius:10px;padding:9px 18px;font-size:.83rem;font-weight:700;color:#fff;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;text-decoration:none;white-space:nowrap;}
+    .btn-cert:hover{background:rgba(255,255,255,.35);color:#fff;}
+    .btn-cert-primary{background:#fff;border-color:#fff;color:var(--green);}
+    .btn-cert-primary:hover{background:rgba(255,255,255,.9);color:var(--green);}
+
+    /* ── STAT CARDS ── */
+    .scard{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:18px 20px;border-left:4px solid transparent;display:flex;align-items:center;justify-content:space-between;transition:box-shadow .2s,transform .2s;}
+    .scard:hover{box-shadow:0 5px 18px rgba(0,0,0,.1);transform:translateY(-1px);}
+    .scard.green{border-color:var(--green);}
+    .scard.blue{border-color:var(--blue);}
+    .scard.teal{border-color:var(--teal);}
+    .scard.yellow{border-color:var(--yellow);}
+    .sc-label{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);}
+    .sc-val{font-size:1.6rem;font-weight:900;color:var(--dark);margin-top:3px;}
+    .sc-sub{font-size:.73rem;color:var(--gris-dark);margin-top:2px;}
+    .sc-icon{font-size:1.9rem;opacity:.15;}
+    .scard.green .sc-icon{color:var(--green);}
+    .scard.blue .sc-icon{color:var(--blue);}
+    .scard.teal .sc-icon{color:var(--teal);}
+    .scard.yellow .sc-icon{color:var(--yellow);}
+
+    /* ── PANEL ── */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* ── TABS FILIÈRES ── */
+    .filiere-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;flex-wrap:nowrap;}
+    .ft{border:2px solid var(--gris-border);border-radius:99px;padding:6px 14px;font-size:.78rem;font-weight:700;color:var(--gris-dark);background:#fff;cursor:pointer;transition:all .14s;white-space:nowrap;flex-shrink:0;}
+    .ft:hover{border-color:var(--blue);color:var(--blue);}
+    .ft.active{border-color:var(--blue);background:var(--blue);color:#fff;}
+
+    /* ── DATATABLES OVERRIDES ── */
+    #validTable thead th{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border-bottom:2px solid var(--gris-bg)!important;border:none;padding:10px 14px;white-space:nowrap;}
+    #validTable tbody td{font-size:.84rem;color:var(--dark);border:none;padding:10px 14px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    #validTable tbody tr:hover td{background:#f5f7fb;}
+    #validTable tbody tr.corr-row td{background:rgba(37,102,158,.03);}
+    .dt-length label,.dt-search label{font-size:.82rem;color:var(--gris-dark);}
+    .dt-length select,.dt-search input{border:1px solid var(--gris-border)!important;border-radius:7px!important;padding:5px 10px!important;font-size:.82rem!important;}
+    .dt-search input:focus{border-color:var(--blue)!important;outline:none!important;}
+    .dataTables_paginate .paginate_button{border-radius:7px!important;font-size:.82rem!important;}
+    .dataTables_paginate .paginate_button.current,.dataTables_paginate .paginate_button.current:hover{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important;}
+
+    /* ── BADGE ── */
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-blue{background:var(--blue-xlight);color:var(--blue);}
+    .bs-teal{background:var(--teal-bg);color:var(--teal);}
+    .bs-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .bs-corr{background:var(--blue-xlight);color:var(--blue-dark);}
+
+    /* ── CORRECTION INDICATOR ── */
+    .corr-tag{font-size:.67rem;color:var(--blue);font-weight:700;display:flex;align-items:center;gap:3px;margin-top:2px;}
+    .original-crossed{font-size:.67rem;color:var(--gris-dark);text-decoration:line-through;}
+
+    /* ── REPARTITION PAR FILIÈRE ── */
+    .fp-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--gris-bg);}
+    .fp-row:last-child{border-bottom:none;}
+    .fp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .fp-name{font-size:.84rem;font-weight:600;color:var(--dark);flex:1;}
+    .fp-bar-wrap{width:100px;flex-shrink:0;}
+    .fp-bar{height:7px;border-radius:99px;background:var(--gris-bg);overflow:hidden;}
+    .fp-fill{height:100%;border-radius:99px;}
+    .fp-count{font-size:.78rem;font-weight:800;color:var(--dark);width:28px;text-align:right;flex-shrink:0;}
+    .fp-pct{font-size:.72rem;color:var(--gris-dark);width:32px;text-align:right;flex-shrink:0;}
+
+    /* ── TRAIL DE VALIDATION ── */
+    .trail-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--gris-bg);}
+    .trail-item:last-child{border-bottom:none;}
+    .trail-dot{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+    .trail-dot.g{background:var(--green-bg);color:var(--green);}
+    .trail-dot.b{background:var(--blue-xlight);color:var(--blue);}
+    .trail-dot.t{background:var(--teal-bg);color:var(--teal);}
+    .trail-body{flex:1;}
+    .trail-action{font-size:.84rem;font-weight:700;color:var(--dark);}
+    .trail-detail{font-size:.76rem;color:var(--gris-dark);margin-top:2px;line-height:1.4;}
+    .trail-time{font-size:.7rem;color:var(--gris-dark);white-space:nowrap;flex-shrink:0;margin-top:3px;}
+
+    /* ── ENVOI DIPLOMATION ── */
+    .send-bar{background:linear-gradient(135deg,var(--blue-dark),var(--blue));border-radius:13px;padding:20px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 4px 16px rgba(37,102,158,.2);}
+    .send-txt strong{color:#fff;font-size:.95rem;font-weight:800;display:block;}
+    .send-txt span{color:rgba(255,255,255,.8);font-size:.81rem;margin-top:3px;display:block;}
+    .btn-send{background:#fff;color:var(--blue-dark);border:none;border-radius:10px;padding:11px 24px;font-size:.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;flex-shrink:0;}
+    .btn-send:hover{background:var(--blue-xlight);}
+    .btn-send-outline{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.5);border-radius:10px;padding:11px 18px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;flex-shrink:0;}
+    .btn-send-outline:hover{background:rgba(255,255,255,.25);}
+
+    /* ── PRINT STYLES ── */
+    @media print{
+      #sidebar,#topbar,#main>.bc,#main>.row:last-child,.send-bar,.dt-search,.dt-length,.dataTables_paginate,.dataTables_info,.panel-hd button,.panel-hd a{display:none!important;}
+      #main{margin:0;padding:10px;}
+      .cert-banner{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      body{background:#fff;}
+    }
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}.cert-actions{align-items:flex-start;margin-left:0;}}
+    @media(max-width:767px){.cert-banner{flex-direction:column;}.send-bar{flex-direction:column;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}.filiere-tabs{flex-wrap:wrap;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <a href="chef_scolarite.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Scolarité / Diplomation</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Gestion listes</div>
+    <a href="import_finissants.html" class="nav-link"><i class="bi bi-cloud-upload"></i><span class="sl">Import liste finissants</span></a>
+    <a href="correction_liste.html" class="nav-link"><i class="bi bi-pencil-square"></i><span class="sl">Correction liste</span></a>
+    <a href="liste_validee.html" class="nav-link active"><i class="bi bi-check2-square"></i><span class="sl">Liste validée</span></a>
+    <div class="ss">Navigation</div>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sl">Bureau Diplomation</span></a>
+    <a href="tables.html" class="nav-link"><i class="bi bi-folder2-open"></i><span class="sl">Dossiers finissants</span></a>
+    <a href="authentification_saisie.html" class="nav-link"><i class="bi bi-shield-check"></i><span class="sl">Authentification</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<!-- TOPBAR -->
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Liste finissants validée</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Promotion 2024-2025 · Prête pour production des diplômes</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-c">CS</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Scolarité</div><div class="av-role">Scolarité</div></div>
+    </a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="bc">
+    <a href="import_finissants.html">Import</a><i class="bi bi-chevron-right"></i>
+    <a href="correction_liste.html">Correction</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Liste validée</span>
+  </div>
+
+  <!-- BANDEAU CERTIFICATION -->
+  <div class="cert-banner">
+    <div class="cert-icon"><i class="bi bi-patch-check-fill"></i></div>
+    <div style="flex:1;">
+      <div class="cert-title">Liste officielle des finissants — Validée</div>
+      <div class="cert-sub">Cette liste a été importée, corrigée et validée par les représentants de filière et le Chef de Service de la Scolarité. Elle est certifiée conforme et constitue la base officielle pour la production des diplômes.</div>
+      <div class="cert-meta">
+        <span class="cert-meta-item"><i class="bi bi-calendar3"></i>Validée le 28 jan. 2025 à 14h32</span>
+        <span class="cert-meta-item"><i class="bi bi-person-check"></i>Mme EBENE Claire — Chef Service Scolarité</span>
+        <span class="cert-meta-item"><i class="bi bi-pencil-square"></i>9 corrections apportées</span>
+        <span class="cert-meta-item"><i class="bi bi-hash"></i>Réf. ENSET-2025-LIST-001</span>
+      </div>
+    </div>
+    <div class="cert-actions">
+      <span class="cert-badge"><i class="bi bi-shield-fill-check"></i>Certifiée conforme</span>
+      <button class="btn-cert btn-cert-primary mt-2" onclick="window.print()"><i class="bi bi-printer"></i>Imprimer la liste</button>
+      <button class="btn-cert mt-1" onclick="exporterCSV()"><i class="bi bi-download"></i>Exporter CSV</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="scard green">
+        <div><div class="sc-label">Finissants validés</div><div class="sc-val">609</div><div class="sc-sub">Sur 612 importés</div></div>
+        <i class="bi bi-people-fill sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="scard blue">
+        <div><div class="sc-label">Corrections apportées</div><div class="sc-val">9</div><div class="sc-sub">Par 5 représentants</div></div>
+        <i class="bi bi-pencil-fill sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="scard teal">
+        <div><div class="sc-label">Filières représentées</div><div class="sc-val">5</div><div class="sc-sub">100% couvertes</div></div>
+        <i class="bi bi-diagram-3-fill sc-icon"></i>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="scard yellow">
+        <div><div class="sc-label">Lignes supprimées</div><div class="sc-val">3</div><div class="sc-sub">Doublons &amp; erreurs</div></div>
+        <i class="bi bi-trash3-fill sc-icon"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- TABLE PRINCIPALE -->
+    <div class="col-12 col-xl-8">
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-list-check me-2" style="color:var(--green);"></i>Liste officielle des 609 finissants</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <span style="font-size:.72rem;background:var(--green-bg);color:var(--green);padding:3px 9px;border-radius:99px;font-weight:700;">
+              <i class="bi bi-check-circle-fill me-1"></i>Validée
+            </span>
+            <button class="btn btn-sm btn-light" style="border-radius:8px;font-size:.76rem;border:1px solid var(--gris-border);" onclick="toggleCorr()">
+              <i class="bi bi-eye me-1"></i>Voir corrections
+            </button>
+          </div>
+        </div>
+
+        <!-- ONGLETS FILIÈRES -->
+        <div class="px-3 pt-3 pb-0">
+          <div class="filiere-tabs mb-3">
+            <button class="ft active" onclick="filtrerFiliere('',this)">Toutes (609)</button>
+            <button class="ft" onclick="filtrerFiliere('Génie Informatique',this)">Génie Info (224)</button>
+            <button class="ft" onclick="filtrerFiliere('Génie Électrique',this)">Génie Élec. (168)</button>
+            <button class="ft" onclick="filtrerFiliere('Génie Civil',this)">Génie Civil (117)</button>
+            <button class="ft" onclick="filtrerFiliere('Sciences Industrielles',this)">Sci. Ind. (66)</button>
+            <button class="ft" onclick="filtrerFiliere('Génie Mécanique',this)">Génie Méca. (34)</button>
+          </div>
+        </div>
+
+        <div class="table-responsive px-3 pb-3">
+          <table id="validTable" class="table w-100">
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Matricule</th>
+                <th>Nom</th>
+                <th>Prénoms</th>
+                <th>Date naiss.</th>
+                <th>Lieu naiss.</th>
+                <th>Filière</th>
+                <th>Niveau</th>
+                <th>Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:var(--gris-dark);font-size:.78rem;">1</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0042</code></td>
+                <td style="font-weight:600;">MBALLA</td>
+                <td>Jean-Baptiste</td>
+                <td>14/03/2000</td>
+                <td>Yaoundé</td>
+                <td><span class="bs bs-blue" style="font-size:.68rem;">Génie Informatique</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-green">Conforme</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gris-dark);font-size:.78rem;">2</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0043</code></td>
+                <td style="font-weight:600;">FOMO EKOTTO</td>
+                <td>Claire</td>
+                <td>22/07/1999</td>
+                <td>Douala</td>
+                <td><span class="bs bs-yellow" style="font-size:.68rem;">Génie Électrique</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-green">Conforme</span></td>
+              </tr>
+              <tr class="corr-row">
+                <td style="color:var(--gris-dark);font-size:.78rem;">3</td>
+                <td>
+                  <code style="color:var(--blue);font-size:.8rem;">21G0044</code>
+                  <div class="corr-tag show-corr" style="display:none;"><i class="bi bi-pencil-fill"></i>Corrigé</div>
+                  <div class="original-crossed show-corr" style="display:none;">21G-044</div>
+                </td>
+                <td style="font-weight:600;">NGONO</td>
+                <td>Paul Rodrigue</td>
+                <td>
+                  08/01/2000
+                  <div class="corr-tag show-corr" style="display:none;"><i class="bi bi-pencil-fill"></i>Corrigé</div>
+                  <div class="original-crossed show-corr" style="display:none;">08/13/2000</div>
+                </td>
+                <td>Bafoussam</td>
+                <td><span class="bs bs-teal" style="font-size:.68rem;">Génie Civil</span></td>
+                <td>Master 2</td>
+                <td><span class="bs bs-corr">Corrigé</span></td>
+              </tr>
+              <tr class="corr-row">
+                <td style="color:var(--gris-dark);font-size:.78rem;">4</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0045</code></td>
+                <td style="font-weight:600;">
+                  BIYA
+                  <div class="corr-tag show-corr" style="display:none;"><i class="bi bi-pencil-fill"></i>Corrigé</div>
+                  <div class="original-crossed show-corr" style="display:none;">biya</div>
+                </td>
+                <td>Sylvie Carole</td>
+                <td>01/11/1999</td>
+                <td>Yaoundé</td>
+                <td><span class="bs bs-blue" style="font-size:.68rem;">Génie Informatique</span></td>
+                <td>Master 2</td>
+                <td><span class="bs bs-corr">Corrigé</span></td>
+              </tr>
+              <tr class="corr-row">
+                <td style="color:var(--gris-dark);font-size:.78rem;">5</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0046</code></td>
+                <td style="font-weight:600;">ATEBA</td>
+                <td>Marc Fabrice</td>
+                <td>
+                  28/02/2001
+                  <div class="corr-tag show-corr" style="display:none;"><i class="bi bi-pencil-fill"></i>Corrigé</div>
+                  <div class="original-crossed show-corr" style="display:none;">30/02/2001</div>
+                </td>
+                <td>Bertoua</td>
+                <td><span class="bs" style="background:#f0ebf8;color:#7b5ea7;font-size:.68rem;">Sciences Ind.</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-corr">Corrigé</span></td>
+              </tr>
+              <tr class="corr-row">
+                <td style="color:var(--gris-dark);font-size:.78rem;">6</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0047</code></td>
+                <td style="font-weight:600;">KOAGNE</td>
+                <td>Bernard</td>
+                <td>17/05/2000</td>
+                <td>
+                  Maroua
+                  <div class="corr-tag show-corr" style="display:none;"><i class="bi bi-pencil-fill"></i>Corrigé</div>
+                  <div class="original-crossed show-corr" style="display:none;">(vide)</div>
+                </td>
+                <td><span class="bs bs-teal" style="font-size:.68rem;">Génie Civil</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-corr">Corrigé</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gris-dark);font-size:.78rem;">7</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0048</code></td>
+                <td style="font-weight:600;">NKOULOU</td>
+                <td>Marie-José</td>
+                <td>03/09/1998</td>
+                <td>Kribi</td>
+                <td><span class="bs bs-yellow" style="font-size:.68rem;">Génie Mécanique</span></td>
+                <td>Master 2</td>
+                <td><span class="bs bs-green">Conforme</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gris-dark);font-size:.78rem;">8</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0049</code></td>
+                <td style="font-weight:600;">ESSAMA</td>
+                <td>Roger Thierry</td>
+                <td>11/12/2000</td>
+                <td>Ngaoundéré</td>
+                <td><span class="bs bs-yellow" style="font-size:.68rem;">Génie Électrique</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-green">Conforme</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gris-dark);font-size:.78rem;">9</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0051</code></td>
+                <td style="font-weight:600;">TABI</td>
+                <td>Claude Aurélien</td>
+                <td>09/06/2001</td>
+                <td>Douala</td>
+                <td><span class="bs bs-blue" style="font-size:.68rem;">Génie Informatique</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-green">Conforme</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gris-dark);font-size:.78rem;">10</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0052</code></td>
+                <td style="font-weight:600;">FOUDA</td>
+                <td>Patrick Francis</td>
+                <td>14/08/1999</td>
+                <td>Yaoundé</td>
+                <td><span class="bs" style="background:#f0ebf8;color:#7b5ea7;font-size:.68rem;">Sciences Ind.</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-green">Conforme</span></td>
+              </tr>
+              <tr class="corr-row">
+                <td style="color:var(--gris-dark);font-size:.78rem;">11</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0053</code></td>
+                <td style="font-weight:600;">ABANDA</td>
+                <td>
+                  Victoire Aline
+                  <div class="corr-tag show-corr" style="display:none;"><i class="bi bi-pencil-fill"></i>Corrigé</div>
+                  <div class="original-crossed show-corr" style="display:none;">Victoire 2Aline</div>
+                </td>
+                <td>22/10/2000</td>
+                <td>Limbé</td>
+                <td><span class="bs bs-yellow" style="font-size:.68rem;">Génie Électrique</span></td>
+                <td>Licence 3</td>
+                <td><span class="bs bs-corr">Corrigé</span></td>
+              </tr>
+              <tr>
+                <td style="color:var(--gris-dark);font-size:.78rem;">12</td>
+                <td><code style="color:var(--blue);font-size:.8rem;">21G0054</code></td>
+                <td style="font-weight:600;">MANGA</td>
+                <td>Éric Stéphane</td>
+                <td>30/06/1999</td>
+                <td>Bafoussam</td>
+                <td><span class="bs bs-blue" style="font-size:.68rem;">Génie Informatique</span></td>
+                <td>Master 2</td>
+                <td><span class="bs bs-green">Conforme</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-12 col-xl-4">
+
+      <!-- RÉPARTITION PAR FILIÈRE -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-pie-chart me-2" style="color:var(--blue);"></i>Répartition par filière</span></div>
+        <div class="panel-bd py-2">
+          <div class="fp-row">
+            <div class="fp-dot" style="background:var(--blue);"></div>
+            <div class="fp-name">Génie Informatique</div>
+            <div class="fp-bar-wrap"><div class="fp-bar"><div class="fp-fill" style="width:37%;background:var(--blue);"></div></div></div>
+            <div class="fp-count">224</div>
+            <div class="fp-pct">37%</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-dot" style="background:var(--yellow);"></div>
+            <div class="fp-name">Génie Électrique</div>
+            <div class="fp-bar-wrap"><div class="fp-bar"><div class="fp-fill" style="width:28%;background:var(--yellow);"></div></div></div>
+            <div class="fp-count">168</div>
+            <div class="fp-pct">28%</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-dot" style="background:var(--teal);"></div>
+            <div class="fp-name">Génie Civil</div>
+            <div class="fp-bar-wrap"><div class="fp-bar"><div class="fp-fill" style="width:19%;background:var(--teal);"></div></div></div>
+            <div class="fp-count">117</div>
+            <div class="fp-pct">19%</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-dot" style="background:#7b5ea7;"></div>
+            <div class="fp-name">Sciences Industrielles</div>
+            <div class="fp-bar-wrap"><div class="fp-bar"><div class="fp-fill" style="width:11%;background:#7b5ea7;"></div></div></div>
+            <div class="fp-count">66</div>
+            <div class="fp-pct">11%</div>
+          </div>
+          <div class="fp-row">
+            <div class="fp-dot" style="background:var(--red);"></div>
+            <div class="fp-name">Génie Mécanique</div>
+            <div class="fp-bar-wrap"><div class="fp-bar"><div class="fp-fill" style="width:6%;background:var(--red);"></div></div></div>
+            <div class="fp-count">34</div>
+            <div class="fp-pct">6%</div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gris-bg);display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div style="text-align:center;background:var(--green-bg);border-radius:9px;padding:10px;">
+              <div style="font-size:1.2rem;font-weight:900;color:var(--green);">489</div>
+              <div style="font-size:.68rem;font-weight:700;color:var(--gris-dark);text-transform:uppercase;">Licence 3</div>
+            </div>
+            <div style="text-align:center;background:var(--blue-xlight);border-radius:9px;padding:10px;">
+              <div style="font-size:1.2rem;font-weight:900;color:var(--blue);">120</div>
+              <div style="font-size:.68rem;font-weight:700;color:var(--gris-dark);text-transform:uppercase;">Master 2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PISTE DE VALIDATION -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-shield-check me-2" style="color:var(--green);"></i>Piste d'audit — Validation</span></div>
+        <div class="panel-bd py-0">
+          <div class="trail-item">
+            <div class="trail-dot b"><i class="bi bi-cloud-upload"></i></div>
+            <div class="trail-body">
+              <div class="trail-action">Import du fichier CSV</div>
+              <div class="trail-detail">612 lignes chargées · 3 erreurs critiques, 3 alertes détectées</div>
+              <div style="font-size:.7rem;color:var(--gris-dark);margin-top:3px;"><i class="bi bi-person me-1"></i>Cellule Informatique</div>
+            </div>
+            <div class="trail-time">25 jan.<br>08h14</div>
+          </div>
+          <div class="trail-item">
+            <div class="trail-dot b"><i class="bi bi-pencil"></i></div>
+            <div class="trail-body">
+              <div class="trail-action">Correction par les représentants</div>
+              <div class="trail-detail">9 corrections apportées sur 5 filières · 3 doublons supprimés</div>
+              <div style="font-size:.7rem;color:var(--gris-dark);margin-top:3px;"><i class="bi bi-people me-1"></i>5 représentants de filière</div>
+            </div>
+            <div class="trail-time">26-27 jan.<br>Multi</div>
+          </div>
+          <div class="trail-item">
+            <div class="trail-dot t"><i class="bi bi-check-circle"></i></div>
+            <div class="trail-body">
+              <div class="trail-action">Vérification Chef de Service</div>
+              <div class="trail-detail">Contrôle de cohérence global · 609 lignes retenues</div>
+              <div style="font-size:.7rem;color:var(--gris-dark);margin-top:3px;"><i class="bi bi-person me-1"></i>Mme EBENE Claire</div>
+            </div>
+            <div class="trail-time">28 jan.<br>11h45</div>
+          </div>
+          <div class="trail-item">
+            <div class="trail-dot g"><i class="bi bi-patch-check-fill"></i></div>
+            <div class="trail-body">
+              <div class="trail-action">Validation officielle</div>
+              <div class="trail-detail">Liste certifiée conforme · Réf. ENSET-2025-LIST-001</div>
+              <div style="font-size:.7rem;color:var(--gris-dark);margin-top:3px;"><i class="bi bi-person me-1"></i>Mme EBENE Claire · Chef Scolarité</div>
+            </div>
+            <div class="trail-time">28 jan.<br>14h32</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIGNES SUPPRIMÉES -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-trash3 me-2" style="color:var(--red);"></i>Lignes exclues (3)</span></div>
+        <div class="panel-bd py-1">
+          <div style="padding:9px 0;border-bottom:1px solid var(--gris-bg);font-size:.83rem;">
+            <div style="font-weight:600;color:var(--dark);">Ligne 9 — 21G0042 OWONA Hélène</div>
+            <div style="font-size:.74rem;color:var(--red);margin-top:2px;"><i class="bi bi-x-circle me-1"></i>Doublon de matricule avec la ligne 1</div>
+          </div>
+          <div style="padding:9px 0;border-bottom:1px solid var(--gris-bg);font-size:.83rem;">
+            <div style="font-weight:600;color:var(--dark);">Ligne 14 — 21G0067 MFOU Patrick</div>
+            <div style="font-size:.74rem;color:var(--red);margin-top:2px;"><i class="bi bi-x-circle me-1"></i>Étudiant non inscrit — matricule inexistant</div>
+          </div>
+          <div style="padding:9px 0;font-size:.83rem;">
+            <div style="font-weight:600;color:var(--dark);">Ligne 31 — (vide) ABAH Christine</div>
+            <div style="font-size:.74rem;color:var(--red);margin-top:2px;"><i class="bi bi-x-circle me-1"></i>Matricule entièrement manquant, non récupérable</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRE D'ENVOI AU BUREAU DIPLOMATION -->
+  <div class="send-bar">
+    <div style="flex:1;" class="send-txt">
+      <strong>Transmettre cette liste au Bureau de la Diplomation</strong>
+      <span>La liste validée (609 finissants) sera transmise pour lancer la production des diplômes. Cette action est irréversible.</span>
+    </div>
+    <button class="btn-send-outline" onclick="exporterCSV()"><i class="bi bi-download"></i>Télécharger CSV</button>
+    <button class="btn-send" onclick="transmettre()"><i class="bi bi-send-fill"></i>Transmettre au Bureau Diplomation</button>
+  </div>
+
+</main>
+
+<!-- TOAST -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
+  <div id="fbToast" class="toast align-items-center border-0" style="border-radius:10px;">
+    <div class="d-flex">
+      <div class="toast-body" id="fbToastBody" style="font-size:.85rem;font-weight:600;"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  /* DATATABLES */
+  let dt;
+  $(document).ready(function(){
+    dt = $('#validTable').DataTable({
+      language:{url:'https://cdn.datatables.net/plug-ins/1.13.8/i18n/fr-FR.json'},
+      pageLength:15,
+      order:[[0,'asc']],
+      columnDefs:[{orderable:false,targets:8}]
+    });
+  });
+
+  /* FILTRE FILIÈRE */
+  function filtrerFiliere(filiere, btn){
+    document.querySelectorAll('.ft').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    dt.search(filiere).draw();
+  }
+
+  /* TOGGLE CORRECTIONS */
+  let corrVisible = false;
+  function toggleCorr(){
+    corrVisible = !corrVisible;
+    document.querySelectorAll('.show-corr').forEach(el=>{
+      el.style.display = corrVisible ? 'flex' : 'none';
+    });
+    const btn = event.currentTarget;
+    btn.innerHTML = corrVisible
+      ? '<i class="bi bi-eye-slash me-1"></i>Masquer corrections'
+      : '<i class="bi bi-eye me-1"></i>Voir corrections';
+  }
+
+  /* EXPORT CSV */
+  function exporterCSV(){
+    const headers=['N°','Matricule','Nom','Prénoms','Date naissance','Lieu naissance','Filière','Niveau','Statut'];
+    const rows=[];
+    $('#validTable tbody tr').each(function(){
+      const cells=$(this).find('td');
+      rows.push([
+        cells.eq(0).text().trim(),
+        cells.eq(1).text().trim(),
+        cells.eq(2).text().trim(),
+        cells.eq(3).text().trim(),
+        cells.eq(4).text().trim(),
+        cells.eq(5).text().trim(),
+        cells.eq(6).text().trim(),
+        cells.eq(7).text().trim(),
+        cells.eq(8).text().trim(),
+      ]);
+    });
+    const csv=[headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='liste_finissants_validee_2025.csv';
+    a.click();
+    showToast('✓ Export CSV généré avec succès.');
+  }
+
+  /* TRANSMISSION */
+  function transmettre(){
+    if(confirm('Transmettre la liste officielle des 609 finissants au Bureau de la Diplomation ? Cette action déclenchera la production des diplômes.')){
+      showToast('✓ Liste transmise au Bureau de la Diplomation avec succès !');
+      setTimeout(()=>{window.location.href='chef_diplomation.html';},2000);
+    }
+  }
+
+  /* TOAST */
+  function showToast(msg,ok=true){
+    const t=document.getElementById('fbToast'),b=document.getElementById('fbToastBody');
+    t.style.background=ok?'var(--green)':'var(--red)';t.style.color='#fff';
+    b.textContent=msg;new bootstrap.Toast(t,{delay:3200}).show();
+  }
+
+  /* SIDEBAR */
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggler.addEventListener('click',()=>{
+    if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}
+    else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}
+  });
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+  window.addEventListener('resize',()=>{if(!isMobile()){sidebar.classList.remove('mobile-open');overlay.classList.remove('show');}});
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Communiqués{% endblock %}
+{% block page_title %}Communiqués{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('directeur.nouveau_communique') }}" class="btn btn-primary btn-sm">
+  <i class="bi bi-plus-lg"></i> Nouveau communiqué
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-megaphone me-2"></i>Communiqués officiels</h1>
+</div>
+
+{# ── Panneau de lancement par année ─────────────────────────────────────── #}
+{% if annees %}
+<div class="card mb-4 border-primary">
+  <div class="card-header bg-primary text-white">
+    <i class="bi bi-play-circle-fill me-2"></i>Lancer le processus de diplomation
+  </div>
+  <div class="card-body">
+    <p class="mb-3 text-muted" style="font-size:.9rem">
+      Cliquez sur <strong>Lancer</strong> pour une année une fois le communiqué publié.
+      Les étudiants pourront alors déposer leur dossier.
+    </p>
+    <div class="d-flex flex-wrap gap-3">
+      {% for a in annees %}
+      <div class="border rounded p-3 d-flex align-items-center gap-3"
+           style="min-width:220px; background:#f8fafc">
+        <div>
+          <div class="fw-600">{{ a.code }}</div>
+          <div style="font-size:.8rem; color:#64748b">
+            {% if a.processus_lance %}
+            <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Processus lancé</span>
+            {% else %}
+            <span class="text-muted">En attente</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if not a.processus_lance %}
+        <form method="POST"
+              action="{{ url_for('directeur.lancer_processus', id=a.id) }}"
+              class="ms-auto">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="bi bi-play-fill me-1"></i>Lancer
+          </button>
+        </form>
+        {% else %}
+        <span class="badge bg-success ms-auto">Actif</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header">
+    <span>Liste des communiqués</span>
+    <span class="badge bg-secondary">{{ communiques|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>N°</th>
+          <th>Titre</th>
+          <th>Date</th>
+          <th>Processus</th>
+          <th>Statut</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in communiques %}
+        <tr>
+          <td><code>{{ c.numero_communique }}</code></td>
+          <td class="fw-500">{{ c.titre }}</td>
+          <td>{{ c.date_emission.strftime('%d/%m/%Y') }}</td>
+          <td><span class="badge bg-info">{{ c.type_processus }}</span></td>
+          <td>
+            <span class="badge bg-{{ 'success' if c.statut == 'PUBLIE' else 'secondary' }}">
+              {{ c.statut }}
+            </span>
+          </td>
+          <td>
+            {% if c.statut == 'BROUILLON' %}
+            <form method="POST" action="{{ url_for('directeur.publier_communique', id=c.id_communique) }}" class="d-inline">
+              <button type="submit" class="btn btn-sm btn-success">
+                <i class="bi bi-send me-1"></i>Publier
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="bi bi-megaphone"></i>
+              <h6>Aucun communiqué</h6>
+              <p>Créez le premier communiqué officiel.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

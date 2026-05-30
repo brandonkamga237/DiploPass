@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau dossier{% endblock %}
+{% block page_title %}Nouveau dossier{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-folder-plus me-2"></i>Nouveau dossier de diplomation</h1>
+  <p>
+    <a href="{{ url_for('representant.liste_dossiers') }}" class="text-decoration-none" style="color:#64748b">
+      <i class="bi bi-arrow-left me-1"></i>Retour à la liste
+    </a>
+  </p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">Informations du dossier</div>
+      <div class="card-body">
+        <form method="POST">
+
+          <div class="mb-4">
+            <label class="form-label">Matricule de l'étudiant</label>
+            <input type="text" name="matricule" class="form-control" required
+                   placeholder="Ex : 21G0001" autocomplete="off">
+          </div>
+
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label">Montant des frais (FCFA)</label>
+              <input type="number" name="montant_frais" class="form-control" min="0" step="500">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Année académique</label>
+              <input type="text" name="annee_academique" class="form-control" placeholder="2024-2025">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date limite de dépôt</label>
+              <input type="date" name="date_limite_depot" class="form-control">
+            </div>
+            <div class="col-md-6 d-flex align-items-end">
+              <div class="form-check">
+                <input type="checkbox" name="frais_payes" class="form-check-input" id="fraisPayes">
+                <label class="form-check-label fw-500" for="fraisPayes">Frais acquittés</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Pièces requises pour la diplomation</label>
+            <div class="card" style="max-height:280px; overflow-y:auto">
+              <ul class="list-group list-group-flush mb-0">
+                {% for doc in documents %}
+                <li class="list-group-item d-flex align-items-start gap-2" style="padding:10px 16px">
+                  <span class="badge bg-secondary mt-1" style="flex-shrink:0">{{ doc.numero }}</span>
+                  <div>
+                    <span style="font-size:.84rem">{{ doc.nom }}</span>
+                    {% if not doc.obligatoire %}
+                    <span class="badge bg-warning ms-1" style="font-size:.65rem">optionnel</span>
+                    {% endif %}
+                    {% if doc.conditionnel %}
+                    <div class="form-text">{{ doc.condition_texte }}</div>
+                    {% endif %}
+                  </div>
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-folder-plus me-2"></i>Créer le dossier
+            </button>
+            <a href="{{ url_for('representant.liste_dossiers') }}" class="btn btn-outline-secondary">Annuler</a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

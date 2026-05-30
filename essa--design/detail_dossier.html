@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Détail dossier diplomation</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --purple:#7b5ea7;--purple-bg:#f0ebf8;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;font-size:1.2rem;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.15rem;cursor:pointer;transition:background .15s;text-decoration:none;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-circle{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+
+    /* BREADCRUMB */
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+    .bc i{font-size:.7rem;color:var(--gris-dark);}
+
+    /* FICHE HEADER */
+    .fiche-header{background:var(--white);border-radius:14px;box-shadow:0 1px 8px rgba(0,0,0,.07);padding:24px;margin-bottom:20px;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+    .fiche-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--blue-light));color:#fff;font-size:1.4rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .fiche-info{flex:1;min-width:200px;}
+    .fiche-name{font-size:1.2rem;font-weight:800;color:var(--dark);}
+    .fiche-matricule{font-size:.83rem;color:var(--blue);font-weight:700;margin-top:2px;}
+    .fiche-chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+    .chip{display:inline-flex;align-items:center;gap:5px;font-size:.74rem;font-weight:700;padding:4px 11px;border-radius:99px;}
+    .chip-blue{background:var(--blue-xlight);color:var(--blue);}
+    .chip-green{background:var(--green-bg);color:var(--green);}
+    .chip-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .chip-red{background:var(--red-bg);color:var(--red);}
+    .chip-purple{background:var(--purple-bg);color:var(--purple);}
+    .chip-teal{background:var(--teal-bg);color:var(--teal);}
+    .fiche-meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:14px;}
+    .fiche-meta-item label{font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--gris-dark);}
+    .fiche-meta-item .val{font-size:.88rem;font-weight:600;color:var(--dark);margin-top:2px;}
+    .fiche-status-col{display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0;}
+    .global-status{text-align:center;background:var(--yellow-bg);border-radius:12px;padding:12px 18px;}
+    .global-status .gs-val{font-size:1.1rem;font-weight:800;color:var(--yellow);}
+    .global-status .gs-label{font-size:.7rem;color:var(--gris-dark);margin-top:2px;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* PIÈCES */
+    .piece-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--gris-bg);}
+    .piece-row:last-child{border-bottom:none;}
+    .piece-num{width:26px;height:26px;border-radius:50%;background:var(--gris-bg);color:var(--gris-dark);font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .piece-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+    .piece-icon.ok{background:var(--green-bg);color:var(--green);}
+    .piece-icon.ko{background:var(--red-bg);color:var(--red);}
+    .piece-icon.warn{background:var(--yellow-bg);color:var(--yellow);}
+    .piece-info{flex:1;}
+    .piece-name{font-size:.86rem;font-weight:600;color:var(--dark);}
+    .piece-sub{font-size:.74rem;color:var(--gris-dark);margin-top:1px;}
+    .piece-status{flex-shrink:0;}
+    .piece-action{flex-shrink:0;}
+    .ps{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;}
+    .ps-ok{background:var(--green-bg);color:var(--green);}
+    .ps-ko{background:var(--red-bg);color:var(--red);}
+    .ps-warn{background:var(--yellow-bg);color:var(--yellow);}
+
+    /* AUTHENTIFICATION */
+    .auth-result{border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;}
+    .auth-result.authentic{background:var(--green-bg);}
+    .auth-result.suspect{background:var(--red-bg);}
+    .auth-result.pending{background:var(--yellow-bg);}
+    .auth-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+    .auth-result.authentic .auth-icon{background:rgba(45,160,110,.15);color:var(--green);}
+    .auth-result.suspect .auth-icon{background:rgba(224,82,82,.15);color:var(--red);}
+    .auth-result.pending .auth-icon{background:rgba(232,160,32,.15);color:var(--yellow);}
+    .auth-title{font-size:.95rem;font-weight:800;}
+    .auth-result.authentic .auth-title{color:var(--green);}
+    .auth-result.suspect .auth-title{color:var(--red);}
+    .auth-result.pending .auth-title{color:var(--yellow);}
+    .auth-sub{font-size:.78rem;color:var(--dark);margin-top:3px;}
+    .auth-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+    .auth-detail{background:var(--white);border-radius:9px;padding:10px 14px;}
+    .auth-detail label{font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--gris-dark);}
+    .auth-detail .val{font-size:.87rem;font-weight:700;color:var(--dark);margin-top:3px;}
+
+    /* PRODUCTION DIPLÔME */
+    .prod-track{display:flex;gap:0;align-items:flex-start;}
+    .prod-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+    .prod-step::after{content:'';position:absolute;right:0;top:17px;width:50%;height:2px;background:var(--gris-bg);}
+    .prod-step::before{content:'';position:absolute;left:0;top:17px;width:50%;height:2px;background:var(--gris-bg);}
+    .prod-step:first-child::before,.prod-step:last-child::after{display:none;}
+    .prod-step.done::after,.prod-step.done::before{background:var(--green);}
+    .prod-step.active::before{background:var(--green);}
+    .prod-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;z-index:1;border:3px solid;}
+    .prod-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+    .prod-dot.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(37,102,158,.15);}
+    .prod-dot.pending{background:var(--white);border-color:var(--gris-border);color:var(--gris-dark);}
+    .prod-dot.blocked{background:#f4f4f6;border-color:#ddd;color:#ccc;}
+    .prod-label{font-size:.71rem;font-weight:700;text-align:center;margin-top:7px;color:var(--dark);line-height:1.3;max-width:80px;}
+    .prod-date{font-size:.65rem;color:var(--gris-dark);text-align:center;margin-top:1px;}
+
+    /* HISTORIQUE */
+    .hist-item{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--gris-bg);}
+    .hist-item:last-child{border-bottom:none;}
+    .hist-dot{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+    .hist-dot.g{background:var(--green-bg);color:var(--green);}
+    .hist-dot.b{background:var(--blue-xlight);color:var(--blue);}
+    .hist-dot.y{background:var(--yellow-bg);color:var(--yellow);}
+    .hist-dot.r{background:var(--red-bg);color:var(--red);}
+    .hist-dot.p{background:var(--purple-bg);color:var(--purple);}
+    .hist-dot.t{background:var(--teal-bg);color:var(--teal);}
+    .hist-body{flex:1;}
+    .hist-action{font-size:.84rem;font-weight:600;color:var(--dark);}
+    .hist-detail{font-size:.77rem;color:var(--gris-dark);margin-top:2px;line-height:1.4;}
+    .hist-time{font-size:.71rem;color:var(--gris-dark);white-space:nowrap;flex-shrink:0;margin-top:2px;}
+
+    /* ACTION BAR */
+    .action-bar{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+    .ab-left{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn-act{border:none;border-radius:9px;padding:9px 18px;font-size:.84rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;}
+    .btn-act-primary{background:var(--blue);color:#fff;}
+    .btn-act-primary:hover{background:var(--blue-dark);}
+    .btn-act-success{background:var(--green);color:#fff;}
+    .btn-act-success:hover{background:#228a5c;}
+    .btn-act-danger{background:var(--red-bg);color:var(--red);border:2px solid var(--red);}
+    .btn-act-danger:hover{background:var(--red);color:#fff;}
+    .btn-act-light{background:var(--gris-bg);color:var(--dark);}
+    .btn-act-light:hover{background:var(--gris-border);}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:767px){.fiche-status-col{align-items:flex-start;}.auth-detail-grid{grid-template-columns:1fr;}.prod-track{overflow-x:auto;padding-bottom:8px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}.fiche-header{flex-direction:column;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="tables.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Scolarité</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Navigation</div>
+    <a href="home.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Tableau de bord</span></a>
+    <a href="tables.html" class="nav-link active"><i class="bi bi-folder2-open"></i><span class="sl">Tous les dossiers</span></a>
+    <a href="verification_dossier.html" class="nav-link"><i class="bi bi-check2-square"></i><span class="sl">Vérification</span></a>
+    <a href="authentification_saisie.html" class="nav-link"><i class="bi bi-shield-check"></i><span class="sl">Authentification</span></a>
+    <div class="ss">Rôles</div>
+    <a href="representant.html" class="nav-link"><i class="bi bi-people"></i><span class="sl">Représentant filière</span></a>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-mortarboard"></i><span class="sl">Bureau Diplomation</span></a>
+    <a href="dashboard_directeur.html" class="nav-link"><i class="bi bi-building"></i><span class="sl">Direction</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div style="font-size:.85rem;font-weight:700;color:var(--dark);" class="d-none d-md-block">Détail du dossier</div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-circle">CS</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Scolarité</div><div class="av-role">Scolarité</div></div>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- BREADCRUMB -->
+  <div class="bc">
+    <a href="home.html">Accueil</a><i class="bi bi-chevron-right"></i>
+    <a href="tables.html">Dossiers finissants</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">21G0042 — MBALLA Jean-Baptiste</span>
+  </div>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar">
+    <div class="ab-left">
+      <button class="btn-act btn-act-success" onclick="validerDossier()"><i class="bi bi-check-circle-fill"></i>Valider le dossier</button>
+      <button class="btn-act btn-act-danger" data-bs-toggle="modal" data-bs-target="#rejetModal"><i class="bi bi-x-circle"></i>Signaler incomplet</button>
+      <button class="btn-act btn-act-primary" data-bs-toggle="modal" data-bs-target="#notifModal"><i class="bi bi-bell"></i>Notifier l'étudiant</button>
+      <button class="btn-act btn-act-light"><i class="bi bi-printer"></i>Imprimer fiche</button>
+    </div>
+    <a href="tables.html" class="btn-act btn-act-light"><i class="bi bi-arrow-left"></i>Retour à la liste</a>
+  </div>
+
+  <!-- FICHE ÉTUDIANT -->
+  <div class="fiche-header">
+    <div class="fiche-avatar">MB</div>
+    <div class="fiche-info">
+      <div class="fiche-name">MBALLA Jean-Baptiste</div>
+      <div class="fiche-matricule"><i class="bi bi-hash" style="font-size:.8rem;"></i> 21G0042</div>
+      <div class="fiche-chips">
+        <span class="chip chip-blue"><i class="bi bi-cpu"></i> Génie Informatique</span>
+        <span class="chip chip-blue"><i class="bi bi-mortarboard"></i> Licence 3</span>
+        <span class="chip chip-blue">Promotion 2024-2025</span>
+        <span class="chip chip-yellow"><i class="bi bi-hourglass-split"></i> En cours de vérification</span>
+      </div>
+      <div class="fiche-meta-grid">
+        <div class="fiche-meta-item"><label>Date de naissance</label><div class="val">14 mars 2000</div></div>
+        <div class="fiche-meta-item"><label>Lieu de naissance</label><div class="val">Yaoundé</div></div>
+        <div class="fiche-meta-item"><label>Email</label><div class="val" style="font-size:.82rem;">jean.mballa@enset.cm</div></div>
+        <div class="fiche-meta-item"><label>Téléphone</label><div class="val">+237 651 23 45 67</div></div>
+        <div class="fiche-meta-item"><label>Date de dépôt</label><div class="val">15 jan. 2025</div></div>
+        <div class="fiche-meta-item"><label>Représentant filière</label><div class="val">M. FOUDA Eric</div></div>
+      </div>
+    </div>
+    <div class="fiche-status-col">
+      <div class="global-status" style="background:var(--yellow-bg);">
+        <div class="gs-val" style="color:var(--yellow);"><i class="bi bi-hourglass-split me-1"></i>En vérification</div>
+        <div class="gs-label">Statut global du dossier</div>
+      </div>
+      <div style="font-size:.75rem;color:var(--gris-dark);text-align:center;margin-top:8px;">
+        <span style="font-weight:700;color:var(--dark);">6 / 8</span> pièces fournies
+      </div>
+      <div style="width:130px;height:6px;background:var(--gris-bg);border-radius:99px;overflow:hidden;margin-top:4px;">
+        <div style="width:75%;height:100%;background:var(--yellow);border-radius:99px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-8">
+
+      <!-- PIÈCES DU DOSSIER -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-paperclip me-2" style="color:var(--blue);"></i>Pièces du dossier — 6/8 fournies</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:.72rem;background:var(--green-bg);color:var(--green);padding:3px 9px;border-radius:99px;font-weight:700;">6 présentes</span>
+            <span style="font-size:.72rem;background:var(--red-bg);color:var(--red);padding:3px 9px;border-radius:99px;font-weight:700;">2 manquantes</span>
+          </div>
+        </div>
+        <div class="panel-bd py-0">
+
+          <div class="piece-row">
+            <div class="piece-num">1</div>
+            <div class="piece-icon ok"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">Fiche d'inscription officielle (signée)</div>
+              <div class="piece-sub">Déposée le 15/01/2025 · PDF · 245 Ko</div>
+            </div>
+            <span class="ps ps-ok">Présente</span>
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;"><i class="bi bi-eye"></i></button>
+          </div>
+
+          <div class="piece-row">
+            <div class="piece-num">2</div>
+            <div class="piece-icon ok"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">Acte de naissance (copie légalisée)</div>
+              <div class="piece-sub">Déposée le 15/01/2025 · PDF · 312 Ko · Légalisée jan. 2025</div>
+            </div>
+            <span class="ps ps-ok">Présente</span>
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;"><i class="bi bi-eye"></i></button>
+          </div>
+
+          <div class="piece-row">
+            <div class="piece-num">3</div>
+            <div class="piece-icon ok"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">Carte Nationale d'Identité (recto-verso)</div>
+              <div class="piece-sub">Déposée le 15/01/2025 · JPG · 198 Ko</div>
+            </div>
+            <span class="ps ps-ok">Présente</span>
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;"><i class="bi bi-eye"></i></button>
+          </div>
+
+          <div class="piece-row">
+            <div class="piece-num">4</div>
+            <div class="piece-icon ok"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">Diplôme du Baccalauréat (copie légalisée)</div>
+              <div class="piece-sub">Déposée le 16/01/2025 · PDF · 540 Ko</div>
+            </div>
+            <span class="ps ps-ok">Présente</span>
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;"><i class="bi bi-eye"></i></button>
+          </div>
+
+          <div class="piece-row">
+            <div class="piece-num">5</div>
+            <div class="piece-icon ok"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">Reçus de paiement des frais de scolarité (3 ans)</div>
+              <div class="piece-sub">Déposés le 16/01/2025 · PDF · 3 documents · 780 Ko</div>
+            </div>
+            <span class="ps ps-ok">Présente</span>
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;"><i class="bi bi-eye"></i></button>
+          </div>
+
+          <div class="piece-row">
+            <div class="piece-num">6</div>
+            <div class="piece-icon ok"><i class="bi bi-file-earmark-check-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">4 photos d'identité récentes (fond blanc)</div>
+              <div class="piece-sub">Déposées le 17/01/2025 · JPG · 4 fichiers</div>
+            </div>
+            <span class="ps ps-ok">Présente</span>
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;"><i class="bi bi-eye"></i></button>
+          </div>
+
+          <div class="piece-row">
+            <div class="piece-num">7</div>
+            <div class="piece-icon ko"><i class="bi bi-file-earmark-x-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">Certificat médical de visite d'aptitude</div>
+              <div class="piece-sub" style="color:var(--red);">Non fourni · Délai dépassé estimé</div>
+            </div>
+            <span class="ps ps-ko">Manquante</span>
+            <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;background:var(--red-bg);color:var(--red);border:none;">Relancer</button>
+          </div>
+
+          <div class="piece-row">
+            <div class="piece-num">8</div>
+            <div class="piece-icon ko"><i class="bi bi-file-earmark-x-fill"></i></div>
+            <div class="piece-info">
+              <div class="piece-name">Fiche de fin d'études (signée Directeur & Doyen)</div>
+              <div class="piece-sub" style="color:var(--red);">Non fournie · Formulaire ENSET requis</div>
+            </div>
+            <span class="ps ps-ko">Manquante</span>
+            <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;margin-left:8px;flex-shrink:0;background:var(--red-bg);color:var(--red);border:none;">Relancer</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RÉSULTAT AUTHENTIFICATION -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-shield-check me-2" style="color:var(--teal);"></i>Résultat de l'authentification des diplômes</span>
+          <a href="authentification_saisie.html" style="font-size:.78rem;color:var(--blue);text-decoration:none;">Modifier →</a>
+        </div>
+        <div class="panel-bd">
+          <div class="auth-result authentic">
+            <div class="auth-icon"><i class="bi bi-patch-check-fill"></i></div>
+            <div>
+              <div class="auth-title"><i class="bi bi-check-circle-fill me-2"></i>Diplôme authentique</div>
+              <div class="auth-sub">Vérification effectuée par l'Office du Baccalauréat · Dossier conforme aux registres officiels</div>
+            </div>
+          </div>
+          <div class="auth-detail-grid mt-3">
+            <div class="auth-detail"><label>Date de vérification</label><div class="val">10 jan. 2025</div></div>
+            <div class="auth-detail"><label>Agent vérificateur</label><div class="val">M. NKOULOU Paul</div></div>
+            <div class="auth-detail"><label>Numéro de référence</label><div class="val">REF-2025-BAC-04712</div></div>
+            <div class="auth-detail"><label>Mention obtenue</label><div class="val">Bien — Série C</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRODUCTION DU DIPLÔME -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-mortarboard me-2" style="color:var(--blue);"></i>Statut de production du diplôme</span>
+          <a href="chef_diplomation.html" style="font-size:.78rem;color:var(--blue);text-decoration:none;">Bureau diplomation →</a>
+        </div>
+        <div class="panel-bd">
+          <div class="prod-track mb-4">
+            <div class="prod-step done">
+              <div class="prod-dot done"><i class="bi bi-check-lg"></i></div>
+              <div class="prod-label">Dossier reçu</div>
+              <div class="prod-date">15 jan.</div>
+            </div>
+            <div class="prod-step done">
+              <div class="prod-dot done"><i class="bi bi-check-lg"></i></div>
+              <div class="prod-label">Validé direction</div>
+              <div class="prod-date">En attente</div>
+            </div>
+            <div class="prod-step active">
+              <div class="prod-dot active">3</div>
+              <div class="prod-label">En production</div>
+              <div class="prod-date">En cours</div>
+            </div>
+            <div class="prod-step pending">
+              <div class="prod-dot pending">4</div>
+              <div class="prod-label">Contrôle qualité</div>
+              <div class="prod-date">—</div>
+            </div>
+            <div class="prod-step pending">
+              <div class="prod-dot pending">5</div>
+              <div class="prod-label">Signature</div>
+              <div class="prod-date">—</div>
+            </div>
+            <div class="prod-step blocked">
+              <div class="prod-dot blocked"><i class="bi bi-lock"></i></div>
+              <div class="prod-label">Transmission Ministère</div>
+              <div class="prod-date">—</div>
+            </div>
+          </div>
+          <div class="alert mb-0" style="background:var(--blue-xlight);border:none;border-radius:10px;font-size:.82rem;">
+            <i class="bi bi-info-circle-fill me-2" style="color:var(--blue);"></i>
+            Le diplôme est en cours de production au Bureau de la Diplomation. Délai estimé : <strong>3–5 jours ouvrés</strong>. Numéro provisoire : <code style="color:var(--blue);">DIP-2025-042</code>.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLONNE DROITE -->
+    <div class="col-12 col-lg-4">
+
+      <!-- RÉSUMÉ RAPIDE -->
+      <div class="panel mb-0" style="margin-bottom:20px!important;">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-clipboard-data me-2" style="color:var(--blue);"></i>Récapitulatif rapide</span></div>
+        <div class="panel-bd">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gris-bg);border-radius:8px;">
+              <span style="font-size:.82rem;font-weight:600;">Pièces fournies</span>
+              <strong style="color:var(--yellow);">6 / 8</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gris-bg);border-radius:8px;">
+              <span style="font-size:.82rem;font-weight:600;">Authentification</span>
+              <span style="font-size:.75rem;font-weight:700;background:var(--green-bg);color:var(--green);padding:2px 8px;border-radius:99px;">Authentique</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gris-bg);border-radius:8px;">
+              <span style="font-size:.82rem;font-weight:600;">Production diplôme</span>
+              <span style="font-size:.75rem;font-weight:700;background:var(--blue-xlight);color:var(--blue);padding:2px 8px;border-radius:99px;">En cours</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gris-bg);border-radius:8px;">
+              <span style="font-size:.82rem;font-weight:600;">Statut transmission</span>
+              <span style="font-size:.75rem;font-weight:700;background:var(--gris-bg);color:var(--gris-dark);padding:2px 8px;border-radius:99px;border:1px solid var(--gris-border);">En attente</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--gris-bg);border-radius:8px;">
+              <span style="font-size:.82rem;font-weight:600;">Vérification filière</span>
+              <span style="font-size:.75rem;font-weight:700;background:var(--yellow-bg);color:var(--yellow);padding:2px 8px;border-radius:99px;">En cours</span>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gris-bg);">
+            <div style="font-size:.73rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-bottom:10px;">Intervenant(s)</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-xlight);color:var(--blue);font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;">FE</div>
+                <div><div style="font-size:.82rem;font-weight:600;">M. FOUDA Eric</div><div style="font-size:.7rem;color:var(--gris-dark);">Représentant GInfo</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:var(--teal-bg);color:var(--teal);font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;">CS</div>
+                <div><div style="font-size:.82rem;font-weight:600;">Mme EBENE Claire</div><div style="font-size:.7rem;color:var(--gris-dark);">Chef Service Scolarité</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIQUE -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-clock-history me-2" style="color:var(--blue);"></i>Historique des actions</span></div>
+        <div class="panel-bd py-0">
+
+          <div class="hist-item">
+            <div class="hist-dot b"><i class="bi bi-upload"></i></div>
+            <div class="hist-body">
+              <div class="hist-action">Dépôt du dossier en ligne</div>
+              <div class="hist-detail">L'étudiant a soumis son dossier via l'espace numérique</div>
+            </div>
+            <div class="hist-time">15 jan.<br>08h34</div>
+          </div>
+
+          <div class="hist-item">
+            <div class="hist-dot y"><i class="bi bi-eye"></i></div>
+            <div class="hist-body">
+              <div class="hist-action">Prise en charge — Représentant</div>
+              <div class="hist-detail">M. FOUDA Eric a ouvert le dossier pour vérification</div>
+            </div>
+            <div class="hist-time">16 jan.<br>09h12</div>
+          </div>
+
+          <div class="hist-item">
+            <div class="hist-dot r"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="hist-body">
+              <div class="hist-action">Signalement — 2 pièces manquantes</div>
+              <div class="hist-detail">Cert. médical + Fiche fin d'études signalés manquants. Étudiant notifié.</div>
+            </div>
+            <div class="hist-time">17 jan.<br>14h20</div>
+          </div>
+
+          <div class="hist-item">
+            <div class="hist-dot g"><i class="bi bi-shield-check"></i></div>
+            <div class="hist-body">
+              <div class="hist-action">Résultat authentification reçu</div>
+              <div class="hist-detail">Office du Bac : diplôme authentique · Réf. REF-2025-BAC-04712</div>
+            </div>
+            <div class="hist-time">18 jan.<br>11h05</div>
+          </div>
+
+          <div class="hist-item">
+            <div class="hist-dot t"><i class="bi bi-mortarboard"></i></div>
+            <div class="hist-body">
+              <div class="hist-action">Dossier transmis au Bureau Diplomation</div>
+              <div class="hist-detail">Production du diplôme lancée · N° DIP-2025-042</div>
+            </div>
+            <div class="hist-time">20 jan.<br>08h00</div>
+          </div>
+
+          <div class="hist-item">
+            <div class="hist-dot b"><i class="bi bi-bell"></i></div>
+            <div class="hist-body">
+              <div class="hist-action">Rappel envoyé à l'étudiant</div>
+              <div class="hist-detail">Relance pour les 2 pièces manquantes avant le 31 jan.</div>
+            </div>
+            <div class="hist-time">22 jan.<br>10h30</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<!-- MODAL REJET -->
+<div class="modal fade" id="rejetModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title" style="font-weight:800;font-size:1rem;color:var(--red);"><i class="bi bi-x-circle-fill me-2"></i>Signaler le dossier incomplet</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <p style="font-size:.85rem;color:var(--gris-dark);">Un message sera automatiquement envoyé à <strong>MBALLA Jean-Baptiste</strong> pour l'informer des manquements.</p>
+        <label style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:5px;display:block;">Motif du rejet <span style="color:var(--red);">*</span></label>
+        <textarea class="form-control" rows="4" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Décrivez précisément les pièces manquantes ou les corrections à apporter…" id="motifRejet"></textarea>
+        <div class="form-check mt-3">
+          <input class="form-check-input" type="checkbox" id="notifCheck" checked/>
+          <label class="form-check-label" style="font-size:.82rem;" for="notifCheck">Envoyer une notification à l'étudiant</label>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" style="background:var(--red);color:#fff;border:none;border-radius:8px;font-weight:700;" onclick="signalerRejet()">
+          <i class="bi bi-send me-1"></i>Confirmer et notifier
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOTIF MANUELLE -->
+<div class="modal fade" id="notifModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:14px;border:none;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title" style="font-weight:800;font-size:1rem;color:var(--blue);"><i class="bi bi-bell-fill me-2"></i>Notifier l'étudiant</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body px-4 pt-3">
+        <div style="font-size:.82rem;color:var(--gris-dark);margin-bottom:10px;">Destinataire : <strong style="color:var(--dark);">MBALLA Jean-Baptiste · 21G0042</strong></div>
+        <label style="font-size:.82rem;font-weight:600;color:var(--dark);margin-bottom:5px;display:block;">Message</label>
+        <textarea class="form-control" rows="4" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Message personnalisé à envoyer à l'étudiant…"></textarea>
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4 gap-2">
+        <button class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Annuler</button>
+        <button class="btn" style="background:var(--blue);color:#fff;border:none;border-radius:8px;font-weight:700;" onclick="envoyerNotif()">
+          <i class="bi bi-send me-1"></i>Envoyer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+  function validerDossier(){
+    if(confirm('Valider le dossier de MBALLA Jean-Baptiste ? Une notification lui sera envoyée automatiquement.')){
+      alert('✓ Dossier validé avec succès. L\'étudiant a été notifié.');
+    }
+  }
+  function signalerRejet(){
+    const motif=document.getElementById('motifRejet').value;
+    if(!motif.trim()){alert('Veuillez saisir un motif de rejet.');return;}
+    bootstrap.Modal.getInstance(document.getElementById('rejetModal')).hide();
+    setTimeout(()=>alert('✓ Dossier signalé incomplet. L\'étudiant a été notifié.'),300);
+  }
+  function envoyerNotif(){
+    bootstrap.Modal.getInstance(document.getElementById('notifModal')).hide();
+    setTimeout(()=>alert('✓ Notification envoyée à MBALLA Jean-Baptiste.'),300);
+  }
+</script>
+</body>
+</html>

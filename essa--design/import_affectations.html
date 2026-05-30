@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Import affectations MINFOPRA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{--blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;--gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;--white:#fff;--dark:#4b4b4b;--green:#2da06e;--green-bg:#e6f5ef;--yellow:#e8a020;--yellow-bg:#fff4e0;--red:#e05252;--red-bg:#fdecea;--teal:#1a9090;--teal-bg:#e2f5f5;--sidebar-w:250px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;flex-shrink:0;}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;text-decoration:none;}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--green));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}
+
+    /* WIZARD */
+    .wz{display:flex;align-items:center;gap:0;margin-bottom:28px;overflow-x:auto;padding-bottom:4px;}
+    .wz-step{flex:1;min-width:110px;display:flex;align-items:center;gap:10px;position:relative;}
+    .wz-step:not(:last-child)::after{content:'';flex:1;height:2px;background:var(--gris-bg);margin:0 8px;}
+    .wz-step.done::after{background:var(--green);}
+    .wz-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:800;border:3px solid;flex-shrink:0;transition:all .25s;}
+    .wz-dot.done{background:var(--green);border-color:var(--green);color:#fff;}
+    .wz-dot.active{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 0 0 5px rgba(26,144,144,.18);}
+    .wz-dot.pending{background:var(--white);border-color:var(--gris-border);color:var(--gris-dark);}
+    .wz-lbl{font-size:.76rem;font-weight:700;color:var(--dark);white-space:nowrap;}
+    .wz-sub{font-size:.66rem;color:var(--gris-dark);}
+
+    /* STEP PANELS */
+    .step-panel{display:none;}.step-panel.active{display:block;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* DROPZONE */
+    .dz{border:2.5px dashed var(--gris-border);border-radius:14px;padding:44px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--gris-bg);}
+    .dz:hover,.dz.drag{border-color:var(--teal);background:var(--teal-bg);}
+    .dz.loaded{border-color:var(--green);background:var(--green-bg);border-style:solid;}
+    .dz-icon{font-size:2.8rem;color:var(--gris-dark);transition:color .2s;}
+    .dz:hover .dz-icon,.dz.drag .dz-icon{color:var(--teal);}
+    .dz.loaded .dz-icon{color:var(--green);}
+
+    /* FORMAT CARD */
+    .fmt-card{background:var(--gris-bg);border-radius:11px;padding:16px 18px;}
+    .col-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--gris-border);border-radius:7px;padding:4px 10px;font-size:.75rem;font-weight:700;margin:3px;background:var(--white);}
+    .col-badge.req{border-color:var(--teal);color:var(--teal);background:var(--teal-bg);}
+    .col-badge.opt{color:var(--gris-dark);}
+
+    /* VALIDATION TABLE */
+    .vtbl thead th{font-size:.67rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gris-dark);background:#f9fafb;border:none;padding:9px 12px;white-space:nowrap;}
+    .vtbl tbody td{font-size:.83rem;border:none;padding:9px 12px;vertical-align:middle;border-top:1px solid var(--gris-bg);}
+    .vtbl tbody tr.row-ok td{background:rgba(45,160,110,.03);}
+    .vtbl tbody tr.row-err td{background:rgba(224,82,82,.04);}
+    .vtbl tbody tr.row-warn td{background:rgba(232,160,32,.04);}
+    .vtbl tbody tr:hover td{background:#f5f7fb;}
+    .err-tag{font-size:.68rem;font-weight:700;color:var(--red);display:flex;align-items:center;gap:3px;margin-top:2px;}
+    .warn-tag{font-size:.68rem;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:3px;margin-top:2px;}
+
+    /* BADGES */
+    .bs{font-size:.69rem;font-weight:700;padding:3px 8px;border-radius:99px;white-space:nowrap;}
+    .bs-green{background:var(--green-bg);color:var(--green);}
+    .bs-red{background:var(--red-bg);color:var(--red);}
+    .bs-yellow{background:var(--yellow-bg);color:var(--yellow);}
+    .bs-teal{background:var(--teal-bg);color:var(--teal);}
+    .bs-gray{background:var(--gris-bg);color:var(--gris-dark);}
+
+    /* STAT MINI */
+    .sm{background:var(--white);border-radius:11px;box-shadow:0 1px 5px rgba(0,0,0,.06);padding:14px 16px;border-left:4px solid transparent;text-align:center;}
+    .sm.green{border-color:var(--green);}.sm.red{border-color:var(--red);}.sm.yellow{border-color:var(--yellow);}.sm.teal{border-color:var(--teal);}
+    .sm-val{font-size:1.55rem;font-weight:900;color:var(--dark);}
+    .sm-lbl{font-size:.7rem;color:var(--gris-dark);font-weight:700;text-transform:uppercase;margin-top:2px;}
+
+    /* ANALYSE BAR */
+    .analyse-bar{background:var(--gris-bg);border-radius:99px;height:10px;overflow:hidden;margin:8px 0;}
+    .analyse-fill{height:100%;border-radius:99px;background:var(--teal);transition:width .5s;}
+
+    /* FOOTER ACTIONS */
+    .footer-actions{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:20px;}
+    .btn-next{background:var(--teal);color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;}
+    .btn-next:hover{background:var(--blue-dark);}
+    .btn-next:disabled{background:#b0cac0;cursor:not-allowed;}
+    .btn-prev{background:var(--gris-bg);color:var(--dark);border:none;border-radius:10px;padding:11px 20px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;}
+    .btn-prev:hover{background:var(--gris-border);}
+    .btn-confirm{background:var(--green);color:#fff;border:none;border-radius:10px;padding:11px 26px;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .15s;}
+    .btn-confirm:hover{background:#228a5c;}
+
+    /* NOTIFICATION CARD */
+    .notif-preview{background:linear-gradient(135deg,var(--teal),var(--blue-dark));border-radius:13px;padding:20px;margin-top:10px;color:#fff;}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name{display:none;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+<nav id="sidebar">
+  <a href="chef_scolarite.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Intégration</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Intégration</div>
+    <a href="liste_integration.html" class="nav-link"><i class="bi bi-building-check"></i><span class="sl">Dossiers intégration</span></a>
+    <a href="import_affectations.html" class="nav-link active"><i class="bi bi-cloud-upload"></i><span class="sl">Import affectations</span></a>
+    <a href="generation_attestation.html" class="nav-link"><i class="bi bi-file-earmark-text"></i><span class="sl">Attestations</span></a>
+    <div class="ss">Navigation</div>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+    <a href="dashboard_directeur.html" class="nav-link"><i class="bi bi-building"></i><span class="sl">Direction</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Import liste d'affectations</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Fichier transmis par le MINFOPRA · Promotion 2024-2025</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar"><div class="av-c">CS</div><span class="av-name d-none d-md-block">Chef Scolarité</span></a>
+  </div>
+</header>
+<main id="main">
+  <div class="bc">
+    <a href="liste_integration.html">Intégration</a><i class="bi bi-chevron-right" style="font-size:.7rem;"></i>
+    <span style="color:var(--dark);font-weight:600;">Import liste d'affectations MINFOPRA</span>
+  </div>
+
+  <!-- WIZARD -->
+  <div class="wz mb-4">
+    <div class="wz-step done" id="wz1"><div class="wz-dot done"><i class="bi bi-check-lg"></i></div><div><div class="wz-lbl">1. Fichier</div><div class="wz-sub">CSV sélectionné</div></div></div>
+    <div class="wz-step" id="wz2"><div class="wz-dot active">2</div><div><div class="wz-lbl">2. Validation</div><div class="wz-sub">Contrôle auto</div></div></div>
+    <div class="wz-step" id="wz3"><div class="wz-dot pending">3</div><div><div class="wz-lbl">3. Publication</div><div class="wz-sub">Notifier étudiants</div></div></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="step1" class="step-panel active">
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-title"><i class="bi bi-cloud-upload me-2" style="color:var(--teal);"></i>Chargement du fichier d'affectations</span></div>
+      <div class="panel-bd">
+        <div class="dz loaded" id="dz" onclick="document.getElementById('csvInput').click()">
+          <div class="dz-icon"><i class="bi bi-file-earmark-check-fill"></i></div>
+          <div style="font-size:.95rem;font-weight:700;color:var(--green);margin-top:10px;">Fichier chargé</div>
+          <div style="font-size:.8rem;color:var(--gris-dark);margin-top:4px;">affectations_minfopra_2025.csv · 48 Ko · 592 lignes</div>
+          <div style="font-size:.75rem;color:var(--blue);margin-top:8px;cursor:pointer;" onclick="event.stopPropagation()"><i class="bi bi-arrow-repeat me-1"></i>Remplacer le fichier</div>
+          <input type="file" id="csvInput" style="display:none;" accept=".csv,.xlsx"/>
+        </div>
+        <div class="fmt-card mt-4">
+          <div style="font-size:.8rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-bottom:10px;">Format attendu (transmis par MINFOPRA)</div>
+          <div>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>matricule</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>nom_complet</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>lieu_affectation</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>region</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>date_prise_service</span>
+            <span class="col-badge req"><i class="bi bi-asterisk" style="font-size:.6rem;"></i>heure_prise_service</span>
+            <span class="col-badge opt">poste</span>
+            <span class="col-badge opt">etablissement</span>
+            <span class="col-badge opt">code_affectation</span>
+          </div>
+          <div style="font-size:.75rem;color:var(--gris-dark);margin-top:10px;"><i class="bi bi-info-circle me-1"></i><strong>Date :</strong> format JJ/MM/AAAA · <strong>Heure :</strong> format HH:MM · <span style="color:var(--red);">* obligatoires</span></div>
+          <div class="mt-3"><button onclick="telechargerModele()" style="background:var(--white);border:1px solid var(--gris-border);border-radius:8px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;"><i class="bi bi-download me-1"></i>Télécharger le modèle CSV</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <span style="font-size:.8rem;color:var(--gris-dark);">Fichier prêt — cliquez sur Analyser pour valider les données.</span>
+      <button class="btn-next" onclick="goStep(2)"><i class="bi bi-play-circle-fill"></i>Analyser le fichier</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div id="step2" class="step-panel">
+    <!-- Barre d'analyse -->
+    <div class="panel mb-4" id="analysePanel">
+      <div class="panel-bd">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <div style="font-size:.9rem;font-weight:700;color:var(--dark);" id="analyseLbl">Analyse en cours…</div>
+          <span id="analysePct" style="font-size:.82rem;font-weight:800;color:var(--teal);margin-left:auto;">0%</span>
+        </div>
+        <div class="analyse-bar"><div class="analyse-fill" id="analyseBar" style="width:0%;"></div></div>
+        <div style="font-size:.76rem;color:var(--gris-dark);margin-top:4px;" id="analyseDetail">Initialisation…</div>
+      </div>
+    </div>
+
+    <!-- Résultats -->
+    <div id="resultsSection" style="display:none;">
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><div class="sm teal"><div class="sm-val" id="vs-total">0</div><div class="sm-lbl">Lignes</div></div></div>
+        <div class="col-6 col-md-3"><div class="sm green"><div class="sm-val" id="vs-ok" style="color:var(--green);">0</div><div class="sm-lbl">Valides</div></div></div>
+        <div class="col-6 col-md-3"><div class="sm red"><div class="sm-val" id="vs-err" style="color:var(--red);">0</div><div class="sm-lbl">Erreurs</div></div></div>
+        <div class="col-6 col-md-3"><div class="sm yellow"><div class="sm-val" id="vs-warn" style="color:var(--yellow);">0</div><div class="sm-lbl">Alertes</div></div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-table me-2" style="color:var(--teal);"></i>Résultats de validation automatique</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-sm btn-light" style="border-radius:7px;font-size:.75rem;border:1px solid var(--gris-border);" onclick="filtrerTable('')">Tous</button>
+            <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;background:var(--red-bg);color:var(--red);border:none;" onclick="filtrerTable('err')">Erreurs</button>
+            <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;background:var(--yellow-bg);color:var(--yellow);border:none;" onclick="filtrerTable('warn')">Alertes</button>
+            <button class="btn btn-sm" style="border-radius:7px;font-size:.75rem;background:var(--green-bg);color:var(--green);border:none;" onclick="filtrerTable('ok')">Valides</button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table vtbl mb-0" id="valTable">
+            <thead>
+              <tr><th>#</th><th>Matricule</th><th>Nom complet</th><th>Lieu affectation</th><th>Région</th><th>Date prise service</th><th>Heure</th><th>Résultat</th><th>Détail</th></tr>
+            </thead>
+            <tbody id="valBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-actions" id="step2Footer" style="display:none;">
+      <button class="btn-prev" onclick="goStep(1)"><i class="bi bi-arrow-left-short"></i>Retour</button>
+      <div class="d-flex gap-3 flex-wrap">
+        <button class="btn-prev" onclick="exporterRapport()"><i class="bi bi-download me-1"></i>Exporter rapport</button>
+        <button class="btn-next" id="btnStep2" onclick="goStep(3)">Confirmer l'import <i class="bi bi-arrow-right-short"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div id="step3" class="step-panel">
+    <div class="panel">
+      <div class="panel-hd"><span class="panel-title"><i class="bi bi-bell me-2" style="color:var(--teal);"></i>Publication et notification des étudiants</span></div>
+      <div class="panel-bd">
+        <div class="alert mb-4" style="background:var(--green-bg);border:none;border-radius:11px;font-size:.85rem;display:flex;gap:10px;align-items:flex-start;">
+          <i class="bi bi-check-circle-fill mt-1" style="color:var(--green);flex-shrink:0;"></i>
+          <div><strong style="color:var(--green);">Import validé — 586 affectations prêtes à publier.</strong><br>6 lignes avec erreurs ont été exclues. Les étudiants recevront une notification avec leur lieu d'affectation, la date et l'heure de prise de service.</div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:5px;">Date de publication</label>
+            <input type="date" class="form-control" id="pubDate" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;"/>
+          </div>
+          <div class="col-12 col-md-6">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:5px;">Référence arrêté MINFOPRA</label>
+            <input type="text" class="form-control" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Ex: ARRETE-MINFOPRA-2025-0421"/>
+          </div>
+          <div class="col-12">
+            <label style="font-size:.82rem;font-weight:600;color:var(--dark);display:block;margin-bottom:5px;">Message d'accompagnement</label>
+            <textarea class="form-control" rows="3" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" id="msgAccomp">Cher(e) étudiant(e), votre affectation dans la Fonction Publique camerounaise est disponible. Veuillez vous présenter au lieu indiqué à la date et heure précisées. Muni(e) d'une copie de votre diplôme et d'une pièce d'identité.</textarea>
+          </div>
+          <div class="col-12">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="notifCheck" checked/>
+              <label class="form-check-label" style="font-size:.83rem;" for="notifCheck"><i class="bi bi-bell me-1" style="color:var(--teal);"></i>Notifier tous les étudiants par notification push dans leur espace</label>
+            </div>
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" id="emailCheck" checked/>
+              <label class="form-check-label" style="font-size:.83rem;" for="emailCheck"><i class="bi bi-envelope me-1" style="color:var(--blue);"></i>Envoyer un email récapitulatif aux représentants de filière</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- APERÇU NOTIFICATION -->
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gris-dark);margin-bottom:10px;">Aperçu de la notification étudiant</div>
+        <div class="notif-preview">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="width:40px;height:40px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;">🎓</div>
+            <div>
+              <div style="font-weight:700;font-size:.9rem;">Votre affectation est disponible</div>
+              <div style="font-size:.74rem;opacity:.8;">ENSET Douala · Service Scolarité</div>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;font-size:.83rem;line-height:1.6;">
+            <div><strong>Lieu d'affectation :</strong> Lycée Bilingue de Yaoundé Centre</div>
+            <div><strong>Région :</strong> Centre</div>
+            <div><strong>Date de prise de service :</strong> 01 juin 2025</div>
+            <div><strong>Heure :</strong> 07h30</div>
+            <div><strong>Poste :</strong> Professeur de Génie Informatique</div>
+          </div>
+          <div style="font-size:.74rem;opacity:.7;margin-top:10px;text-align:center;">ENSET Douala · Réf : ARRETE-MINFOPRA-2025-0421</div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn-prev" onclick="goStep(2)"><i class="bi bi-arrow-left-short"></i>Retour</button>
+      <button class="btn-confirm" onclick="publierAffectations()"><i class="bi bi-send-fill"></i>Publier et notifier 586 étudiants</button>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+const mockData=[
+  {n:1,mat:'21G0042',nom:'MBALLA Jean-Baptiste',lieu:'Lycée Bilingue Ydé Centre',region:'Centre',date:'01/06/2025',heure:'07h30',status:'ok',errors:[],warns:[]},
+  {n:2,mat:'21G0043',nom:'FOMO EKOTTO Claire',lieu:'Lycée Technique de Douala',region:'Littoral',date:'01/06/2025',heure:'07h30',status:'ok',errors:[],warns:[]},
+  {n:3,mat:'21G-044',nom:'NGONO Paul',lieu:'Lycée de Bafoussam',region:'Ouest',date:'32/06/2025',heure:'07h30',status:'err',errors:['Matricule invalide (format)','Date invalide : 32/06'],warns:[]},
+  {n:4,mat:'21G0045',nom:'BIYA Sylvie Carole',lieu:'Lycée Bilingue de Bertoua',region:'Est',date:'01/06/2025',heure:'',status:'warn',errors:[],warns:['Heure de prise de service manquante']},
+  {n:5,mat:'21G0046',nom:'ATEBA Marc Fabrice',lieu:'Lycée de Ngaoundéré',region:'Adamaoua',date:'01/06/2025',heure:'07h30',status:'ok',errors:[],warns:[]},
+  {n:6,mat:'21G0048',nom:'NKOULOU Marie-José',lieu:'Lycée Technique de Kribi',region:'Sud',date:'01/06/2025',heure:'08h00',status:'ok',errors:[],warns:[]},
+  {n:7,mat:'21G0049',nom:'ESSAMA Roger Thierry',lieu:'',region:'Littoral',date:'01/06/2025',heure:'07h30',status:'err',errors:['Lieu d\'affectation vide'],warns:[]},
+];
+
+let currentStep=1;
+const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+const isMobile=()=>window.innerWidth<992;
+toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+function goStep(step){
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`step${step}`).classList.add('active');
+  currentStep=step;
+  updateWizard(step);
+  if(step===2) lancerAnalyse();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateWizard(step){
+  for(let i=1;i<=3;i++){
+    const dot=document.querySelector(`#wz${i} .wz-dot`);
+    if(i<step){dot.className='wz-dot done';dot.innerHTML='<i class="bi bi-check-lg"></i>';}
+    else if(i===step){dot.className='wz-dot active';dot.textContent=i;}
+    else{dot.className='wz-dot pending';dot.textContent=i;}
+    const s=document.getElementById(`wz${i}`);
+    if(i<step) s.className='wz-step done';
+    else s.className='wz-step';
+  }
+}
+
+function lancerAnalyse(){
+  const steps=[
+    {pct:15,lbl:'Lecture du fichier…',detail:'Décodage CSV · Encodage UTF-8 détecté'},
+    {pct:35,lbl:'Vérification des colonnes…',detail:'9 colonnes trouvées — 6 obligatoires présentes ✓'},
+    {pct:55,lbl:'Validation des matricules…',detail:'Croisement avec la liste des finissants ENSET'},
+    {pct:70,lbl:'Validation des dates et heures…',detail:'Format JJ/MM/AAAA · Cohérence calendaire'},
+    {pct:85,lbl:'Validation des lieux et régions…',detail:'Vérification des 10 régions du Cameroun'},
+    {pct:100,lbl:'Analyse terminée ✓',detail:'Rapport généré — 586 valides · 4 erreurs · 2 alertes'},
+  ];
+  let i=0;
+  const int=setInterval(()=>{
+    if(i>=steps.length){clearInterval(int);afficherResultats();return;}
+    const s=steps[i];
+    document.getElementById('analyseBar').style.width=s.pct+'%';
+    document.getElementById('analysePct').textContent=s.pct+'%';
+    document.getElementById('analyseLbl').textContent=s.lbl;
+    document.getElementById('analyseDetail').textContent=s.detail;
+    if(s.pct===100){document.getElementById('analyseBar').style.background='var(--green)';document.getElementById('analyseLbl').style.color='var(--green)';}
+    i++;
+  },650);
+}
+
+function afficherResultats(){
+  setTimeout(()=>{
+    document.getElementById('analysePanel').style.display='none';
+    document.getElementById('resultsSection').style.display='block';
+    document.getElementById('step2Footer').style.display='flex';
+    const ok=mockData.filter(r=>r.status==='ok').length;
+    const err=mockData.filter(r=>r.status==='err').length;
+    const warn=mockData.filter(r=>r.status==='warn').length;
+    document.getElementById('vs-total').textContent=mockData.length;
+    document.getElementById('vs-ok').textContent=ok;
+    document.getElementById('vs-err').textContent=err;
+    document.getElementById('vs-warn').textContent=warn;
+    renderTable(mockData);
+    if(err>0){document.getElementById('btnStep2').style.background='var(--yellow)';document.getElementById('btnStep2').textContent='Importer malgré les erreurs →';}
+  },400);
+}
+
+function renderTable(data){
+  document.getElementById('valBody').innerHTML=data.map(r=>{
+    const cls=r.status==='ok'?'row-ok':r.status==='err'?'row-err':'row-warn';
+    const badge=r.status==='ok'?'<span class="bs bs-green"><i class="bi bi-check-circle-fill me-1"></i>Valide</span>':r.status==='err'?'<span class="bs bs-red"><i class="bi bi-x-circle-fill me-1"></i>Erreur</span>':'<span class="bs bs-yellow"><i class="bi bi-exclamation-triangle-fill me-1"></i>Alerte</span>';
+    const details=r.errors.map(e=>`<div class="err-tag"><i class="bi bi-x-circle-fill"></i>${e}</div>`).join('')+r.warns.map(w=>`<div class="warn-tag"><i class="bi bi-exclamation-triangle-fill"></i>${w}</div>`).join('');
+    return `<tr class="${cls}"><td style="color:var(--gris-dark);font-size:.76rem;">${r.n}</td><td><code style="color:var(--blue);font-size:.78rem;">${r.mat}</code></td><td style="font-weight:600;">${r.nom}</td><td>${r.lieu||'<em style="color:var(--red);">Vide</em>'}</td><td style="font-size:.8rem;">${r.region}</td><td style="font-size:.8rem;">${r.date}</td><td style="font-size:.8rem;">${r.heure||'<em style="color:var(--yellow);">—</em>'}</td><td>${badge}</td><td><div style="display:flex;flex-direction:column;">${details||'<span style="color:var(--green);font-size:.73rem;font-weight:700;">✓ RAS</span>'}</div></td></tr>`;
+  }).join('');
+}
+
+function filtrerTable(type){
+  const data=type===''?mockData:mockData.filter(r=>r.status===type);
+  renderTable(data);
+}
+
+function publierAffectations(){
+  showToast('✓ 586 affectations publiées ! Notifications envoyées à tous les étudiants.');
+  setTimeout(()=>{window.location.href='liste_integration.html';},2500);
+}
+function telechargerModele(){showToast('Téléchargement du modèle CSV…');}
+function exporterRapport(){showToast('Export du rapport de validation…');}
+function showToast(msg,ok=true){const t=document.createElement('div');t.style.cssText=`position:fixed;bottom:20px;right:20px;background:${ok?'var(--green)':'var(--red)'};color:#fff;padding:12px 20px;border-radius:10px;font-size:.85rem;font-weight:700;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200);}
+document.getElementById('pubDate').value=new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>

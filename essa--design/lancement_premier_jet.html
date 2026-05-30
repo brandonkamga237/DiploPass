@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ENSET — Lancement premier jet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css"/>
+  <style>
+    :root{
+      --blue:#25669e;--blue-dark:#1a4f7a;--blue-light:#3a7fc1;--blue-xlight:#ddeaf7;
+      --gris-bg:#eeeff1;--gris-dark:#797a7c;--gris-border:#dde0e5;
+      --white:#ffffff;--dark:#4b4b4b;
+      --green:#2da06e;--green-bg:#e6f5ef;
+      --yellow:#e8a020;--yellow-bg:#fff4e0;
+      --red:#e05252;--red-bg:#fdecea;
+      --teal:#1a9090;--teal-bg:#e2f5f5;
+      --gold:#b8860b;--gold-bg:#fdf6e3;
+      --sidebar-w:250px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--gris-bg);color:var(--dark);min-height:100vh;}
+
+    /* SIDEBAR */
+    #sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--blue-dark);z-index:1040;display:flex;flex-direction:column;transition:transform .28s,width .28s;overflow:hidden;}
+    #sidebar.collapsed{width:64px;}
+    #sidebar.collapsed .sl,#sidebar.collapsed .ss,#sidebar.collapsed .sb-text{display:none;}
+    #sidebar.collapsed .nav-link{justify-content:center;padding:12px 0;}
+    #sidebar.collapsed .nav-link i{margin:0;}
+    .sb-brand{padding:0 18px;height:66px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.1);text-decoration:none;flex-shrink:0;}
+    .sb-brand-logo{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;color:var(--blue-dark);font-weight:900;font-size:.85rem;flex-shrink:0;}
+    .sb-text strong{color:#fff;font-size:.9rem;font-weight:700;white-space:nowrap;}
+    .sb-text small{color:rgba(255,255,255,.55);font-size:.7rem;white-space:nowrap;display:block;}
+    .sb-nav{flex:1;overflow-y:auto;padding:8px 0;}
+    .ss{font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38);padding:14px 20px 4px;}
+    .nav-link{display:flex;align-items:center;gap:11px;color:rgba(255,255,255,.72);padding:10px 20px;font-size:.86rem;transition:all .15s;white-space:nowrap;text-decoration:none;}
+    .nav-link:hover{background:rgba(255,255,255,.08);color:#fff;}
+    .nav-link.active{background:rgba(255,255,255,.14);color:#fff;border-left:3px solid rgba(255,255,255,.8);}
+    .nav-link i{font-size:1rem;flex-shrink:0;width:18px;text-align:center;}
+    .sb-foot{padding:14px 18px;border-top:1px solid rgba(255,255,255,.08);}
+    .sb-foot .nav-link{color:rgba(255,255,255,.5);font-size:.83rem;padding:6px 0;}
+    .sb-foot .nav-link:hover{color:#fff;background:none;}
+
+    /* TOPBAR */
+    #topbar{position:fixed;top:0;right:0;height:66px;left:var(--sidebar-w);background:var(--white);border-bottom:1px solid var(--gris-border);z-index:1030;display:flex;align-items:center;padding:0 26px;gap:14px;transition:left .28s;}
+    #topbar.sc{left:64px;}
+    #toggler{background:none;border:none;color:var(--gris-dark);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;transition:background .15s;flex-shrink:0;}
+    #toggler:hover{background:var(--gris-bg);}
+    .tb-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+    .tb-btn{position:relative;width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:none;border:none;border-radius:50%;color:var(--gris-dark);font-size:1.1rem;cursor:pointer;text-decoration:none;transition:background .15s;}
+    .tb-btn:hover{background:var(--gris-bg);color:var(--dark);}
+    .tb-dot{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+    .tb-avatar{display:flex;align-items:center;gap:9px;cursor:pointer;padding:5px 10px;border-radius:9px;transition:background .15s;text-decoration:none;}
+    .tb-avatar:hover{background:var(--gris-bg);}
+    .av-c{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--green));color:#fff;font-size:.76rem;font-weight:800;display:flex;align-items:center;justify-content:center;}
+    .av-name{font-size:.82rem;font-weight:700;color:var(--dark);}
+    .av-role{font-size:.7rem;color:var(--gris-dark);}
+
+    /* MAIN */
+    #main{margin-left:var(--sidebar-w);margin-top:66px;padding:26px;transition:margin-left .28s;min-height:calc(100vh - 66px);}
+    #main.sc{margin-left:64px;}
+    .bc{font-size:.78rem;color:var(--gris-dark);margin-bottom:16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .bc a{color:var(--blue);text-decoration:none;}.bc a:hover{text-decoration:underline;}
+
+    /* PANEL */
+    .panel{background:var(--white);border-radius:13px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden;margin-bottom:20px;}
+    .panel-hd{padding:15px 20px;border-bottom:1px solid var(--gris-bg);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+    .panel-title{font-size:.9rem;font-weight:800;color:var(--dark);}
+    .panel-bd{padding:20px;}
+
+    /* CHECKLIST PRE-LANCEMENT */
+    .check-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--gris-bg);}
+    .check-item:last-child{border-bottom:none;}
+    .check-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+    .check-icon.ok{background:var(--green-bg);color:var(--green);}
+    .check-icon.warn{background:var(--yellow-bg);color:var(--yellow);}
+    .check-icon.err{background:var(--red-bg);color:var(--red);}
+    .check-label{font-size:.86rem;font-weight:700;color:var(--dark);flex:1;}
+    .check-detail{font-size:.75rem;color:var(--gris-dark);margin-top:2px;}
+    .check-badge{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:99px;flex-shrink:0;}
+    .cb-ok{background:var(--green-bg);color:var(--green);}
+    .cb-warn{background:var(--yellow-bg);color:var(--yellow);}
+    .cb-err{background:var(--red-bg);color:var(--red);}
+
+    /* OPTIONS GÉNÉRATION */
+    .opt-card{border:2px solid var(--gris-border);border-radius:12px;padding:16px;cursor:pointer;transition:all .15s;display:flex;align-items:flex-start;gap:12px;}
+    .opt-card.selected{border-color:var(--blue);background:var(--blue-xlight);}
+    .opt-card:hover:not(.selected){border-color:var(--blue-light);background:#f8fbff;}
+    .opt-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--gris-border);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;transition:all .15s;}
+    .opt-card.selected .opt-radio{border-color:var(--blue);background:var(--blue);}
+    .opt-radio::after{content:'';width:8px;height:8px;border-radius:50%;background:#fff;display:none;}
+    .opt-card.selected .opt-radio::after{display:block;}
+    .opt-title{font-size:.88rem;font-weight:700;color:var(--dark);}
+    .opt-sub{font-size:.76rem;color:var(--gris-dark);margin-top:3px;line-height:1.4;}
+
+    /* APERÇU DIPLÔME */
+    .diplome-preview{background:#fff;border:1px solid #d4c090;border-radius:4px;position:relative;overflow:hidden;aspect-ratio:1.414/1;box-shadow:0 4px 20px rgba(0,0,0,.12);max-width:520px;margin:0 auto;}
+    .diplome-inner{padding:32px 40px;height:100%;display:flex;flex-direction:column;position:relative;}
+    .diplome-border-outer{position:absolute;inset:8px;border:3px solid #b8860b;border-radius:2px;pointer-events:none;}
+    .diplome-border-inner{position:absolute;inset:14px;border:1px solid #d4c090;border-radius:1px;pointer-events:none;}
+    .diplome-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:.04;font-size:5rem;font-weight:900;color:#b8860b;pointer-events:none;letter-spacing:.2em;text-align:center;}
+    .diplome-header{text-align:center;margin-bottom:10px;}
+    .diplome-republic{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4b3800;}
+    .diplome-ministry{font-size:.52rem;color:#6b5800;margin-top:2px;letter-spacing:.06em;}
+    .diplome-school{font-size:.75rem;font-weight:900;color:#1a4f7a;margin-top:6px;text-transform:uppercase;letter-spacing:.05em;}
+    .diplome-divider{height:2px;background:linear-gradient(90deg,transparent,#b8860b,transparent);margin:8px auto;width:70%;}
+    .diplome-title{text-align:center;margin:10px 0;}
+    .diplome-title-main{font-size:1.15rem;font-weight:900;color:#b8860b;text-transform:uppercase;letter-spacing:.08em;font-family:Georgia,serif;}
+    .diplome-title-sub{font-size:.62rem;color:#4b3800;margin-top:3px;letter-spacing:.05em;}
+    .diplome-body{text-align:center;flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px;}
+    .diplome-certify{font-size:.58rem;color:#4b3800;font-style:italic;}
+    .diplome-name{font-size:1rem;font-weight:900;color:#1a1a1a;font-family:Georgia,serif;border-bottom:1px solid #d4c090;display:inline-block;padding:0 20px;margin:4px 0;}
+    .diplome-born{font-size:.55rem;color:#4b3800;}
+    .diplome-mention{font-size:.6rem;color:#1a4f7a;font-weight:700;margin-top:4px;}
+    .diplome-specialty{font-size:.62rem;font-weight:800;color:#1a4f7a;text-transform:uppercase;letter-spacing:.05em;}
+    .diplome-diploma-name{font-size:.72rem;font-weight:900;color:#b8860b;font-family:Georgia,serif;margin:4px 0;}
+    .diplome-footer{display:flex;justify-content:space-between;align-items:flex-end;margin-top:10px;}
+    .diplome-sig{text-align:center;font-size:.5rem;color:#4b3800;}
+    .diplome-sig-line{width:80px;border-top:1px solid #b8860b;margin:4px auto;}
+    .diplome-num{font-size:.48rem;color:#888;text-align:center;margin-top:4px;}
+    .draft-stamp{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);font-size:2.2rem;font-weight:900;color:rgba(232,160,32,.25);text-transform:uppercase;letter-spacing:.2em;pointer-events:none;white-space:nowrap;}
+
+    /* PROGRESS GÉNÉRATION */
+    .gen-step{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gris-bg);}
+    .gen-step:last-child{border-bottom:none;}
+    .gen-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0;}
+    .gen-dot.done{background:var(--green);color:#fff;}
+    .gen-dot.running{background:var(--blue);color:#fff;animation:pulse 1.2s infinite;}
+    .gen-dot.wait{background:var(--gris-bg);color:var(--gris-dark);}
+    @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,102,158,.4);}50%{box-shadow:0 0 0 8px rgba(37,102,158,0);}}
+    .gen-label{font-size:.85rem;font-weight:700;color:var(--dark);flex:1;}
+    .gen-sub{font-size:.75rem;color:var(--gris-dark);}
+    .gen-count{font-size:.8rem;font-weight:800;color:var(--gris-dark);flex-shrink:0;}
+
+    /* STAT MINI */
+    .sm{background:var(--white);border-radius:11px;box-shadow:0 1px 5px rgba(0,0,0,.06);padding:14px 16px;border-left:4px solid transparent;display:flex;align-items:center;justify-content:space-between;}
+    .sm.green{border-color:var(--green);}.sm.blue{border-color:var(--blue);}.sm.yellow{border-color:var(--yellow);}.sm.teal{border-color:var(--teal);}
+    .sm-val{font-size:1.5rem;font-weight:900;color:var(--dark);}
+    .sm-lbl{font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gris-dark);margin-top:2px;}
+    .sm-icon{font-size:1.8rem;opacity:.15;}
+    .sm.green .sm-icon{color:var(--green);}.sm.blue .sm-icon{color:var(--blue);}.sm.yellow .sm-icon{color:var(--yellow);}.sm.teal .sm-icon{color:var(--teal);}
+
+    /* BUTTONS */
+    .btn-launch{background:linear-gradient(135deg,var(--teal),var(--green));color:#fff;border:none;border-radius:12px;padding:14px 32px;font-size:.95rem;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:10px;transition:all .18s;box-shadow:0 4px 16px rgba(26,144,144,.3);}
+    .btn-launch:hover{box-shadow:0 6px 24px rgba(26,144,144,.45);transform:translateY(-1px);}
+    .btn-launch:disabled{background:#b0cac0;box-shadow:none;cursor:not-allowed;transform:none;}
+    .btn-sec{background:var(--white);color:var(--dark);border:2px solid var(--gris-border);border-radius:10px;padding:10px 20px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .15s;}
+    .btn-sec:hover{border-color:var(--blue);color:var(--blue);}
+
+    #sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:1039;}
+    #sidebarOverlay.show{display:block;}
+    @media(max-width:991px){#sidebar{transform:translateX(-100%);width:var(--sidebar-w)!important;}#sidebar.mobile-open{transform:translateX(0);}#topbar{left:0!important;}#main{margin-left:0!important;padding:16px;}}
+    @media(max-width:575px){#main{padding:12px;}.av-name,.av-role{display:none;}.btn-launch{padding:12px 20px;font-size:.88rem;}}
+  </style>
+</head>
+<body>
+<div id="sidebarOverlay"></div>
+
+<nav id="sidebar">
+  <a href="chef_diplomation.html" class="sb-brand">
+    <div class="sb-brand-logo">EN</div>
+    <div class="sb-text"><strong>ENSET Douala</strong><small>Bureau Diplomation</small></div>
+  </a>
+  <div class="sb-nav">
+    <div class="ss">Production</div>
+    <a href="chef_diplomation.html" class="nav-link"><i class="bi bi-speedometer2"></i><span class="sl">Vue d'ensemble</span></a>
+    <a href="lancement_premier_jet.html" class="nav-link active"><i class="bi bi-play-circle"></i><span class="sl">Lancement premier jet</span></a>
+    <a href="verification_premier_jet.html" class="nav-link"><i class="bi bi-eye-fill"></i><span class="sl">Vérification premier jet</span></a>
+    <a href="production_officielle.html" class="nav-link"><i class="bi bi-mortarboard-fill"></i><span class="sl">Production officielle</span></a>
+    <a href="suivi_signatures.html" class="nav-link"><i class="bi bi-pen-fill"></i><span class="sl">Suivi signatures</span></a>
+    <div class="ss">Données source</div>
+    <a href="liste_validee.html" class="nav-link"><i class="bi bi-check2-square"></i><span class="sl">Liste validée</span></a>
+    <a href="authentification_saisie.html" class="nav-link"><i class="bi bi-shield-check"></i><span class="sl">Authentification</span></a>
+    <div class="ss">Navigation</div>
+    <a href="chef_scolarite.html" class="nav-link"><i class="bi bi-person-workspace"></i><span class="sl">Chef Scolarité</span></a>
+  </div>
+  <div class="sb-foot">
+    <a href="#" class="nav-link"><i class="bi bi-box-arrow-right"></i><span class="sl">Déconnexion</span></a>
+  </div>
+</nav>
+
+<header id="topbar">
+  <button id="toggler"><i class="bi bi-list"></i></button>
+  <div>
+    <div style="font-size:.88rem;font-weight:700;color:var(--dark);">Lancement du premier jet</div>
+    <div style="font-size:.73rem;color:var(--gris-dark);">Bureau Diplomation · Génération PDF provisoire · Promotion 2024-2025</div>
+  </div>
+  <div class="tb-right">
+    <a href="notifications.html" class="tb-btn"><i class="bi bi-bell"></i><span class="tb-dot"></span></a>
+    <a href="#" class="tb-avatar">
+      <div class="av-c">BD</div>
+      <div class="d-none d-md-block"><div class="av-name">Chef Bureau</div><div class="av-role">Bureau Diplomation</div></div>
+    </a>
+  </div>
+</header>
+
+<main id="main">
+  <div class="bc">
+    <a href="chef_diplomation.html">Bureau Diplomation</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--dark);font-weight:600;">Lancement premier jet</span>
+  </div>
+
+  <div class="d-flex align-items-flex-start justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+      <div style="font-size:1.4rem;font-weight:800;color:var(--dark);">Génération du premier jet des diplômes</div>
+      <div style="font-size:.82rem;color:var(--gris-dark);margin-top:3px;">Génère les PDF provisoires à partir de la liste officielle validée — pour relecture avant production finale</div>
+    </div>
+  </div>
+
+  <!-- STATS SOURCE -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="sm green"><div><div class="sm-lbl">Liste source</div><div class="sm-val">609</div></div><i class="bi bi-people-fill sm-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sm blue"><div><div class="sm-lbl">Filières</div><div class="sm-val">5</div></div><i class="bi bi-diagram-3-fill sm-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sm teal"><div><div class="sm-lbl">Modèle diplôme</div><div class="sm-val">v3.2</div></div><i class="bi bi-file-earmark-pdf sm-icon"></i></div></div>
+    <div class="col-6 col-xl-3"><div class="sm yellow"><div><div class="sm-lbl">Dernier jet</div><div class="sm-val">—</div></div><i class="bi bi-clock sm-icon"></i></div></div>
+  </div>
+
+  <div class="row g-4">
+    <!-- CONFIG + LANCEMENT -->
+    <div class="col-12 col-lg-5">
+
+      <!-- PRÉ-REQUIS -->
+      <div class="panel">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-clipboard2-check me-2" style="color:var(--blue);"></i>Pré-requis avant lancement</span>
+        </div>
+        <div class="panel-bd py-0">
+          <div class="check-item">
+            <div class="check-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+            <div><div class="check-label">Liste finissants validée</div><div class="check-detail">609 étudiants · Réf. ENSET-2025-LIST-001</div></div>
+            <span class="check-badge cb-ok">OK</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+            <div><div class="check-label">Authentification des diplômes</div><div class="check-detail">586 authentiques · 23 douteux signalés</div></div>
+            <span class="check-badge cb-ok">OK</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+            <div><div class="check-label">Modèle de diplôme chargé</div><div class="check-detail">Template v3.2 · Logo ENSET + armoiries Cameroun</div></div>
+            <span class="check-badge cb-ok">OK</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon warn"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div><div class="check-label">Résultats d'admission définitifs</div><div class="check-detail">Non encore disponibles — le premier jet utilisera les données provisoires</div></div>
+            <span class="check-badge cb-warn">Provisoire</span>
+          </div>
+          <div class="check-item">
+            <div class="check-icon ok"><i class="bi bi-check-circle-fill"></i></div>
+            <div><div class="check-label">Numérotation série disponible</div><div class="check-detail">Plage DIP-2025-0001 à DIP-2025-0609 réservée</div></div>
+            <span class="check-badge cb-ok">OK</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- OPTIONS -->
+      <div class="panel">
+        <div class="panel-hd"><span class="panel-title"><i class="bi bi-sliders me-2" style="color:var(--blue);"></i>Options de génération</span></div>
+        <div class="panel-bd d-flex flex-column gap-3">
+          <div class="opt-card selected" id="opt1" onclick="selectOpt(1)">
+            <div class="opt-radio"><span></span></div>
+            <div><div class="opt-title">Toutes les filières (609 diplômes)</div><div class="opt-sub">Génère un PDF provisoire pour chaque étudiant de la liste validée</div></div>
+          </div>
+          <div class="opt-card" id="opt2" onclick="selectOpt(2)">
+            <div class="opt-radio"></div>
+            <div><div class="opt-title">Filière spécifique</div><div class="opt-sub">Cibler une seule filière pour test ou rattrapage</div></div>
+          </div>
+          <div id="filiereSelect" style="display:none;">
+            <select class="form-select" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;">
+              <option>Génie Informatique (224)</option>
+              <option>Génie Électrique (168)</option>
+              <option>Génie Civil (117)</option>
+              <option>Sciences Industrielles (66)</option>
+              <option>Génie Mécanique (34)</option>
+            </select>
+          </div>
+          <div class="opt-card" id="opt3" onclick="selectOpt(3)">
+            <div class="opt-radio"></div>
+            <div><div class="opt-title">Étudiant unique (test)</div><div class="opt-sub">Générer un seul diplôme pour vérifier le rendu du modèle</div></div>
+          </div>
+          <div id="matInput" style="display:none;">
+            <input type="text" class="form-control" style="border:1px solid var(--gris-border);border-radius:9px;font-size:.86rem;" placeholder="Matricule étudiant ex: 21G0042"/>
+          </div>
+
+          <div style="background:var(--yellow-bg);border-radius:10px;padding:12px 14px;font-size:.8rem;color:var(--dark);">
+            <i class="bi bi-info-circle-fill me-2" style="color:var(--yellow);"></i>
+            <strong>Premier jet = provisoire.</strong> Les diplômes générés porteront un filigrane <em>«BROUILLON»</em> et ne peuvent pas être signés. Ils servent uniquement à la vérification par les représentants de filière.
+          </div>
+
+          <div class="d-flex gap-3 align-items-center flex-wrap pt-2">
+            <button class="btn-launch" id="btnLancer" onclick="lancerGeneration()">
+              <i class="bi bi-play-circle-fill" style="font-size:1.2rem;"></i>
+              Lancer la génération
+            </button>
+            <button class="btn-sec" onclick="previewDiplome()">
+              <i class="bi bi-eye"></i>Aperçu modèle
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- APERÇU DIPLÔME + PROGRESSION -->
+    <div class="col-12 col-lg-7">
+
+      <!-- APERÇU DIPLÔME TYPE -->
+      <div class="panel mb-4">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-file-earmark-richtext me-2" style="color:var(--gold);"></i>Aperçu — Diplôme type (brouillon)</span>
+          <span style="font-size:.75rem;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:99px;font-weight:700;">
+            <i class="bi bi-eye me-1"></i>Rendu non contractuel
+          </span>
+        </div>
+        <div class="panel-bd" style="background:#f5f2ea;">
+          <div class="diplome-preview">
+            <div class="diplome-border-outer"></div>
+            <div class="diplome-border-inner"></div>
+            <div class="diplome-watermark">BROUILLON</div>
+            <div class="draft-stamp">BROUILLON</div>
+            <div class="diplome-inner">
+              <div class="diplome-header">
+                <div class="diplome-republic">République du Cameroun</div>
+                <div class="diplome-ministry">Ministère de l'Enseignement Supérieur</div>
+                <div class="diplome-school">École Normale Supérieure pour l'Enseignement Technique de Douala</div>
+              </div>
+              <div class="diplome-divider"></div>
+              <div class="diplome-title">
+                <div class="diplome-title-main">Diplôme</div>
+                <div class="diplome-title-sub">délivré au nom de la République du Cameroun</div>
+              </div>
+              <div class="diplome-body">
+                <div class="diplome-certify">Le Directeur de l'ENSET de Douala certifie que</div>
+                <div class="diplome-name">MBALLA Jean-Baptiste</div>
+                <div class="diplome-born">né(e) le 14 mars 2000 à Yaoundé (Cameroun)</div>
+                <div style="font-size:.55rem;color:#4b3800;margin-top:6px;">a satisfait aux épreuves et obtenu le</div>
+                <div class="diplome-diploma-name">Diplôme de Licence Professionnelle</div>
+                <div class="diplome-specialty">Spécialité : Génie Informatique</div>
+                <div class="diplome-mention">Mention : Bien</div>
+              </div>
+              <div class="diplome-footer">
+                <div class="diplome-sig">
+                  <div class="diplome-sig-line"></div>
+                  <div>Le Directeur</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-size:.48rem;color:#888;">Douala, le 15 février 2025</div>
+                  <div class="diplome-num">N° DIP-2025-0042</div>
+                  <div style="font-size:.42rem;color:#aaa;margin-top:2px;">QR: ENSET-VRF-2025-042</div>
+                </div>
+                <div class="diplome-sig">
+                  <div class="diplome-sig-line"></div>
+                  <div>Le Recteur</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;margin-top:10px;font-size:.75rem;color:var(--gris-dark);">
+            <i class="bi bi-info-circle me-1"></i>Rendu approximatif — La mise en page finale dépend du modèle officiel PDF
+          </div>
+        </div>
+      </div>
+
+      <!-- PROGRESSION GÉNÉRATION -->
+      <div class="panel" id="progressPanel" style="display:none;">
+        <div class="panel-hd">
+          <span class="panel-title"><i class="bi bi-arrow-repeat me-2" style="color:var(--blue);"></i>Génération en cours…</span>
+          <span id="genPct" style="font-size:.82rem;font-weight:800;color:var(--blue);">0%</span>
+        </div>
+        <div class="panel-bd">
+          <div style="height:10px;background:var(--gris-bg);border-radius:99px;overflow:hidden;margin-bottom:16px;">
+            <div id="genBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--teal),var(--green));border-radius:99px;transition:width .4s;"></div>
+          </div>
+          <div id="genSteps">
+            <div class="gen-step"><div class="gen-dot wait" id="gs1"><i class="bi bi-1-circle"></i></div><div><div class="gen-label">Chargement de la liste validée</div><div class="gen-sub gen-sub-1">En attente…</div></div><div class="gen-count" id="gc1">—</div></div>
+            <div class="gen-step"><div class="gen-dot wait" id="gs2">2</div><div><div class="gen-label">Application du modèle de diplôme</div><div class="gen-sub">Fusion données + template</div></div><div class="gen-count" id="gc2">—</div></div>
+            <div class="gen-step"><div class="gen-dot wait" id="gs3">3</div><div><div class="gen-label">Génération des QR codes</div><div class="gen-sub">Identifiant unique par diplôme</div></div><div class="gen-count" id="gc3">—</div></div>
+            <div class="gen-step"><div class="gen-dot wait" id="gs4">4</div><div><div class="gen-label">Application du filigrane BROUILLON</div><div class="gen-sub">Watermark provisoire</div></div><div class="gen-count" id="gc4">—</div></div>
+            <div class="gen-step"><div class="gen-dot wait" id="gs5">5</div><div><div class="gen-label">Compilation et archivage PDF</div><div class="gen-sub">Regroupement par filière</div></div><div class="gen-count" id="gc5">—</div></div>
+          </div>
+          <div id="genDone" style="display:none;" class="mt-3 p-3" style="background:var(--green-bg);border-radius:10px;">
+            <div style="font-size:.9rem;font-weight:800;color:var(--green);display:flex;align-items:center;gap:8px;">
+              <i class="bi bi-check-circle-fill"></i>Génération terminée — 609 diplômes produits
+            </div>
+            <div style="font-size:.78rem;color:var(--dark);margin-top:6px;">Les représentants de filière ont été notifiés. La vérification peut commencer.</div>
+            <div class="d-flex gap-3 mt-3 flex-wrap">
+              <a href="verification_premier_jet.html" class="btn-launch" style="font-size:.84rem;padding:10px 20px;text-decoration:none;">
+                <i class="bi bi-arrow-right-circle-fill"></i>Aller à la vérification
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+  const sidebar=document.getElementById('sidebar'),topbar=document.getElementById('topbar'),main=document.getElementById('main'),toggler=document.getElementById('toggler'),overlay=document.getElementById('sidebarOverlay');
+  const isMobile=()=>window.innerWidth<992;
+  toggler.addEventListener('click',()=>{if(isMobile()){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show');}else{sidebar.classList.toggle('collapsed');topbar.classList.toggle('sc');main.classList.toggle('sc');}});
+  overlay.addEventListener('click',()=>{sidebar.classList.remove('mobile-open');overlay.classList.remove('show');});
+
+  function selectOpt(n){
+    [1,2,3].forEach(i=>{
+      document.getElementById(`opt${i}`).classList.remove('selected');
+      document.getElementById(`opt${i}`).querySelector('.opt-radio').innerHTML='';
+    });
+    document.getElementById(`opt${n}`).classList.add('selected');
+    document.getElementById(`opt${n}`).querySelector('.opt-radio').innerHTML='<span style="width:8px;height:8px;border-radius:50%;background:#fff;display:block;"></span>';
+    document.getElementById('filiereSelect').style.display=n===2?'block':'none';
+    document.getElementById('matInput').style.display=n===3?'block':'none';
+  }
+  selectOpt(1);
+
+  function previewDiplome(){
+    document.querySelector('.diplome-preview').scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  function lancerGeneration(){
+    document.getElementById('progressPanel').style.display='block';
+    document.getElementById('progressPanel').scrollIntoView({behavior:'smooth'});
+    document.getElementById('btnLancer').disabled=true;
+
+    const steps=[
+      {id:1,label:'609 étudiants chargés',count:'609/609',pct:20,dur:900},
+      {id:2,label:'Modèle v3.2 appliqué',count:'609 PDF',pct:45,dur:1200},
+      {id:3,label:'QR codes générés',count:'609 codes',pct:65,dur:1000},
+      {id:4,label:'Filigranes apposés',count:'609 pages',pct:85,dur:800},
+      {id:5,label:'5 archives créées',count:'Terminé',pct:100,dur:700},
+    ];
+
+    let i=0;
+    function nextStep(){
+      if(i>=steps.length){
+        setTimeout(()=>{
+          document.getElementById('genDone').style.display='block';
+          document.getElementById('genDone').style.background='var(--green-bg)';
+          document.getElementById('genDone').style.borderRadius='10px';
+          document.getElementById('genDone').style.padding='14px';
+        },400);
+        return;
+      }
+      const s=steps[i];
+      // Previous done
+      if(i>0){
+        const prev=steps[i-1];
+        document.getElementById(`gs${prev.id}`).className='gen-dot done';
+        document.getElementById(`gs${prev.id}`).innerHTML='<i class="bi bi-check-lg"></i>';
+        document.getElementById(`gc${prev.id}`).textContent=prev.count;
+        document.getElementById(`gc${prev.id}`).style.color='var(--green)';
+      }
+      // Current running
+      document.getElementById(`gs${s.id}`).className='gen-dot running';
+      document.getElementById(`gs${s.id}`).innerHTML='<i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite;display:inline-block;"></i>';
+      document.getElementById('genBar').style.width=s.pct+'%';
+      document.getElementById('genPct').textContent=s.pct+'%';
+      i++;
+      setTimeout(nextStep,s.dur);
+    }
+    nextStep();
+  }
+</script>
+<style>@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}</style>
+</body>
+</html>

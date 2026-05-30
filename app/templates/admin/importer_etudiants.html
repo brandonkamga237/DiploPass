@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Importer les étudiants{% endblock %}
+{% block page_title %}Importer les étudiants{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+  <span class="text-muted small">Année active :</span>
+  <span class="badge bg-primary fs-6">{{ annee_active }}</span>
+  <span class="text-muted small">— Tous les étudiants importés seront rattachés à cette année.</span>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="panel">
+      <div class="panel-header">
+        <h6 class="mb-0"><i class="bi bi-cloud-upload me-2"></i>Fichier JSON</h6>
+      </div>
+      <div class="panel-body">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="mb-4">
+            <label class="form-label fw-500">Fichier JSON à importer</label>
+            <input type="file" name="fichier_json" class="form-control" accept=".json" required>
+            <div class="form-text">
+              Tableau d'objets JSON. Les redoublants (matricule déjà existant) sont
+              mis à jour pour l'année {{ annee_active }}.
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload me-2"></i>Importer pour {{ annee_active }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="panel">
+      <div class="panel-header">
+        <h6 class="mb-0"><i class="bi bi-code-slash me-2"></i>Format attendu</h6>
+      </div>
+      <div class="panel-body p-0">
+        <pre style="background:#f8fafc;border-radius:0 0 12px 12px;padding:20px;margin:0;font-size:.78rem;color:#0f172a;overflow-x:auto">[
+  {
+    <span style="color:#16a34a">"matricule"</span>: <span style="color:#d97706">"21G0001"</span>,          <span style="color:#94a3b8">// obligatoire</span>
+    <span style="color:#16a34a">"nom"</span>: <span style="color:#d97706">"MBALLA"</span>,
+    <span style="color:#16a34a">"prenom"</span>: <span style="color:#d97706">"Jean-Pierre"</span>,
+    <span style="color:#16a34a">"date_naissance"</span>: <span style="color:#d97706">"2000-03-15"</span>,   <span style="color:#94a3b8">// YYYY-MM-DD</span>
+    <span style="color:#16a34a">"lieu_naissance"</span>: <span style="color:#d97706">"Yaoundé"</span>,
+    <span style="color:#16a34a">"sexe"</span>: <span style="color:#d97706">"M"</span>,                    <span style="color:#94a3b8">// M ou F</span>
+    <span style="color:#16a34a">"filiere"</span>: <span style="color:#d97706">"Génie Informatique"</span>,
+    <span style="color:#16a34a">"niveau"</span>: 3,                     <span style="color:#94a3b8">// 3 (Licence) ou 5 (Master)</span>
+    <span style="color:#16a34a">"cycle"</span>: <span style="color:#d97706">"LICENCE"</span>,            <span style="color:#94a3b8">// LICENCE ou MASTER</span>
+    <span style="color:#16a34a">"type_etudiant"</span>: <span style="color:#d97706">"REGULIER"</span>,   <span style="color:#94a3b8">// REGULIER ou FONCTIONNAIRE</span>
+    <span style="color:#16a34a">"statut_fonctionnaire"</span>: false,
+    <span style="color:#16a34a">"email"</span>: <span style="color:#d97706">"jean@example.cm"</span>,
+    <span style="color:#16a34a">"telephone"</span>: <span style="color:#d97706">"6XXXXXXXX"</span>
+  }
+]</pre>
+      </div>
+    </div>
+
+    <div class="panel mt-3">
+      <div class="panel-body">
+        <p class="mb-2 small text-muted fw-500">Règles d'import</p>
+        <ul class="small text-muted mb-0" style="padding-left:1.2rem">
+          <li>Le mot de passe initial de chaque étudiant est son <strong>matricule</strong>.</li>
+          <li>L'année académique est automatiquement celle sélectionnée dans la barre latérale (<strong>{{ annee_active }}</strong>).</li>
+          <li>Si le matricule existe déjà, l'étudiant est mis à jour pour l'année {{ annee_active }} (redoublant).</li>
+          <li>Le champ <code>filiere</code> doit correspondre exactement au nom d'une filière existante.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
