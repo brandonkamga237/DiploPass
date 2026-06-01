@@ -3,6 +3,9 @@
 {% block page_title %}Gestion des filières{% endblock %}
 
 {% block topbar_actions %}
+<a href="{{ url_for('admin.liste_departements') }}" class="btn btn-outline-secondary btn-sm me-2">
+  <i class="bi bi-building"></i> Gérer les départements
+</a>
 <a href="{{ url_for('admin.nouvelle_filiere') }}" class="btn btn-primary btn-sm">
   <i class="bi bi-plus-circle"></i> Nouvelle filière
 </a>
@@ -12,71 +15,78 @@
 
 <div class="page-header">
   <h1><i class="bi bi-diagram-3 me-2"></i>Filières</h1>
-  <p>Configurez les filières de l'ENSET. Chaque filière peut être attribuée à un représentant.</p>
+  <p>{{ filieres|length }} filière(s) rattachées à {{ departements|length }} département(s).</p>
 </div>
 
+{% set dept_courant = namespace(code=None) %}
+{% for f in filieres %}
+  {% if f.code_departement != dept_courant.code %}
+    {% set dept_courant.code = f.code_departement %}
+
+    {% if not loop.first %}</tbody></table></div></div>{% endif %}
+
+    <div class="card mb-3">
+      <div class="card-header d-flex align-items-center gap-2 py-2">
+        <i class="bi bi-building text-primary"></i>
+        <strong>
+          {% if f.departement_obj %}
+            {{ f.departement_obj.nom }}
+            <span class="badge bg-primary ms-1">{{ f.code_departement }}</span>
+          {% else %}
+            <span class="text-muted">Sans département</span>
+          {% endif %}
+        </strong>
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Nom</th>
+              <th>Cycle</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+  {% endif %}
+
+  <tr>
+    <td><span class="badge bg-secondary">{{ f.code }}</span></td>
+    <td class="fw-500">{{ f.nom }}</td>
+    <td>{{ f.cycle or '—' }}</td>
+    <td>
+      <span class="badge bg-{{ 'success' if f.actif else 'secondary' }}">
+        {{ 'Active' if f.actif else 'Inactive' }}
+      </span>
+    </td>
+    <td>
+      <form method="POST" action="{{ url_for('admin.toggle_filiere', code=f.code) }}" style="display:inline">
+        <button class="btn btn-sm btn-outline-{{ 'danger' if f.actif else 'success' }}"
+                onclick="return confirm('{{ 'Désactiver' if f.actif else 'Activer' }} la filière {{ f.nom }} ?')">
+          <i class="bi bi-toggle-{{ 'on' if f.actif else 'off' }}"></i>
+          {{ 'Désactiver' if f.actif else 'Activer' }}
+        </button>
+      </form>
+    </td>
+  </tr>
+
+{% else %}
 <div class="card">
-  <div class="card-body p-0">
-    <table class="table mb-0">
-      <thead>
-        <tr>
-          <th>Code</th>
-          <th>Nom</th>
-          <th>Cycle</th>
-          <th>Représentant(s)</th>
-          <th>Statut</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for f in filieres %}
-        <tr>
-          <td><span class="badge bg-primary">{{ f.code }}</span></td>
-          <td class="fw-500">{{ f.nom }}</td>
-          <td>{{ f.cycle or '—' }}</td>
-          <td>
-            {% if f.representants %}
-              {% for r in f.representants %}
-              <span class="badge bg-{{ 'primary' if r.est_chef_bureau else 'secondary' }} me-1">
-                {{ r.prenom }} {{ r.nom }}
-                {% if r.est_chef_bureau %}<i class="bi bi-star-fill ms-1"></i>{% endif %}
-              </span>
-              {% endfor %}
-            {% else %}
-            <em class="text-muted small">Non attribuée</em>
-            {% endif %}
-          </td>
-          <td>
-            <span class="badge bg-{{ 'success' if f.actif else 'secondary' }}">
-              {{ 'Active' if f.actif else 'Inactive' }}
-            </span>
-          </td>
-          <td>
-            <form method="POST" action="{{ url_for('admin.toggle_filiere', code=f.code) }}" style="display:inline">
-              <button class="btn btn-sm btn-outline-{{ 'danger' if f.actif else 'success' }}"
-                      onclick="return confirm('{{ 'Désactiver' if f.actif else 'Activer' }} la filière {{ f.nom }} ?')">
-                <i class="bi bi-toggle-{{ 'on' if f.actif else 'off' }}"></i>
-                {{ 'Désactiver' if f.actif else 'Activer' }}
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6">
-            <div class="empty-state py-4">
-              <i class="bi bi-diagram-3" style="font-size:2rem;color:#cbd5e1"></i>
-              <p class="mt-2 mb-0 text-muted">Aucune filière configurée.</p>
-              <a href="{{ url_for('admin.nouvelle_filiere') }}" class="btn btn-primary btn-sm mt-2">
-                <i class="bi bi-plus-circle"></i> Créer la première filière
-              </a>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="card-body">
+    <div class="empty-state py-4">
+      <i class="bi bi-diagram-3" style="font-size:2rem;color:#cbd5e1"></i>
+      <p class="mt-2 mb-0 text-muted">Aucune filière configurée.</p>
+      <a href="{{ url_for('admin.nouvelle_filiere') }}" class="btn btn-primary btn-sm mt-2">
+        <i class="bi bi-plus-circle"></i> Créer la première filière
+      </a>
+    </div>
   </div>
 </div>
+{% endfor %}
+
+{% if filieres %}
+  </tbody></table></div></div>
+{% endif %}
 
 {% endblock %}

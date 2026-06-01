@@ -2,7 +2,7 @@ services:
 
   db:
     image: postgres:16-alpine
-    container_name: digipass_db
+    container_name: diplopass_db
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -15,7 +15,7 @@ services:
     ports:
       - "5432:5432"
     networks:
-      - digipass_net
+      - diplopass_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -24,7 +24,7 @@ services:
 
   web:
     build: .
-    container_name: digipass_web
+    container_name: diplopass_web
     restart: unless-stopped
     env_file: .env
     environment:
@@ -39,11 +39,11 @@ services:
       db:
         condition: service_healthy
     networks:
-      - digipass_net
+      - diplopass_net
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: digipass_pgadmin
+    container_name: diplopass_pgadmin
     restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
@@ -53,11 +53,11 @@ services:
     depends_on:
       - db
     networks:
-      - digipass_net
+      - diplopass_net
 
   minio:
     image: minio/minio:latest
-    container_name: digipass_minio
+    container_name: diplopass_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -69,7 +69,7 @@ services:
     volumes:
       - minio_data:/data
     networks:
-      - digipass_net
+      - diplopass_net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -81,5 +81,5 @@ volumes:
   minio_data:
 
 networks:
-  digipass_net:
+  diplopass_net:
     driver: bridge

@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Diplôme — {{ etudiant.nom }} {{ etudiant.prenom }}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background: #fff;
+      color: #000;
+    }
+
+    /* ── Page diplôme ── */
+    .diplome {
+      width: 297mm;
+      min-height: 210mm;
+      margin: 0 auto;
+      padding: 12mm 14mm 10mm;
+      background: #fff;
+      position: relative;
+      border: 2px solid #1a4f8a;
+      box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 6px #c8a84b;
+    }
+
+    /* ── Filigrane central ── */
+    .watermark {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 160mm;
+      height: 160mm;
+      opacity: 0.06;
+      background-image: url('/static/img/logo_ud.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: center;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content { position: relative; z-index: 1; }
+
+    /* ── EN-TÊTE ── */
+    .header {
+      display: grid;
+      grid-template-columns: 28mm 1fr 28mm;
+      align-items: start;
+      gap: 6mm;
+      margin-bottom: 4mm;
+    }
+
+    .logo-left, .logo-right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2mm;
+    }
+
+    .logo-circle {
+      width: 24mm; height: 24mm;
+      border-radius: 50%;
+      border: 1.5px solid #1a4f8a;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+
+    .logo-circle img {
+      width: 100%; height: 100%; object-fit: contain;
+    }
+
+    .logo-circle-placeholder {
+      font-size: 5pt;
+      color: #1a4f8a;
+      text-align: center;
+      font-weight: bold;
+      line-height: 1.2;
+    }
+
+    .header-center {
+      text-align: center;
+    }
+
+    .header-bilingual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4mm;
+      font-size: 6.5pt;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .header-bilingual .fr { font-weight: bold; text-transform: uppercase; }
+    .header-bilingual .en { font-style: italic; text-transform: uppercase; }
+
+    .devise {
+      font-size: 6pt;
+      font-style: italic;
+      color: #444;
+      margin-top: 0.5mm;
+    }
+
+    /* ── TITRE PRINCIPAL ── */
+    .titre-bloc {
+      text-align: center;
+      margin: 5mm 0 4mm;
+      padding: 3mm 0;
+      border-top: 1.5px solid #c8a84b;
+      border-bottom: 1.5px solid #c8a84b;
+    }
+
+    .titre-diplome {
+      font-size: 16pt;
+      font-weight: bold;
+      color: #1a4f8a;
+      text-transform: uppercase;
+      letter-spacing: 0.5pt;
+      line-height: 1.25;
+    }
+
+    /* ── CORPS DU DIPLÔME ── */
+    .corps {
+      font-size: 7.5pt;
+      line-height: 1.6;
+      margin-bottom: 4mm;
+    }
+
+    .corps p {
+      margin-bottom: 1.5mm;
+    }
+
+    .corps .fr-line { }
+    .corps .en-line { font-style: italic; color: #333; }
+
+    .numero-diplome {
+      float: right;
+      font-size: 8pt;
+      font-weight: bold;
+      border: 1px solid #000;
+      padding: 1mm 3mm;
+      margin-bottom: 2mm;
+    }
+
+    /* ── CHAMPS PRINCIPAUX ── */
+    .champs {
+      margin: 4mm 0;
+      font-size: 8.5pt;
+    }
+
+    .champ-ligne {
+      display: grid;
+      grid-template-columns: 60mm 1fr;
+      align-items: baseline;
+      margin-bottom: 2mm;
+      gap: 2mm;
+    }
+
+    .champ-label {
+      font-size: 7.5pt;
+    }
+
+    .champ-label .fr { font-style: normal; }
+    .champ-label .en { font-style: italic; font-size: 6.5pt; color: #333; display: block; }
+
+    .champ-valeur {
+      font-size: 10pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      border-bottom: 1px solid #000;
+      padding-bottom: 0.5mm;
+      min-width: 80mm;
+      letter-spacing: 0.5pt;
+    }
+
+    .champ-valeur.nom {
+      font-size: 13pt;
+      font-weight: 900;
+    }
+
+    .row-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6mm;
+      margin-bottom: 2mm;
+    }
+
+    /* ── MENTION ── */
+    .mention-bloc {
+      margin: 3mm 0;
+      font-size: 8.5pt;
+    }
+
+    /* ── FORMULE DE DÉLIVRANCE ── */
+    .formule {
+      font-size: 7.5pt;
+      font-style: italic;
+      margin: 3mm 0;
+      line-height: 1.5;
+    }
+
+    /* ── LIEU ET DATE ── */
+    .lieu-date {
+      display: flex;
+      justify-content: flex-end;
+      font-size: 8pt;
+      margin: 3mm 0 5mm;
+    }
+
+    /* ── SIGNATURES ── */
+    .signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4mm;
+      margin-top: 4mm;
+      font-size: 7pt;
+      text-align: center;
+    }
+
+    .sig-bloc {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1mm;
+    }
+
+    .sig-titre {
+      font-weight: bold;
+      font-size: 7.5pt;
+      text-align: center;
+    }
+
+    .sig-titre .en {
+      font-style: italic;
+      font-weight: normal;
+      font-size: 6.5pt;
+      display: block;
+    }
+
+    .sig-zone {
+      width: 100%;
+      height: 18mm;
+      border-bottom: 1px solid #000;
+      margin: 1mm 0;
+    }
+
+    .sig-nom {
+      font-size: 7pt;
+      text-align: center;
+    }
+
+    /* ── PIED DE PAGE ── */
+    .footer-note {
+      margin-top: 5mm;
+      padding-top: 2mm;
+      border-top: 1px solid #000;
+      font-size: 6pt;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .footer-note .fr { font-style: normal; }
+    .footer-note .en { font-style: italic; color: #333; }
+
+    /* ── IMPRESSION ── */
+    @media print {
+      body { margin: 0; }
+      .diplome {
+        width: 297mm;
+        min-height: 210mm;
+        margin: 0;
+        border: none;
+        box-shadow: none;
+        padding: 10mm 12mm 8mm;
+      }
+      .no-print { display: none; }
+    }
+
+    /* ── Bouton impression ── */
+    .no-print {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .btn-print {
+      background: #1a4f8a;
+      color: #fff;
+      border: none;
+      padding: 10px 28px;
+      font-size: 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-print:hover { background: #133a68; }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimer / Télécharger PDF</button>
+</div>
+
+<div class="diplome">
+
+  <!-- Filigrane -->
+  <div class="watermark"></div>
+
+  <div class="content">
+
+    <!-- ── EN-TÊTE ── -->
+    <div class="header">
+
+      <!-- Logo gauche : Université de Douala -->
+      <div class="logo-left">
+        <div class="logo-circle">
+          <img src="/static/img/logo_ud.png" alt="Université de Douala"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="logo-circle-placeholder" style="display:none">
+            UNIVERSITE<br>DE<br>DOUALA
+          </div>
+        </div>
+      </div>
+
+      <!-- Textes centraux bilingues -->
+      <div class="header-center">
+        <div class="header-bilingual">
+          <div>
+            <div class="fr">République du Cameroun</div>
+            <div class="en">Republic of Cameroon</div>
+            <div class="devise">Paix – Travail – Patrie &nbsp;/&nbsp; <em>Peace – Work – Fatherland</em></div>
+            <br>
+            <div class="fr">Ministère de l'Enseignement Supérieur</div>
+            <div class="en">Ministry of Higher Education</div>
+            <div class="fr">Direction de la Coordination des Activités Académiques</div>
+            <div class="en">Department of the Coordination of Academic Activities</div>
+            <br>
+            <div class="fr">Université de Douala</div>
+            <div class="en">The University of Douala</div>
+            <div class="fr">École Normale Supérieure d'Enseignement Technique</div>
+            <div class="en">Advanced Teacher's Training College for Technical Education</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logo droit : MINESUP -->
+      <div class="logo-right">
+        <div class="logo-circle">
+          <img src="/static/img/logo_minesup.png" alt="MINESUP"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="logo-circle-placeholder" style="display:none">
+            MINESUP
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── TITRE ── -->
+    <div class="titre-bloc">
+      <div class="titre-diplome">
+        Diplôme de Professeur d'Enseignement Technique de Premier Grade<br>
+        <span style="font-size:13pt">(DIPET I)</span>
+      </div>
+      <div style="font-size:7pt; font-style:italic; color:#444; margin-top:2mm">
+        Teacher's Diploma for Technical Education — Grade One
+      </div>
+    </div>
+
+    <!-- ── CORPS : VISAS ── -->
+    <div class="corps">
+      <div class="numero-diplome">N° {{ dossier.numero_diplome or '___________' }}</div>
+
+      <p>
+        <span class="fr-line">Vu le décret N°93/027 du 19 janvier 1993 portant dispositions communes aux universités ;</span><br>
+        <span class="en-line">Mindful of decree N°93/027 of 19<sup>th</sup> January 1993 to lay down general regulations governing universities ;</span>
+      </p>
+      <p>
+        <span class="fr-line">Vu les textes en vigueur portant organisation des enseignements et des évaluations à l'École Normale Supérieure d'Enseignement Technique ;</span><br>
+        <span class="en-line">Mindful of the regulations organising the courses and examinations at the Advanced Teacher's Training College for Technical Education ;</span>
+      </p>
+      <p>
+        <span class="fr-line">Vu le procès-verbal des délibérations du jury, session
+          <strong>{{ dossier.session_jury | upper if dossier.session_jury else 'NORMALE' }}</strong> ;</span><br>
+        <span class="en-line">Mindful of the minutes of the deliberations of the promotion jury sitting.</span>
+      </p>
+    </div>
+
+    <!-- ── CHAMPS PRINCIPAUX ── -->
+    <div class="champs">
+
+      <!-- Titre conféré -->
+      <div class="champ-ligne">
+        <div class="champ-label">
+          <span class="fr">Le / <em>The</em></span>
+        </div>
+        <div class="champ-valeur" style="font-size:8pt; font-weight:bold">
+          DIPLÔME DE PROFESSEUR D'ENSEIGNEMENT TECHNIQUE DE PREMIER GRADE<br>
+          <span style="font-style:italic; font-weight:normal; font-size:7pt">
+            TEACHER'S DIPLOMA FOR TECHNICAL EDUCATION GRADE ONE
+          </span>
+        </div>
+      </div>
+
+      <!-- Spécialité et Option -->
+      <div class="row-two">
+        <div class="champ-ligne">
+          <div class="champ-label">
+            <span class="fr">Spécialité</span>
+            <span class="en">Specialty</span>
+          </div>
+          <div class="champ-valeur">{{ dossier.specialite or etudiant.filiere_obj.departement_obj.nom if etudiant.filiere_obj and etudiant.filiere_obj.departement_obj else '—' }}</div>
+        </div>
+        <div class="champ-ligne">
+          <div class="champ-label">
+            <span class="fr">Option</span>
+            <span class="en">Option</span>
+          </div>
+          <div class="champ-valeur">{{ dossier.option_diplome or etudiant.filiere_obj.nom if etudiant.filiere_obj else '—' }}</div>
+        </div>
+      </div>
+
+      <!-- Nom sur diplôme -->
+      <div class="champ-ligne" style="margin-top:3mm">
+        <div class="champ-label">
+          <span class="fr">Est délivré à</span>
+          <span class="en">Is conferred on</span>
+        </div>
+        <div class="champ-valeur nom">{{ dossier.nom_sur_diplome }} {{ dossier.prenom_sur_diplome }}</div>
+      </div>
+
+      <!-- Matricule + Date de naissance -->
+      <div class="row-two" style="margin-top:2mm">
+        <div class="champ-ligne">
+          <div class="champ-label">
+            <span class="fr">Matricule</span>
+            <span class="en">Reg. N°</span>
+          </div>
+          <div class="champ-valeur">{{ etudiant.matricule }}</div>
+        </div>
+        <div class="champ-ligne">
+          <div class="champ-label">
+            <span class="fr">Né(e) le</span>
+            <span class="en">Born on</span>
+          </div>
+          <div class="champ-valeur">
+            {{ dossier.ddn_sur_diplome.strftime('%d/%m/%Y') if dossier.ddn_sur_diplome else '—' }}
+            {% if dossier.lddn_sur_diplome %}
+              à {{ dossier.lddn_sur_diplome }}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Mention -->
+      <div class="champ-ligne" style="margin-top:2mm">
+        <div class="champ-label">
+          <span class="fr">Mention</span>
+          <span class="en">Grade</span>
+        </div>
+        <div class="champ-valeur" style="font-size:12pt">{{ dossier.mention | upper if dossier.mention else 'PASSABLE' }}</div>
+      </div>
+
+    </div>
+
+    <!-- ── FORMULE ── -->
+    <div class="formule">
+      Pour en jouir avec les droits et prérogatives qui y sont rattachés.<br>
+      <em>With all the rights and privileges appertaining thereto.</em>
+    </div>
+
+    <!-- ── LIEU ET DATE ── -->
+    <div class="lieu-date">
+      Fait à Yaoundé, le &nbsp;<strong>{{ dossier.date_signature_ministre.strftime('%d %B %Y') if dossier.date_signature_ministre else '___________________' }}</strong>
+      &nbsp;&nbsp;&nbsp;
+      <em>Issued at Yaoundé, on</em>
+    </div>
+
+    <!-- ── SIGNATURES ── -->
+    <div class="signatures">
+
+      <div class="sig-bloc">
+        <div class="sig-titre">
+          L'Impétrant
+          <span class="en">The Holder</span>
+        </div>
+        <div class="sig-zone"></div>
+        <div class="sig-nom">{{ dossier.prenom_sur_diplome }} {{ dossier.nom_sur_diplome }}</div>
+      </div>
+
+      <div class="sig-bloc">
+        <div class="sig-titre">
+          Le Recteur
+          <span class="en">The Rector</span>
+        </div>
+        <div class="sig-zone"></div>
+        <div class="sig-nom">{{ recteur_nom | default('') }}</div>
+      </div>
+
+      <div class="sig-bloc">
+        <div class="sig-titre">
+          Le Ministre d'État, Ministre de l'Enseignement Supérieur,<br>
+          Chancelier des Ordres Académiques
+          <span class="en">The Minister of State, Minister of Higher Education,<br>Chancellor of Academic Order</span>
+        </div>
+        <div class="sig-zone"></div>
+        <div class="sig-nom">{{ ministre_nom | default('') }}</div>
+      </div>
+
+    </div>
+
+    <!-- ── PIED DE PAGE ── -->
+    <div class="footer-note">
+      <div class="fr">
+        IL N'EST DÉLIVRÉ QU'UNE SEULE ATTESTATION OU DIPLÔME. L'INTÉRESSÉ PEUT EN FAIRE ÉTABLIR AUTANT DE COPIES CONFORMES QU'IL LE DÉSIRE.
+      </div>
+      <div class="en">
+        ONLY ONE COPY OF THIS CERTIFICATE CAN BE ISSUED. CERTIFIED COPIES OF IT CAN BE MADE WHENEVER NECESSARY.
+      </div>
+    </div>
+
+  </div><!-- .content -->
+</div><!-- .diplome -->
+
+<script>
+  // Correction onerror sur les logos
+  document.querySelectorAll('.logo-circle img').forEach(img => {
+    img.addEventListener('error', () => {
+      img.style.display = 'none';
+      img.nextElementSibling.style.display = 'flex';
+    });
+  });
+</script>
+
+</body>
+</html>

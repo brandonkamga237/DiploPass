@@ -1,4 +1,4 @@
-# DigiPass — Suivi numérique de la diplomation
+# DiploPass — Suivi numérique de la diplomation
 
 Plateforme web de gestion administrative des finissants de l'ENSET de Douala.  
 Développée avec Flask 3.1 + PostgreSQL 16 + MinIO + Bootstrap 5.3, déployable via Docker.
@@ -26,7 +26,7 @@ Développée avec Flask 3.1 + PostgreSQL 16 + MinIO + Bootstrap 5.3, déployable
 
 ## 1. Présentation
 
-DigiPass dématérialise le suivi du processus de diplomation à l'ENSET de Douala.  
+DiploPass dématérialise le suivi du processus de diplomation à l'ENSET de Douala.  
 Chaque finissant dispose d'un dossier numérique qui progresse à travers 14 statuts validés par les différents acteurs administratifs.
 
 **Fonctionnalités principales :**
@@ -71,7 +71,7 @@ Chaque finissant dispose d'un dossier numérique qui progresse à travers 14 sta
 ## 3. Structure du projet
 
 ```
-DigiPass/
+DiploPass/
 ├── app/
 │   ├── __init__.py                  # Application factory (create_app)
 │   ├── models/
@@ -151,8 +151,8 @@ DigiPass/
 
 ```bash
 # 1. Cloner le dépôt
-git clone https://github.com/votre-org/DigiPass.git
-cd DigiPass
+git clone https://github.com/votre-org/DiploPass.git
+cd DiploPass
 
 # 2. Créer l'environnement virtuel
 python3 -m venv .venv
@@ -196,8 +196,8 @@ flask run
 
 ```bash
 # 1. Cloner et configurer
-git clone https://github.com/votre-org/DigiPass.git
-cd DigiPass
+git clone https://github.com/votre-org/DiploPass.git
+cd DiploPass
 cp .env.example .env
 # Éditer .env avec des valeurs de production sécurisées
 
@@ -265,19 +265,19 @@ docker compose exec web python seed.py
 | Champ | Valeur |
 |-------|--------|
 | URL | http://localhost:9001 |
-| Login | `digipass` |
-| Mot de passe | `digipass2026` |
+| Login | `diplopass` |
+| Mot de passe | `diplopass2026` |
 
 ### Interface pgAdmin
 
 | Champ | Valeur |
 |-------|--------|
 | URL | http://localhost:5050 |
-| Email | `admin@digipass.cm` |
+| Email | `admin@diplopass.cm` |
 | Mot de passe | `admin_password` |
 | Hôte serveur PostgreSQL | `db` |
-| Base | `digipass_db` |
-| Utilisateur DB | `digipass_user` |
+| Base | `diplopass_db` |
+| Utilisateur DB | `diplopass_user` |
 
 ---
 
@@ -546,16 +546,16 @@ Copier `.env.example` en `.env` et adapter :
 | `SECRET_KEY` | `changez-moi` | Clé de signature Flask (sessions) |
 | `FLASK_APP` | `run.py` | Point d'entrée Flask |
 | `FLASK_ENV` | `development` | Environnement |
-| `DATABASE_URL` | `postgresql://digipass_user:digipass2026@localhost:5432/digipass_db` | Local : `localhost` / Docker : `db` |
-| `POSTGRES_DB` | `digipass_db` | Nom de la base |
-| `POSTGRES_USER` | `digipass_user` | Utilisateur PostgreSQL |
-| `POSTGRES_PASSWORD` | `digipass2026` | Mot de passe PostgreSQL |
+| `DATABASE_URL` | `postgresql://diplopass_user:diplopass2026@localhost:5432/diplopass_db` | Local : `localhost` / Docker : `db` |
+| `POSTGRES_DB` | `diplopass_db` | Nom de la base |
+| `POSTGRES_USER` | `diplopass_user` | Utilisateur PostgreSQL |
+| `POSTGRES_PASSWORD` | `diplopass2026` | Mot de passe PostgreSQL |
 | `MINIO_ENDPOINT` | `localhost:9000` | Local : `localhost` / Docker : `minio:9000` |
-| `MINIO_ACCESS_KEY` | `digipass` | Identifiant MinIO |
-| `MINIO_SECRET_KEY` | `digipass2026` | Mot de passe MinIO |
-| `MINIO_BUCKET` | `digipass` | Nom du bucket |
+| `MINIO_ACCESS_KEY` | `diplopass` | Identifiant MinIO |
+| `MINIO_SECRET_KEY` | `diplopass2026` | Mot de passe MinIO |
+| `MINIO_BUCKET` | `diplopass` | Nom du bucket |
 | `MINIO_SECURE` | `false` | `true` en production avec TLS |
-| `PGADMIN_EMAIL` | `admin@digipass.cm` | Email pgAdmin |
+| `PGADMIN_EMAIL` | `admin@diplopass.cm` | Email pgAdmin |
 | `PGADMIN_PASSWORD` | `admin_password` | Mot de passe pgAdmin |
 
 > **Production :** générer une `SECRET_KEY` robuste :  
@@ -602,7 +602,7 @@ docker compose exec web flask db upgrade
 docker compose exec web python seed.py
 
 # Shell PostgreSQL
-docker compose exec db psql -U digipass_user -d digipass_db
+docker compose exec db psql -U diplopass_user -d diplopass_db
 
 # Rebuild après modification du code
 docker compose up --build -d
@@ -644,7 +644,7 @@ EOF
 En développement local, `DATABASE_URL` doit utiliser `localhost` et non `db` :
 
 ```
-DATABASE_URL=postgresql://digipass_user:digipass2026@localhost:5432/digipass_db
+DATABASE_URL=postgresql://diplopass_user:diplopass2026@localhost:5432/diplopass_db
 ```
 
 ### `AttributeError: 'DossierDiplomation' object has no attribute 'pieces_jointes'`
@@ -656,9 +656,9 @@ Le serveur Flask tourne avec une ancienne version du modèle en mémoire. Redém
 Le fichier `seed_documents.sql` n'a pas été exécuté :
 
 ```bash
-psql -h localhost -U digipass_user -d digipass_db -f init_db/seed_documents.sql
+psql -h localhost -U diplopass_user -d diplopass_db -f init_db/seed_documents.sql
 # Ou via Docker :
-docker compose exec db psql -U digipass_user -d digipass_db \
+docker compose exec db psql -U diplopass_user -d diplopass_db \
   -f /docker-entrypoint-initdb.d/02_seed.sql
 ```
 
@@ -676,7 +676,7 @@ Verrou PostgreSQL actif — libérer les connexions bloquées :
 ```sql
 SELECT pg_terminate_backend(pid)
 FROM pg_stat_activity
-WHERE datname = 'digipass_db'
+WHERE datname = 'diplopass_db'
   AND pid <> pg_backend_pid()
   AND state IN ('active', 'idle in transaction');
 ```

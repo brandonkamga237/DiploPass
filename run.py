@@ -15,7 +15,7 @@ with app.app_context():
         admin.set_password('admin1234')
         db.session.add(admin)
         db.session.commit()
-        print('[DigiPass] Compte admin créé : login=admin / mdp=admin1234')
+        print('[DiploPass] Compte admin créé : login=admin / mdp=admin1234')
 
     # ── Filières ENSET de base ────────────────────────────────────────────────
     FILIERES_BASE = [
@@ -38,7 +38,7 @@ with app.app_context():
     if nouvelles:
         db.session.add_all(nouvelles)
         db.session.commit()
-        print(f'[DigiPass] {len(nouvelles)} filière(s) de base créée(s).')
+        print(f'[DiploPass] {len(nouvelles)} filière(s) de base créée(s).')
 
     # ── Années académiques ────────────────────────────────────────────────────
     ANNEE_COURANTE = '2025-2026'
@@ -62,7 +62,7 @@ with app.app_context():
                 )
             db.session.delete(annee)
             print(
-                f'[DigiPass] Année invalide « {annee.code} » supprimée'
+                f'[DiploPass] Année invalide « {annee.code} » supprimée'
                 + (f', {nb_etu} étudiant(s) et {nb_dos} dossier(s) migrés vers {ANNEE_COURANTE}.'
                    if nb_etu or nb_dos else '.')
             )
@@ -72,7 +72,7 @@ with app.app_context():
     if not AnneeDiplomation.query.filter_by(code=ANNEE_COURANTE).first():
         db.session.add(AnneeDiplomation(code=ANNEE_COURANTE))
         db.session.commit()
-        print(f'[DigiPass] Année {ANNEE_COURANTE} créée.')
+        print(f'[DiploPass] Année {ANNEE_COURANTE} créée.')
 
     # 3. Rattacher les étudiants/dossiers sans année à l'année courante
     orphelins_etu = Etudiant.query.filter(
@@ -83,7 +83,7 @@ with app.app_context():
         for e in orphelins_etu:
             e.annee_academique = ANNEE_COURANTE
         db.session.commit()
-        print(f'[DigiPass] {len(orphelins_etu)} étudiant(s) rattaché(s) à {ANNEE_COURANTE}.')
+        print(f'[DiploPass] {len(orphelins_etu)} étudiant(s) rattaché(s) à {ANNEE_COURANTE}.')
 
     orphelins_dos = DossierDiplomation.query.filter(
         (DossierDiplomation.annee_academique == None) |  # noqa: E711
@@ -93,7 +93,7 @@ with app.app_context():
         for d in orphelins_dos:
             d.annee_academique = ANNEE_COURANTE
         db.session.commit()
-        print(f'[DigiPass] {len(orphelins_dos)} dossier(s) rattaché(s) à {ANNEE_COURANTE}.')
+        print(f'[DiploPass] {len(orphelins_dos)} dossier(s) rattaché(s) à {ANNEE_COURANTE}.')
 
 
 if __name__ == '__main__':

@@ -27,6 +27,16 @@
                placeholder="Ex : Génie Informatique">
       </div>
 
+      <div class="mb-3">
+        <label class="form-label">Département</label>
+        <select name="code_departement" class="form-select">
+          <option value="">— Sans département —</option>
+          {% for d in departements %}
+          <option value="{{ d.code }}">{{ d.code }} — {{ d.nom }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
       <div class="mb-4">
         <label class="form-label">Cycle</label>
         <select name="cycle" class="form-select">

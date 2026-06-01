@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   DigiPass — Design System
+   DiploPass — Design System
    ENSET de Douala — inspiré du design officiel
 ═══════════════════════════════════════════ */
 
@@ -948,6 +948,8 @@ code {
 .login-page {
   min-height: 100vh;
   display: flex;
+  justify-content: center;
+  align-items: center;
   background: var(--gris-bg);
 }
 .login-left {
@@ -999,6 +1001,8 @@ code {
   flex-direction: column;
   justify-content: center;
   padding: 56px 48px;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 32px rgba(0,0,0,.08);
 }
 .login-right h2 { font-size: 1.5rem; font-weight: 800; color: var(--dark); letter-spacing: -.3px; margin-bottom: 6px; }
 .login-right p { color: var(--gris-dark); font-size: .875rem; margin-bottom: 32px; }
@@ -1021,8 +1025,10 @@ code {
    RESPONSIVE
 ══════════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .login-left { display: none; }
-  .login-right { width: 100%; padding: 40px 32px; }
+  .login-right { width: 100%; max-width: 460px; padding: 40px 32px; }
+}
+@media (max-width: 480px) {
+  .login-right { border-radius: 0; box-shadow: none; min-height: 100vh; }
 }
 
 @media (max-width: 991px) {

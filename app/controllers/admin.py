@@ -4,6 +4,7 @@ from app.utils.decorators import role_required
 from app.models.directeur import Directeur
 from app.models.chef_service import ChefServiceScolarite
 from app.models.representant import RepresentantFiliere
+from app.models.departement import Departement
 from app.models.filiere import Filiere
 from app.models.annee_diplomation import AnneeDiplomation
 from app.models.etudiant import Etudiant
@@ -44,6 +45,7 @@ def dashboard():
         nb_chefs_bureau=RepresentantFiliere.query.filter_by(est_chef_bureau=True).count(),
         nb_chefs_service=ChefServiceScolarite.query.count(),
         nb_filieres=Filiere.query.count(),
+        nb_departements=Departement.query.count(),
         nb_annees=AnneeDiplomation.query.count(),
     )
 
@@ -128,35 +130,80 @@ def supprimer_annee(id):
     return redirect(url_for('admin.liste_annees'))
 
 
+# ── Gestion des départements ──────────────────────────────────────────────────
+
+@admin_bp.route('/departements')
+@login_required
+@role_required('admin')
+def liste_departements():
+    departements = Departement.query.order_by(Departement.nom).all()
+    return render_template('admin/departements.html', departements=departements)
+
+
+@admin_bp.route('/departements/nouveau', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+def nouveau_departement():
+    if request.method == 'POST':
+        code = request.form.get('code', '').strip().upper()
+        nom  = request.form.get('nom', '').strip()
+        if not code or not nom:
+            flash('Le code et le nom sont obligatoires.', 'danger')
+            return redirect(request.url)
+        if Departement.query.get(code):
+            flash(f'Un département avec le code « {code} » existe déjà.', 'warning')
+            return redirect(request.url)
+        db.session.add(Departement(code=code, nom=nom, actif=True))
+        db.session.commit()
+        flash(f'Département {nom} créé.', 'success')
+        return redirect(url_for('admin.liste_departements'))
+    return render_template('admin/nouveau_departement.html')
+
+
+@admin_bp.route('/departements/<code>/toggle', methods=['POST'])
+@login_required
+@role_required('admin')
+def toggle_departement(code):
+    d = Departement.query.get_or_404(code)
+    d.actif = not d.actif
+    db.session.commit()
+    flash(f'Département {d.nom} {"activé" if d.actif else "désactivé"}.', 'info')
+    return redirect(url_for('admin.liste_departements'))
+
+
 # ── Gestion des filières ──────────────────────────────────────────────────────
 
 @admin_bp.route('/filieres')
 @login_required
 @role_required('admin')
 def liste_filieres():
-    filieres = Filiere.query.order_by(Filiere.nom).all()
-    return render_template('admin/filieres.html', filieres=filieres)
+    departements = Departement.query.order_by(Departement.nom).all()
+    filieres = Filiere.query.order_by(Filiere.code_departement, Filiere.nom).all()
+    return render_template('admin/filieres.html', filieres=filieres, departements=departements)
 
 
 @admin_bp.route('/filieres/nouvelle', methods=['GET', 'POST'])
 @login_required
 @role_required('admin')
 def nouvelle_filiere():
+    departements = Departement.query.order_by(Departement.nom).all()
     if request.method == 'POST':
-        code = request.form.get('code', '').strip().upper()
-        nom = request.form.get('nom', '').strip()
-        cycle = request.form.get('cycle', '').strip()
+        code         = request.form.get('code', '').strip().upper()
+        nom          = request.form.get('nom', '').strip()
+        cycle        = request.form.get('cycle', '').strip()
+        code_dept    = request.form.get('code_departement', '').strip() or None
         if not code or not nom:
             flash('Le code et le nom sont obligatoires.', 'danger')
             return redirect(request.url)
         if Filiere.query.get(code):
             flash(f'Une filière avec le code « {code} » existe déjà.', 'warning')
             return redirect(request.url)
-        db.session.add(Filiere(code=code, nom=nom, cycle=cycle or None))
+        db.session.add(Filiere(code=code, nom=nom, cycle=cycle or None,
+                               code_departement=code_dept))
         db.session.commit()
         flash(f'Filière {nom} créée.', 'success')
         return redirect(url_for('admin.liste_filieres'))
-    return render_template('admin/nouvelle_filiere.html')
+    return render_template('admin/nouvelle_filiere.html', departements=departements)
 
 
 @admin_bp.route('/filieres/<code>/toggle', methods=['POST'])

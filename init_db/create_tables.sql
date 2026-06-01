@@ -1,4 +1,4 @@
--- DigiPass — Schéma initial PostgreSQL
+-- DiploPass — Schéma initial PostgreSQL
 -- Ce fichier est exécuté automatiquement par Docker au premier démarrage.
 
 CREATE TABLE IF NOT EXISTS etudiant (
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS etudiant (
     filiere                VARCHAR(100) NOT NULL,
     niveau                 INTEGER,
     cycle                  VARCHAR(20)  CHECK (cycle IN ('LICENCE','MASTER')),
-    type_etudiant          VARCHAR(20)  CHECK (type_etudiant IN ('REGULIER','AUDITEUR_LIBRE')),
+    type_etudiant          VARCHAR(20)  CHECK (type_etudiant IN ('REGULIER','AUDITEUR_LIBRE','FONCTIONNAIRE')),
     statut_fonctionnaire   BOOLEAN      DEFAULT FALSE,
     email                  VARCHAR(150) UNIQUE,
     telephone              VARCHAR(20),
@@ -51,15 +51,33 @@ CREATE TABLE IF NOT EXISTS chef_bureau_diplomation (
     actif          BOOLEAN      DEFAULT TRUE
 );
 
+CREATE TABLE IF NOT EXISTS departement (
+    code  VARCHAR(20)  PRIMARY KEY,
+    nom   VARCHAR(150) NOT NULL,
+    actif BOOLEAN      DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS filiere (
+    id_filiere       SERIAL       PRIMARY KEY,
+    code             VARCHAR(20)  UNIQUE NOT NULL,
+    nom              VARCHAR(150) NOT NULL,
+    cycle            VARCHAR(30),
+    actif            BOOLEAN      DEFAULT TRUE,
+    code_departement VARCHAR(20)  REFERENCES departement(code)
+);
+
 CREATE TABLE IF NOT EXISTS representant_filiere (
-    id_representant SERIAL       PRIMARY KEY,
-    nom             VARCHAR(100) NOT NULL,
-    prenom          VARCHAR(100) NOT NULL,
-    filiere_geree   VARCHAR(100) NOT NULL,
-    bureau          VARCHAR(100),
-    login           VARCHAR(100) UNIQUE NOT NULL,
-    mot_de_passe    VARCHAR(255) NOT NULL,
-    actif           BOOLEAN      DEFAULT TRUE
+    id_representant  SERIAL       PRIMARY KEY,
+    nom              VARCHAR(100) NOT NULL,
+    prenom           VARCHAR(100) NOT NULL,
+    filiere_geree    VARCHAR(100) NOT NULL,
+    code_filiere     VARCHAR(20)  REFERENCES filiere(code),
+    code_departement VARCHAR(20)  REFERENCES departement(code),
+    bureau           VARCHAR(100),
+    login            VARCHAR(100) UNIQUE NOT NULL,
+    mot_de_passe     VARCHAR(255) NOT NULL,
+    est_chef_bureau  BOOLEAN      DEFAULT FALSE NOT NULL,
+    actif            BOOLEAN      DEFAULT TRUE
 );
 
 CREATE TABLE IF NOT EXISTS communique (

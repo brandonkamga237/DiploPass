@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}DigiPass{% endblock %} — ENSET Douala</title>
+  <title>{% block title %}DiploPass{% endblock %} — ENSET Douala</title>
   <link href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='vendor/bootstrap-icons.min.css') }}" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
@@ -19,7 +19,7 @@
   <a href="{{ url_for('auth.index') }}" class="sidebar-brand">
     <div class="sidebar-brand-icon">EN</div>
     <div class="sidebar-brand-text">
-      DigiPass<br><small>ENSET de Douala</small>
+      DiploPass<br><small>ENSET de Douala</small>
     </div>
   </a>
 
@@ -127,6 +127,11 @@
       <span class="sidebar-label">Gérer les comptes</span>
     </a>
     <div class="sidebar-section">Données</div>
+    <a href="{{ url_for('admin.liste_departements') }}"
+       class="nav-link {% if request.endpoint in ('admin.liste_departements', 'admin.nouveau_departement') %}active{% endif %}">
+      <i class="bi bi-building"></i>
+      <span class="sidebar-label">Départements</span>
+    </a>
     <a href="{{ url_for('admin.liste_filieres') }}"
        class="nav-link {% if request.endpoint in ('admin.liste_filieres', 'admin.nouvelle_filiere') %}active{% endif %}">
       <i class="bi bi-diagram-3"></i>

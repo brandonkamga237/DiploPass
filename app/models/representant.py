@@ -28,9 +28,10 @@ class RepresentantFiliere(UserMixin, db.Model):
     mot_de_passe = db.Column(db.String(255), nullable=False)
     actif = db.Column(db.Boolean, default=True)
 
-    # Filière représentée — texte libre (rétrocompat) + FK optionnelle vers filiere.code
-    filiere_geree = db.Column(db.String(100), nullable=False)
-    code_filiere = db.Column(db.String(20), db.ForeignKey('filiere.code'), nullable=True)
+    # Département géré — texte libre + FK vers departement.code
+    filiere_geree = db.Column(db.String(100), nullable=False)   # gardé pour compatibilité
+    code_filiere = db.Column(db.String(20), db.ForeignKey('filiere.code'), nullable=True)  # gardé pour compatibilité
+    code_departement = db.Column(db.String(20), db.ForeignKey('departement.code'), nullable=True)
     bureau = db.Column(db.String(100))
 
     # Promotion : True = ce représentant est aussi Chef de Bureau de la Diplomation

@@ -1,5 +1,5 @@
 """
-storage_service.py — Abstraction MinIO pour DigiPass
+storage_service.py — Abstraction MinIO pour DiploPass
 
 Toutes les opérations sur les fichiers (upload, URL signée, suppression)
 passent par ce module. Changer de backend de stockage ne nécessite que
@@ -12,14 +12,14 @@ from datetime import timedelta
 from minio import Minio
 from minio.error import S3Error
 
-BUCKET = os.environ.get('MINIO_BUCKET', 'digipass')
+BUCKET = os.environ.get('MINIO_BUCKET', 'diplopass')
 
 
 def _client() -> Minio:
     return Minio(
         os.environ.get('MINIO_ENDPOINT', 'localhost:9000'),
-        access_key=os.environ.get('MINIO_ACCESS_KEY', 'digipass'),
-        secret_key=os.environ.get('MINIO_SECRET_KEY', 'digipass2026'),
+        access_key=os.environ.get('MINIO_ACCESS_KEY', 'diplopass'),
+        secret_key=os.environ.get('MINIO_SECRET_KEY', 'diplopass2026'),
         secure=os.environ.get('MINIO_SECURE', 'false').lower() == 'true',
     )
 

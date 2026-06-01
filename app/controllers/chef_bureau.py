@@ -118,6 +118,26 @@ def envoyer_directeur(id):
     return redirect(url_for('chef_bureau.impressions'))
 
 
+@chef_bureau_bp.route('/dossiers/<int:id>/diplome')
+@login_required
+@role_required('chef_bureau')
+def apercu_diplome(id):
+    from app.models.etudiant import Etudiant
+    from app.models.filiere import Filiere
+    dossier = DossierDiplomation.query.get_or_404(id)
+    etudiant = Etudiant.query.get_or_404(dossier.matricule)
+    filiere = Filiere.query.filter_by(code=etudiant.filiere).first()
+    if filiere:
+        etudiant.filiere_obj = filiere
+    return render_template(
+        'documents/diplome.html',
+        dossier=dossier,
+        etudiant=etudiant,
+        recteur_nom='',
+        ministre_nom='Jacques Fame Ndongo',
+    )
+
+
 def _log(id_dossier, phase, ancien, nouveau, id_acteur, role):
     h = HistoriquePhases(
         id_dossier=id_dossier,

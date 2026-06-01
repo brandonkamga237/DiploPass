@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Départements{% endblock %}
+{% block page_title %}Gestion des départements{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('admin.liste_filieres') }}" class="btn btn-outline-secondary btn-sm me-2">
+  <i class="bi bi-diagram-3"></i> Voir les filières
+</a>
+<a href="{{ url_for('admin.nouveau_departement') }}" class="btn btn-primary btn-sm">
+  <i class="bi bi-plus-circle"></i> Nouveau département
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <h1><i class="bi bi-building me-2"></i>Départements</h1>
+  <p>{{ departements|length }} département(s) — chaque département regroupe plusieurs filières.</p>
+</div>
+
+<div class="row g-3">
+  {% for dept in departements %}
+  <div class="col-12 col-md-6 col-xl-4">
+    <div class="card h-100" style="border-left: 4px solid {{ 'var(--blue)' if dept.actif else '#cbd5e1' }}">
+      <div class="card-body">
+
+        <div class="d-flex align-items-start justify-content-between mb-3">
+          <div>
+            <span class="badge bg-primary fs-6 mb-1">{{ dept.code }}</span>
+            <h3 class="fw-700 mb-0" style="font-size:1rem">{{ dept.nom }}</h3>
+          </div>
+          <span class="badge bg-{{ 'success' if dept.actif else 'secondary' }}">
+            {{ 'Actif' if dept.actif else 'Inactif' }}
+          </span>
+        </div>
+
+        {% set filieres_actives = dept.filieres | selectattr('actif') | list %}
+        {% if dept.filieres %}
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {% for f in dept.filieres %}
+          <span class="badge bg-{{ 'light text-dark border' if f.actif else 'secondary' }}" style="font-size:.75rem">
+            {{ f.code }}
+            {% if not f.actif %}<i class="bi bi-slash-circle ms-1"></i>{% endif %}
+          </span>
+          {% endfor %}
+        </div>
+        <p class="text-muted small mb-3">
+          {{ filieres_actives|length }} filière(s) active(s) sur {{ dept.filieres|length }}
+        </p>
+        {% else %}
+        <p class="text-muted small mb-3"><em>Aucune filière rattachée</em></p>
+        {% endif %}
+
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('admin.liste_filieres') }}" class="btn btn-sm btn-outline-primary flex-grow-1">
+            <i class="bi bi-diagram-3"></i> Filières
+          </a>
+          <form method="POST" action="{{ url_for('admin.toggle_departement', code=dept.code) }}">
+            <button class="btn btn-sm btn-outline-{{ 'danger' if dept.actif else 'success' }}"
+                    onclick="return confirm('{{ 'Désactiver' if dept.actif else 'Activer' }} le département {{ dept.nom }} ?')">
+              <i class="bi bi-toggle-{{ 'on' if dept.actif else 'off' }}"></i>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="empty-state py-4 text-center">
+          <i class="bi bi-building" style="font-size:2rem;color:#cbd5e1"></i>
+          <p class="mt-2 mb-0 text-muted">Aucun département configuré.</p>
+          <a href="{{ url_for('admin.nouveau_departement') }}" class="btn btn-primary btn-sm mt-2">
+            <i class="bi bi-plus-circle"></i> Créer le premier département
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
