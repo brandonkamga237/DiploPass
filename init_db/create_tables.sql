@@ -129,6 +129,7 @@ CREATE TABLE IF NOT EXISTS dossier_diplomation (
     toge_remise                   BOOLEAN     DEFAULT FALSE,
     journal_promo_remis           BOOLEAN     DEFAULT FALSE,
     motif_rejet                   TEXT,
+    id_communique                 INTEGER     REFERENCES communique(id_communique),
     id_representant               INTEGER     REFERENCES representant_filiere(id_representant),
     id_chef_bureau                INTEGER     REFERENCES chef_bureau_diplomation(id_chef_bureau),
     created_at                    TIMESTAMP   DEFAULT NOW(),
