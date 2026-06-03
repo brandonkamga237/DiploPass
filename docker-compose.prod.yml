@@ -1,0 +1,70 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: diplopass_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db/create_tables.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./init_db/seed_documents.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: diplopass_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  web:
+    image: brandoniscoding/diplopass:latest
+    container_name: diplopass_web
+    restart: unless-stopped
+    env_file: .env.prod
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - internal
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.diplopass.rule=Host(`diplopass.lescracks.com`)"
+      - "traefik.http.routers.diplopass.entrypoints=websecure"
+      - "traefik.http.routers.diplopass.tls.certresolver=le"
+      - "traefik.http.services.diplopass.loadbalancer.server.port=5000"
+      - "traefik.docker.network=traefik-public"
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  internal:
+    driver: bridge
+  traefik-public:
+    external: true
