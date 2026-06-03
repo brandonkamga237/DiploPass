@@ -1,6 +1,15 @@
 -- DiploPass — Schéma initial PostgreSQL
 -- Ce fichier est exécuté automatiquement par Docker au premier démarrage.
 
+CREATE TABLE IF NOT EXISTS admin (
+    id_admin       SERIAL       PRIMARY KEY,
+    nom            VARCHAR(100) NOT NULL,
+    prenom         VARCHAR(100) NOT NULL DEFAULT '',
+    login          VARCHAR(100) UNIQUE NOT NULL,
+    mot_de_passe   VARCHAR(255) NOT NULL,
+    actif          BOOLEAN      DEFAULT TRUE
+);
+
 CREATE TABLE IF NOT EXISTS etudiant (
     matricule              VARCHAR(20)  PRIMARY KEY,
     nom                    VARCHAR(100) NOT NULL,
@@ -199,4 +208,24 @@ CREATE TABLE IF NOT EXISTS historique_phases (
     id_acteur      INTEGER,
     role_acteur    VARCHAR(50),
     date_action    TIMESTAMP   DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS annee_diplomation (
+    id               SERIAL      PRIMARY KEY,
+    code             VARCHAR(9)  UNIQUE NOT NULL,
+    actif            BOOLEAN     DEFAULT TRUE,
+    processus_lance  BOOLEAN     NOT NULL DEFAULT FALSE,
+    created_at       TIMESTAMP   DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS piece_jointe (
+    id_piece           SERIAL       PRIMARY KEY,
+    id_dossier         INTEGER      NOT NULL REFERENCES dossier_diplomation(id_dossier) ON DELETE CASCADE,
+    id_document_requis INTEGER      REFERENCES document_requis(id_document),
+    nom_original       VARCHAR(255) NOT NULL,
+    cle_minio          VARCHAR(500) NOT NULL UNIQUE,
+    mime_type          VARCHAR(100),
+    taille_octets      INTEGER,
+    date_upload        TIMESTAMP    DEFAULT NOW(),
+    statut             VARCHAR(20)  DEFAULT 'DEPOSE'
 );
