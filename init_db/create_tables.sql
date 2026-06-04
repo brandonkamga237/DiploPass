@@ -229,3 +229,16 @@ CREATE TABLE IF NOT EXISTS piece_jointe (
     date_upload        TIMESTAMP    DEFAULT NOW(),
     statut             VARCHAR(20)  DEFAULT 'DEPOSE'
 );
+
+CREATE TABLE IF NOT EXISTS liste_finissants (
+    id                  SERIAL       PRIMARY KEY,
+    matricule           VARCHAR(20)  NOT NULL,
+    nom                 VARCHAR(100) NOT NULL,
+    prenom              VARCHAR(100) NOT NULL,
+    filiere             VARCHAR(20),
+    annee_academique    VARCHAR(9)   NOT NULL,
+    valide              BOOLEAN      NOT NULL DEFAULT TRUE,
+    motif_invalidation  TEXT,
+    created_at          TIMESTAMP    DEFAULT NOW(),
+    CONSTRAINT uq_finissant_annee UNIQUE (matricule, annee_academique)
+);

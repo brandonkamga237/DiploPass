@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% block title %}Liste des finissants{% endblock %}
+{% block page_title %}Liste des finissants{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-outline-secondary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#importModal">
+  <i class="bi bi-upload me-1"></i>Importer JSON
+</button>
+<button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#ajoutModal">
+  <i class="bi bi-plus-circle me-1"></i>Ajouter manuellement
+</button>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-list-check me-2"></i>Liste officielle des finissants</h1>
+    <p>
+      Étudiants ayant validé leur année et autorisés à recevoir leur diplôme.
+      {% if annee %}<strong>Année : {{ annee }}</strong>{% endif %}
+    </p>
+  </div>
+</div>
+
+{# Alertes #}
+{% with msgs = get_flashed_messages(with_categories=true) %}
+{% for cat, msg in msgs %}
+<div class="alert alert-{{ cat }} mb-3">{{ msg }}</div>
+{% endfor %}
+{% endwith %}
+
+{# Statistiques #}
+{% set nb_valides = finissants | selectattr('valide') | list | length %}
+{% set nb_invalides = finissants | length - nb_valides %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Total finissants</div>
+        <div class="stat-value">{{ finissants | length }}</div>
+        <div class="stat-sub">Sur la liste</div>
+      </div>
+      <i class="bi bi-people stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Validés</div>
+        <div class="stat-value">{{ nb_valides }}</div>
+        <div class="stat-sub">Autorisés à diplômer</div>
+      </div>
+      <i class="bi bi-check-circle stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card red">
+      <div>
+        <div class="stat-label">Invalidés</div>
+        <div class="stat-value">{{ nb_invalides }}</div>
+        <div class="stat-sub">Diplomation bloquée</div>
+      </div>
+      <i class="bi bi-x-circle stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Année</div>
+        <div class="stat-value" style="font-size:1rem">{{ annee or '—' }}</div>
+        <div class="stat-sub">Promotion active</div>
+      </div>
+      <i class="bi bi-calendar3 stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# Tableau #}
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Matricule</th>
+          <th>Nom complet</th>
+          <th>Filière</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in finissants %}
+        <tr>
+          <td><code>{{ f.matricule }}</code></td>
+          <td class="fw-500">{{ f.nom }} {{ f.prenom }}</td>
+          <td>{{ f.filiere or '—' }}</td>
+          <td>
+            {% if f.valide %}
+            <span class="badge bg-success">✓ Validé</span>
+            {% else %}
+            <span class="badge bg-danger">✗ Invalidé</span>
+            {% if f.motif_invalidation %}
+            <div style="font-size:.72rem;color:var(--red);margin-top:2px">{{ f.motif_invalidation }}</div>
+            {% endif %}
+            {% endif %}
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              {# Toggle validé/invalidé #}
+              {% if f.valide %}
+              <button class="btn btn-sm btn-outline-danger"
+                      data-bs-toggle="modal" data-bs-target="#invalidModal{{ f.id }}">
+                <i class="bi bi-x-circle me-1"></i>Invalider
+              </button>
+              {% else %}
+              <form method="POST" action="{{ url_for('admin.toggle_finissant', id=f.id) }}" style="display:inline">
+                <button class="btn btn-sm btn-outline-success">
+                  <i class="bi bi-check-circle me-1"></i>Révalider
+                </button>
+              </form>
+              {% endif %}
+
+              <form method="POST" action="{{ url_for('admin.supprimer_finissant', id=f.id) }}"
+                    onsubmit="return confirm('Supprimer {{ f.nom }} {{ f.prenom }} de la liste ?')">
+                <button class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+
+            {# Modal invalidation #}
+            {% if f.valide %}
+            <div class="modal fade" id="invalidModal{{ f.id }}" tabindex="-1">
+              <div class="modal-dialog modal-sm">
+                <div class="modal-content" style="border-radius:12px;border:none">
+                  <div class="modal-header">
+                    <h6 class="modal-title fw-700">Invalider {{ f.nom }} {{ f.prenom }}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="POST" action="{{ url_for('admin.toggle_finissant', id=f.id) }}">
+                    <div class="modal-body">
+                      <label class="form-label">Motif <span class="text-danger">*</span></label>
+                      <input type="text" name="motif" class="form-control" required
+                             placeholder="Ex: n'a pas validé son année…">
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                      <button type="submit" class="btn btn-sm btn-danger">Confirmer</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">
+            <div class="text-center py-5">
+              <i class="bi bi-list-check" style="font-size:2.5rem;color:#cbd5e1"></i>
+              <p class="mt-3 mb-1 fw-600">Aucun finissant dans la liste</p>
+              <p class="text-muted small">Importez un fichier JSON ou ajoutez manuellement.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# Modal ajout manuel #}
+<div class="modal fade" id="ajoutModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:12px;border:none">
+      <div class="modal-header">
+        <h6 class="modal-title fw-700"><i class="bi bi-person-plus me-2"></i>Ajouter un finissant</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('admin.ajouter_finissant') }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Matricule <span class="text-danger">*</span></label>
+            <input type="text" name="matricule" class="form-control" required
+                   placeholder="Ex : 22G0001" style="text-transform:uppercase">
+          </div>
+          <div class="row g-3">
+            <div class="col-6">
+              <label class="form-label">Nom <span class="text-danger">*</span></label>
+              <input type="text" name="nom" class="form-control" required
+                     placeholder="MBALLA" style="text-transform:uppercase">
+            </div>
+            <div class="col-6">
+              <label class="form-label">Prénom</label>
+              <input type="text" name="prenom" class="form-control" placeholder="Jean">
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Filière</label>
+            <input type="text" name="filiere" class="form-control"
+                   placeholder="Ex : GINFO, GEL…" style="text-transform:uppercase">
+          </div>
+          <div class="mt-2 p-2 rounded-3" style="background:#f0fdf4;font-size:.78rem;color:#166534">
+            <i class="bi bi-info-circle me-1"></i>
+            Si le matricule existe dans le système, les données seront pré-remplies automatiquement.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Ajouter
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Modal import JSON #}
+<div class="modal fade" id="importModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:12px;border:none">
+      <div class="modal-header">
+        <h6 class="modal-title fw-700"><i class="bi bi-upload me-2"></i>Importer depuis un fichier JSON</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('admin.importer_finissants') }}" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Fichier JSON <span class="text-danger">*</span></label>
+            <input type="file" name="fichier" class="form-control" accept=".json" required>
+          </div>
+          <div class="p-3 rounded-3" style="background:#f8f9fa;font-size:.8rem">
+            <strong>Format attendu :</strong>
+            <pre style="margin-top:8px;margin-bottom:0;font-size:.75rem;background:#fff;padding:10px;border-radius:6px">[
+  {"matricule": "22G0001", "nom": "MBALLA", "prenom": "Jean"},
+  {"matricule": "22M0001", "nom": "ESSOMBA", "prenom": "Rachel"},
+  {"matricule": "22G0006", "nom": "OWONA", "prenom": "Lucie"}
+]</pre>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i>Importer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

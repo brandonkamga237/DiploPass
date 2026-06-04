@@ -1,4 +1,5 @@
 from app.models.departement import Departement
+from app.models.liste_finissants import ListeFinissants
 from app.models.filiere import Filiere
 from app.models.annee_diplomation import AnneeDiplomation
 from app.models.etudiant import Etudiant

@@ -8,8 +8,10 @@ from app.models.departement import Departement
 from app.models.filiere import Filiere
 from app.models.annee_diplomation import AnneeDiplomation
 from app.models.etudiant import Etudiant
+from app.models.liste_finissants import ListeFinissants
 from app.services.import_service import importer_etudiants_json
 from app import db
+import json
 
 _ROLES_MODELES = {
     'directeur':    Directeur,
@@ -542,3 +544,144 @@ def modifier_etudiant(matricule):
     db.session.commit()
     flash(f'{etu.prenom} {etu.nom} mis à jour.', 'success')
     return redirect(url_for('admin.liste_etudiants'))
+
+
+# ══════════════════════════════════════════════════════════════════
+# LISTE DES FINISSANTS
+# ══════════════════════════════════════════════════════════════════
+
+@admin_bp.route('/finissants')
+@login_required
+@role_required('admin')
+def liste_finissants():
+    annee = session.get('annee_active_code', '')
+    finissants = ListeFinissants.query.filter_by(
+        annee_academique=annee
+    ).order_by(ListeFinissants.nom).all() if annee else []
+    annees = AnneeDiplomation.query.order_by(AnneeDiplomation.code.desc()).all()
+    return render_template('admin/liste_finissants.html',
+                           finissants=finissants, annee=annee, annees=annees)
+
+
+@admin_bp.route('/finissants/ajouter', methods=['POST'])
+@login_required
+@role_required('admin')
+def ajouter_finissant():
+    annee = session.get('annee_active_code', '')
+    matricule = request.form.get('matricule', '').strip().upper()
+    nom = request.form.get('nom', '').strip().upper()
+    prenom = request.form.get('prenom', '').strip()
+    filiere = request.form.get('filiere', '').strip().upper()
+
+    if not matricule or not nom or not annee:
+        flash('Matricule et nom sont obligatoires.', 'danger')
+        return redirect(url_for('admin.liste_finissants'))
+
+    # Pré-remplir depuis la table etudiant si le matricule existe
+    etu = Etudiant.query.get(matricule)
+    if etu:
+        nom = nom or etu.nom
+        prenom = prenom or etu.prenom
+        filiere = filiere or etu.filiere
+
+    existant = ListeFinissants.query.filter_by(
+        matricule=matricule, annee_academique=annee
+    ).first()
+    if existant:
+        flash(f'{matricule} est déjà dans la liste.', 'warning')
+        return redirect(url_for('admin.liste_finissants'))
+
+    f = ListeFinissants(matricule=matricule, nom=nom, prenom=prenom,
+                        filiere=filiere, annee_academique=annee, valide=True)
+    db.session.add(f)
+    db.session.commit()
+    flash(f'{prenom} {nom} ({matricule}) ajouté à la liste des finissants.', 'success')
+    return redirect(url_for('admin.liste_finissants'))
+
+
+@admin_bp.route('/finissants/importer', methods=['POST'])
+@login_required
+@role_required('admin')
+def importer_finissants():
+    annee = session.get('annee_active_code', '')
+    if not annee:
+        flash("Aucune année académique active.", 'danger')
+        return redirect(url_for('admin.liste_finissants'))
+
+    fichier = request.files.get('fichier')
+    if not fichier or not fichier.filename.endswith('.json'):
+        flash('Fichier JSON requis.', 'danger')
+        return redirect(url_for('admin.liste_finissants'))
+
+    try:
+        data = json.loads(fichier.read().decode('utf-8'))
+        if not isinstance(data, list):
+            raise ValueError("Le fichier doit contenir une liste JSON.")
+
+        nb_ajoutes = 0
+        nb_ignores = 0
+        for item in data:
+            matricule = str(item.get('matricule', '')).strip().upper()
+            nom = str(item.get('nom', '')).strip().upper()
+            prenom = str(item.get('prenom', '')).strip()
+            filiere = str(item.get('filiere', '')).strip().upper()
+
+            if not matricule or not nom:
+                nb_ignores += 1
+                continue
+
+            # Pré-remplir depuis etudiant si disponible
+            etu = Etudiant.query.get(matricule)
+            if etu:
+                nom = nom or etu.nom
+                prenom = prenom or etu.prenom
+                filiere = filiere or etu.filiere
+
+            existant = ListeFinissants.query.filter_by(
+                matricule=matricule, annee_academique=annee
+            ).first()
+            if existant:
+                nb_ignores += 1
+                continue
+
+            db.session.add(ListeFinissants(
+                matricule=matricule, nom=nom, prenom=prenom,
+                filiere=filiere, annee_academique=annee, valide=True
+            ))
+            nb_ajoutes += 1
+
+        db.session.commit()
+        flash(f'{nb_ajoutes} finissant(s) importé(s). {nb_ignores} ignoré(s) (doublons ou données manquantes).', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors de l\'import : {e}', 'danger')
+
+    return redirect(url_for('admin.liste_finissants'))
+
+
+@admin_bp.route('/finissants/<int:id>/toggle', methods=['POST'])
+@login_required
+@role_required('admin')
+def toggle_finissant(id):
+    f = ListeFinissants.query.get_or_404(id)
+    f.valide = not f.valide
+    if not f.valide:
+        f.motif_invalidation = request.form.get('motif', 'Invalidé par l\'admin')
+    else:
+        f.motif_invalidation = None
+    db.session.commit()
+    etat = 'validé' if f.valide else 'invalidé'
+    flash(f'{f.prenom} {f.nom} ({f.matricule}) — {etat}.', 'success')
+    return redirect(url_for('admin.liste_finissants'))
+
+
+@admin_bp.route('/finissants/<int:id>/supprimer', methods=['POST'])
+@login_required
+@role_required('admin')
+def supprimer_finissant(id):
+    f = ListeFinissants.query.get_or_404(id)
+    nom = f'{f.prenom} {f.nom}'
+    db.session.delete(f)
+    db.session.commit()
+    flash(f'{nom} supprimé de la liste.', 'success')
+    return redirect(url_for('admin.liste_finissants'))

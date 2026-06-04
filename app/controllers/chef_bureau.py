@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from app.utils.decorators import role_required
 from app.models.dossier_diplomation import DossierDiplomation
 from app.models.historique_phases import HistoriquePhases
+from app.models.liste_finissants import ListeFinissants
 from app import db
 import datetime
 
@@ -66,14 +67,30 @@ def authentifier(id):
     return redirect(url_for('chef_bureau.dossiers_authentification'))
 
 
+def _est_sur_liste(matricule, annee_academique):
+    """Vérifie si un étudiant est validé sur la liste officielle des finissants."""
+    return ListeFinissants.query.filter_by(
+        matricule=matricule,
+        annee_academique=annee_academique,
+        valide=True
+    ).first() is not None
+
+
 @chef_bureau_bp.route('/impressions')
 @login_required
 @role_required('chef_bureau')
 def impressions():
-    dossiers = _q_annee().filter(
-        DossierDiplomation.statut.in_(['LISTE_FINISSANTS', 'IMPRESSION_PROVISOIRE'])
+    from flask_login import current_user
+    annee = _q_annee()
+    dossiers_raw = annee.filter(
+        DossierDiplomation.statut.in_(['AUTHENTIFICATION', 'LISTE_FINISSANTS', 'IMPRESSION_PROVISOIRE'])
     ).all()
-    return render_template('chef_bureau/impressions.html', dossiers=dossiers)
+
+    # Enrichir chaque dossier avec info liste finissants
+    for d in dossiers_raw:
+        d._sur_liste = _est_sur_liste(d.matricule, d.annee_academique)
+
+    return render_template('chef_bureau/impressions.html', dossiers=dossiers_raw)
 
 
 @chef_bureau_bp.route('/dossiers/<int:id>/impression-provisoire', methods=['POST'])
@@ -81,6 +98,16 @@ def impressions():
 @role_required('chef_bureau')
 def lancer_impression_provisoire(id):
     dossier = DossierDiplomation.query.get_or_404(id)
+
+    # Vérifier que l'étudiant est sur la liste des finissants
+    if not _est_sur_liste(dossier.matricule, dossier.annee_academique):
+        flash(
+            f'Impression impossible : {dossier.matricule} n\'est pas sur la liste '
+            f'officielle des finissants validés pour {dossier.annee_academique}.',
+            'danger'
+        )
+        return redirect(url_for('chef_bureau.impressions'))
+
     ancien = dossier.statut
     dossier.statut = 'IMPRESSION_PROVISOIRE'
     _log(id, 'IMPRESSION_PROVISOIRE', ancien, 'IMPRESSION_PROVISOIRE',

@@ -159,6 +159,11 @@
       <i class="bi bi-upload"></i>
       <span class="sidebar-label">Importer étudiants</span>
     </a>
+    <a href="{{ url_for('admin.liste_finissants') }}"
+       class="nav-link {% if 'finissant' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-list-check"></i>
+      <span class="sidebar-label">Liste finissants</span>
+    </a>
     <a href="{{ url_for('admin.liste_etudiants') }}"
        class="nav-link {% if request.endpoint == 'admin.liste_etudiants' %}active{% endif %}">
       <i class="bi bi-mortarboard"></i>
