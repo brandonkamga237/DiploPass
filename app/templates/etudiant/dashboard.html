@@ -6,8 +6,7 @@
 
 {# ── Ordre officiel des étapes (sans les états d'erreur) ── #}
 {% set statuts_order = ['DEPOSE','EN_VERIFICATION','AUTHENTIFICATION','LISTE_FINISSANTS',
-  'IMPRESSION_PROVISOIRE','PRODUCTION_DEFINITIVE','SIGNATURE_DIRECTEUR',
-  'SIGNATURE_RECTEUR','SIGNATURE_MINISTRE','FORMALISATION','CLOTURE'] %}
+  'IMPRESSION_PROVISOIRE','PRODUCTION_DEFINITIVE','CLOTURE'] %}
 
 {# ── Mapping états d'erreur → indice équivalent pour le stepper ── #}
 {# INCOMPLET = bloqué à EN_VERIFICATION (idx 1), AUTH_REJETEE = bloqué à AUTHENTIFICATION (idx 2) #}
@@ -131,13 +130,13 @@
   <div class="panel-body">
     {# Stepper vertical — aucune étape complétée #}
     {% set steps = [
-      ('Dépôt du dossier', 'Déposez vos pièces via la plateforme', 'bi-folder2-open', 'active'),
-      ('Vérification représentant', 'Contrôle des pièces par votre représentant de filière', 'bi-search', 'pending'),
-      ('Authentification diplôme', 'Vérification de l\'authenticité du diplôme d\'origine par le Bureau', 'bi-shield-check', 'pending'),
-      ('Liste des finissants', 'Inscription sur la liste officielle des finissants', 'bi-list-check', 'pending'),
-      ('Production du diplôme', 'Impression provisoire puis production définitive', 'bi-printer', 'pending'),
-      ('Signature Directeur', 'Signature du diplôme par le Directeur de l\'ENSET', 'bi-pen', 'pending'),
-      ('Remise du diplôme', 'Formalisation et remise officielle du diplôme', 'bi-mortarboard-fill', 'pending'),
+      ('Dépôt du dossier',       'Déposez vos pièces via la plateforme',                         'bi-folder2-open',      'active'),
+      ('Vérification',           'Contrôle des pièces par votre représentant de filière',         'bi-search',            'pending'),
+      ('Authentification',       'Vérification de l\'authenticité de votre diplôme d\'origine',   'bi-shield-check',      'pending'),
+      ('Liste officielle',       'Inscription sur la liste officielle des finissants validés',     'bi-list-check',        'pending'),
+      ('Production du diplôme',  'Premier jet imprimé, corrigé et validé',                         'bi-printer',           'pending'),
+      ('Production définitive',  'Diplôme produit — en attente des résultats officiels',           'bi-file-earmark-text', 'pending'),
+      ('Remise du diplôme',      'Diplôme remis officiellement',                                   'bi-mortarboard-fill',  'pending'),
     ] %}
     {% include '_macros/parcours_stepper.html' ignore missing %}
     <div style="display:flex;flex-direction:column;gap:0">
@@ -298,17 +297,13 @@
       <div class="panel-body">
 
         {% set phases_info = [
-          ('DEPOSE', 'Dépôt du dossier', 'Votre dossier a été déposé sur la plateforme', 'bi-folder2-open'),
-          ('EN_VERIFICATION', 'Vérification représentant', 'Contrôle des pièces par votre représentant', 'bi-search'),
-          ('AUTHENTIFICATION', 'Authentification diplôme', 'Vérification d\'authenticité par le Bureau de Diplomation', 'bi-shield-check'),
-          ('LISTE_FINISSANTS', 'Liste des finissants', 'Inscription sur la liste officielle des finissants', 'bi-list-check'),
-          ('IMPRESSION_PROVISOIRE', 'Impression provisoire', 'Impression provisoire du diplôme lancée', 'bi-printer'),
-          ('PRODUCTION_DEFINITIVE', 'Production définitive', 'Diplôme produit de façon définitive', 'bi-file-earmark-text'),
-          ('SIGNATURE_DIRECTEUR', 'Signature Directeur', 'Signature du diplôme par le Directeur de l\'ENSET', 'bi-pen'),
-          ('SIGNATURE_RECTEUR', 'Signature Recteur', 'Signature du diplôme par le Recteur', 'bi-pen-fill'),
-          ('SIGNATURE_MINISTRE', 'Signature Ministre', 'Signature par le Ministère de tutelle', 'bi-award'),
-          ('FORMALISATION', 'Formalisation', 'Dossier post-soutenance complété', 'bi-clipboard2-check'),
-          ('CLOTURE', 'Diplôme remis', 'Votre diplôme vous a été officiellement remis', 'bi-mortarboard-fill'),
+          ('DEPOSE',             'Dépôt du dossier',        'Votre dossier a été déposé sur la plateforme', 'bi-folder2-open'),
+          ('EN_VERIFICATION',   'Vérification',             'Contrôle des pièces par votre représentant de filière', 'bi-search'),
+          ('AUTHENTIFICATION',  'Authentification diplôme', 'Vérification d\'authenticité de votre diplôme d\'origine', 'bi-shield-check'),
+          ('LISTE_FINISSANTS',  'Liste officielle',          'Votre nom figure sur la liste officielle des finissants', 'bi-list-check'),
+          ('IMPRESSION_PROVISOIRE', 'Impression provisoire', 'Premier jet du diplôme imprimé et vérifié', 'bi-printer'),
+          ('PRODUCTION_DEFINITIVE', 'Production définitive', 'Diplôme produit — en attente des résultats officiels', 'bi-file-earmark-text'),
+          ('CLOTURE',           'Diplôme remis',            'Votre diplôme vous a été officiellement remis ✓', 'bi-mortarboard-fill'),
         ] %}
 
         <div style="display:flex;flex-direction:column;gap:0">
@@ -443,6 +438,31 @@
           <i class="bi bi-info-circle me-1"></i>
           Ces informations figureront sur votre diplôme officiel. Contactez votre représentant en cas d'erreur.
         </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# Aperçu diplôme si PRODUCTION_DEFINITIVE ou CLOTURE #}
+    {% if dossier.statut in ['PRODUCTION_DEFINITIVE', 'CLOTURE'] %}
+    <div class="panel mt-4" style="border-left:4px solid var(--green)">
+      <div class="panel-header">
+        <h2 class="panel-title">
+          <i class="bi bi-award me-2" style="color:var(--green)"></i>Aperçu de votre diplôme
+        </h2>
+      </div>
+      <div class="panel-body text-center py-3">
+        <p style="font-size:.85rem;color:var(--gris-dark);margin-bottom:16px">
+          Votre diplôme a été produit.
+          {% if dossier.statut == 'CLOTURE' %}
+          Il vous a été officiellement remis.
+          {% else %}
+          Il est en attente des résultats officiels de l'année académique.
+          {% endif %}
+        </p>
+        <a href="{{ url_for('etudiant.apercu_diplome') }}" target="_blank"
+           class="btn" style="background:var(--green);color:#fff;border:none;border-radius:9px;font-weight:700;padding:10px 24px">
+          <i class="bi bi-eye me-2"></i>Voir l'aperçu de mon diplôme
+        </a>
       </div>
     </div>
     {% endif %}

@@ -44,6 +44,14 @@
       <i class="bi bi-folder2"></i>
       <span class="sidebar-label">Mon dossier</span>
     </a>
+    {% if current_user.dossier_diplomation and current_user.dossier_diplomation.statut in ['PRODUCTION_DEFINITIVE','CLOTURE'] %}
+    <a href="{{ url_for('etudiant.apercu_diplome') }}"
+       class="nav-link {% if request.endpoint == 'etudiant.apercu_diplome' %}active{% endif %}"
+       target="_blank">
+      <i class="bi bi-award"></i>
+      <span class="sidebar-label">Mon diplôme</span>
+    </a>
+    {% endif %}
     {% endif %}
     <a href="{{ url_for('etudiant.profil') }}"
        class="nav-link {% if request.endpoint == 'etudiant.profil' %}active{% endif %}">

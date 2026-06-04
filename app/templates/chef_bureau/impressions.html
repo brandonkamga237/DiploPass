@@ -136,12 +136,19 @@
               </div>
 
             {% elif d.statut == 'PRODUCTION_DEFINITIVE' %}
-              <form method="POST"
-                    action="{{ url_for('chef_bureau.envoyer_directeur', id=d.id_dossier) }}">
-                <button class="btn btn-sm btn-outline-success">
-                  <i class="bi bi-pen me-1"></i>Envoyer au Directeur
-                </button>
-              </form>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('chef_bureau.apercu_diplome', id=d.id_dossier) }}"
+                   target="_blank" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye me-1"></i>Aperçu
+                </a>
+                <form method="POST"
+                      action="{{ url_for('chef_bureau.cloturer_dossier', id=d.id_dossier) }}"
+                      onsubmit="return confirm('Clôturer le dossier de {{ d.nom_sur_diplome }} — diplôme remis ?')">
+                  <button class="btn btn-sm btn-success">
+                    <i class="bi bi-mortarboard me-1"></i>Clôturer
+                  </button>
+                </form>
+              </div>
             {% endif %}
           </td>
         </tr>

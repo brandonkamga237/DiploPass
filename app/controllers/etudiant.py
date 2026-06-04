@@ -365,3 +365,27 @@ def changer_mot_de_passe():
             return redirect(url_for('etudiant.profil'))
 
     return render_template('etudiant/changer_mot_de_passe.html')
+
+
+@etudiant_bp.route('/mon-diplome')
+@login_required
+@role_required('etudiant')
+def apercu_diplome():
+    """Aperçu du diplôme — accessible quand PRODUCTION_DEFINITIVE ou CLOTURE."""
+    from app.models.filiere import Filiere
+    dossier = current_user.dossier_diplomation
+    if not dossier or dossier.statut not in ('PRODUCTION_DEFINITIVE', 'CLOTURE'):
+        flash('L\'aperçu du diplôme n\'est pas encore disponible.', 'warning')
+        return redirect(url_for('etudiant.dashboard'))
+
+    filiere = Filiere.query.filter_by(code=current_user.filiere).first()
+    if filiere:
+        current_user.filiere_obj = filiere
+
+    return render_template(
+        'documents/diplome.html',
+        dossier=dossier,
+        etudiant=current_user,
+        recteur_nom='',
+        ministre_nom='Jacques Fame Ndongo',
+    )

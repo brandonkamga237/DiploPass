@@ -235,17 +235,18 @@ def production_definitive(id):
     return redirect(url_for('chef_bureau.impressions'))
 
 
-@chef_bureau_bp.route('/dossiers/<int:id>/envoyer-directeur', methods=['POST'])
+@chef_bureau_bp.route('/dossiers/<int:id>/cloturer', methods=['POST'])
 @login_required
 @role_required('chef_bureau')
-def envoyer_directeur(id):
+def cloturer_dossier(id):
+    """Clôture le dossier — diplôme officiellement remis à l'étudiant."""
     dossier = DossierDiplomation.query.get_or_404(id)
     ancien = dossier.statut
-    dossier.statut = 'SIGNATURE_DIRECTEUR'
-    _log(id, 'SIGNATURE_DIRECTEUR', ancien, 'SIGNATURE_DIRECTEUR',
-         current_user.id_representant, 'chef_bureau')
+    dossier.statut = 'CLOTURE'
+    _log(id, 'CLOTURE', ancien, 'CLOTURE',
+         str(current_user.id_representant), 'chef_bureau')
     db.session.commit()
-    flash('Dossier envoyé au Directeur pour signature.', 'success')
+    flash(f'Dossier de {dossier.nom_sur_diplome} {dossier.prenom_sur_diplome} clôturé — diplôme remis.', 'success')
     return redirect(url_for('chef_bureau.impressions'))
 
 
