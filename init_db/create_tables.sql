@@ -236,10 +236,15 @@ CREATE TABLE IF NOT EXISTS liste_finissants (
     matricule           VARCHAR(20)  NOT NULL,
     nom                 VARCHAR(100) NOT NULL,
     prenom              VARCHAR(100) NOT NULL,
+    date_naissance      DATE,
+    lieu_naissance      VARCHAR(150),
     filiere             VARCHAR(20),
+    cycle               VARCHAR(20),
     annee_academique    VARCHAR(9)   NOT NULL,
     valide              BOOLEAN      NOT NULL DEFAULT TRUE,
     motif_invalidation  TEXT,
+    statut_correction   VARCHAR(20)  NOT NULL DEFAULT 'BROUILLON',
     created_at          TIMESTAMP    DEFAULT NOW(),
+    updated_at          TIMESTAMP    DEFAULT NOW(),
     CONSTRAINT uq_finissant_annee UNIQUE (matricule, annee_academique)
 );

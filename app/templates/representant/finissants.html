@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% block title %}Liste des finissants — {{ current_user.filiere_geree }}{% endblock %}
+{% block page_title %}Finissants — corrections{% endblock %}
+
+{% block topbar_actions %}
+{% if not tous_transmis and finissants %}
+<button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#transmettreModal">
+  <i class="bi bi-send-fill me-1"></i>Transmettre au Chef de Bureau
+</button>
+{% elif tous_transmis %}
+<span class="badge bg-success fs-6 px-3 py-2">
+  <i class="bi bi-check-all me-1"></i>Liste transmise au Chef de Bureau
+</span>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-pencil-square me-2"></i>Corrections — Liste des finissants</h1>
+    <p>
+      Filière <strong>{{ current_user.filiere_geree }}</strong> · Année <strong>{{ annee }}</strong><br>
+      <small class="text-muted">
+        Corrigez les informations avant transmission. Ces données seront imprimées sur les diplômes.
+      </small>
+    </p>
+  </div>
+</div>
+
+{# Stats #}
+<div class="row g-3 mb-4">
+  <div class="col-4">
+    <div class="stat-card {% if nb_brouillon > 0 %}yellow{% else %}green{% endif %}">
+      <div>
+        <div class="stat-label">À corriger</div>
+        <div class="stat-value">{{ nb_brouillon }}</div>
+        <div class="stat-sub">Brouillons</div>
+      </div>
+      <i class="bi bi-pencil stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Corrigés</div>
+        <div class="stat-value">{{ nb_corrige }}</div>
+        <div class="stat-sub">Prêts à transmettre</div>
+      </div>
+      <i class="bi bi-check-circle stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Transmis</div>
+        <div class="stat-value">{{ nb_transmis }}</div>
+        <div class="stat-sub">Chez le Chef de Bureau</div>
+      </div>
+      <i class="bi bi-send stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{% if tous_transmis %}
+<div class="d-flex gap-3 p-3 rounded-3 mb-4" style="background:#e6f5ef;border-left:4px solid var(--green)">
+  <i class="bi bi-check-circle-fill mt-1" style="color:var(--green)"></i>
+  <div style="font-size:.85rem">
+    <strong>Toute la liste a été transmise au Chef de Bureau.</strong>
+    Les données corrigées ont été copiées dans les dossiers de diplomation.
+    L'impression des diplômes provisoires peut commencer.
+  </div>
+</div>
+{% endif %}
+
+{# Tableau principal #}
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span>Finissants de la filière <strong>{{ current_user.filiere_geree }}</strong></span>
+    <span class="badge bg-secondary">{{ finissants | length }} étudiant(s)</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0" style="font-size:.85rem">
+      <thead>
+        <tr>
+          <th>Matricule</th>
+          <th>Nom (sur diplôme)</th>
+          <th>Prénom (sur diplôme)</th>
+          <th>Date naissance</th>
+          <th>Lieu naissance</th>
+          <th>État</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in finissants %}
+        <tr style="{% if not f.valide %}opacity:.5;background:#fafafa{% elif f.statut_correction == 'TRANSMIS' %}background:#f7fdf9{% endif %}">
+          <td><code>{{ f.matricule }}</code></td>
+          <td class="fw-600">{{ f.nom }}</td>
+          <td>{{ f.prenom }}</td>
+          <td>{{ f.date_naissance.strftime('%d/%m/%Y') if f.date_naissance else '—' }}</td>
+          <td>{{ f.lieu_naissance or '—' }}</td>
+          <td>
+            {% if not f.valide %}
+              <span class="badge bg-danger">Retiré</span>
+              {% if f.motif_invalidation %}
+              <div style="font-size:.7rem;color:var(--red)">{{ f.motif_invalidation }}</div>
+              {% endif %}
+            {% elif f.statut_correction == 'TRANSMIS' %}
+              <span class="badge bg-success"><i class="bi bi-send me-1"></i>Transmis</span>
+            {% elif f.statut_correction == 'CORRIGE' %}
+              <span class="badge bg-primary">Corrigé</span>
+            {% else %}
+              <span class="badge bg-warning text-dark">Brouillon</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if f.valide and f.statut_correction != 'TRANSMIS' %}
+            <div class="d-flex gap-1">
+              {# Bouton corriger #}
+              <button class="btn btn-sm btn-outline-primary"
+                      data-bs-toggle="modal"
+                      data-bs-target="#corrigerModal{{ f.id }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+              {# Bouton retirer #}
+              <button class="btn btn-sm btn-outline-danger"
+                      data-bs-toggle="modal"
+                      data-bs-target="#retirerModal{{ f.id }}">
+                <i class="bi bi-x-circle"></i>
+              </button>
+            </div>
+            {% elif f.statut_correction == 'TRANSMIS' %}
+            <span class="text-muted small"><i class="bi bi-lock"></i></span>
+            {% endif %}
+          </td>
+        </tr>
+
+        {# Modal correction #}
+        {% if f.valide and f.statut_correction != 'TRANSMIS' %}
+        <div class="modal fade" id="corrigerModal{{ f.id }}" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius:12px;border:none">
+              <div class="modal-header">
+                <h6 class="modal-title fw-700">
+                  <i class="bi bi-pencil me-2 text-primary"></i>
+                  Corriger — <code>{{ f.matricule }}</code>
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST" action="{{ url_for('representant.corriger_finissant', id=f.id) }}">
+                <div class="modal-body">
+                  <div class="p-2 mb-3 rounded-3" style="background:#fff3cd;font-size:.8rem">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Ces informations seront <strong>imprimées sur le diplôme</strong>. Vérifiez l'orthographe.
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-6">
+                      <label class="form-label fw-600">Nom <span class="text-danger">*</span></label>
+                      <input type="text" name="nom" class="form-control"
+                             value="{{ f.nom }}" required style="text-transform:uppercase">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label fw-600">Prénom(s) <span class="text-danger">*</span></label>
+                      <input type="text" name="prenom" class="form-control"
+                             value="{{ f.prenom }}" required>
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label fw-600">Date de naissance</label>
+                      <input type="date" name="date_naissance" class="form-control"
+                             value="{{ f.date_naissance.strftime('%Y-%m-%d') if f.date_naissance else '' }}">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label fw-600">Lieu de naissance</label>
+                      <input type="text" name="lieu_naissance" class="form-control"
+                             value="{{ f.lieu_naissance or '' }}"
+                             placeholder="Ex : Douala">
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Enregistrer les corrections
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {# Modal retirer #}
+        <div class="modal fade" id="retirerModal{{ f.id }}" tabindex="-1">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content" style="border-radius:12px;border:none">
+              <div class="modal-header" style="background:#fdecea">
+                <h6 class="modal-title fw-700" style="color:var(--red)">
+                  <i class="bi bi-x-circle me-2"></i>Retirer du processus
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST" action="{{ url_for('representant.retirer_finissant', id=f.id) }}">
+                <div class="modal-body">
+                  <p style="font-size:.85rem">
+                    <strong>{{ f.nom }} {{ f.prenom }}</strong> (<code>{{ f.matricule }}</code>)
+                    sera retiré du processus de diplomation et son dossier marqué
+                    <strong class="text-danger">NON_ELIGIBLE</strong>.
+                  </p>
+                  <label class="form-label">Motif <span class="text-danger">*</span></label>
+                  <input type="text" name="motif" class="form-control" required
+                         value="Absent de la liste officielle des finissants"
+                         placeholder="Motif du retrait">
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                  <button type="submit" class="btn btn-sm btn-danger">
+                    <i class="bi bi-x-circle me-1"></i>Retirer
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <tr>
+          <td colspan="7">
+            <div class="text-center py-5">
+              <i class="bi bi-list-check" style="font-size:2rem;color:#cbd5e1"></i>
+              <p class="mt-3 mb-0 text-muted fw-600">
+                Aucun finissant pour la filière {{ current_user.filiere_geree }} — {{ annee }}
+              </p>
+              <p class="text-muted small">L'admin n'a pas encore importé la liste pour votre filière.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# Modal transmission globale #}
+{% if not tous_transmis and finissants %}
+<div class="modal fade" id="transmettreModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:12px;border:none">
+      <div class="modal-header" style="background:var(--green);color:#fff;border-radius:12px 12px 0 0">
+        <h6 class="modal-title fw-700"><i class="bi bi-send-fill me-2"></i>Transmettre au Chef de Bureau</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="p-3 rounded-3 mb-3" style="background:#e6f5ef">
+          <strong>Cette action va :</strong>
+          <ul style="font-size:.84rem;margin-top:6px;margin-bottom:0">
+            <li>Verrouiller la liste — plus de modifications possibles</li>
+            <li>Copier les données corrigées dans chaque dossier de diplomation</li>
+            <li>Passer les dossiers éligibles au statut <strong>LISTE_FINISSANTS</strong></li>
+          </ul>
+        </div>
+        <p style="font-size:.85rem">
+          <strong>{{ finissants | selectattr('valide') | list | length }}</strong> fiche(s) valide(s) à transmettre
+          ({{ nb_brouillon }} brouillon(s) inclus — seront marqués transmis).
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        <form method="POST" action="{{ url_for('representant.transmettre_finissants') }}">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-send-fill me-1"></i>Confirmer la transmission
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

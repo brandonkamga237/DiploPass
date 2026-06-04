@@ -86,9 +86,13 @@ def impressions():
         DossierDiplomation.statut.in_(['AUTHENTIFICATION', 'LISTE_FINISSANTS', 'IMPRESSION_PROVISOIRE'])
     ).all()
 
-    # Enrichir chaque dossier avec info liste finissants
+    # Enrichir avec le statut de transmission de la liste finissants
     for d in dossiers_raw:
         d._sur_liste = _est_sur_liste(d.matricule, d.annee_academique)
+        fiche = ListeFinissants.query.filter_by(
+            matricule=d.matricule, annee_academique=d.annee_academique
+        ).first()
+        d._statut_liste = fiche.statut_correction if fiche else None
 
     return render_template('chef_bureau/impressions.html', dossiers=dossiers_raw)
 

@@ -7,6 +7,7 @@ from app.models.document_requis import DocumentRequis
 from app.models.piece_jointe import PieceJointe
 from app.models.etudiant import Etudiant
 from app.models.historique_phases import HistoriquePhases
+from app.models.liste_finissants import ListeFinissants
 from app import db
 import datetime
 
@@ -250,6 +251,153 @@ def cloturer(id):
     db.session.commit()
     flash('Dossier clôturé — diplôme remis.', 'success')
     return redirect(url_for('representant.liste_dossiers'))
+
+
+@representant_bp.route('/finissants')
+@login_required
+@role_required('representant', 'chef_bureau')
+def liste_finissants():
+    """Liste des finissants de la filière du représentant — à corriger avant transmission."""
+    annee = session.get('annee_active_code', '')
+    finissants = ListeFinissants.query.filter_by(
+        filiere=current_user.filiere_geree,
+        annee_academique=annee,
+    ).order_by(ListeFinissants.nom).all() if annee else []
+
+    # Stats par statut de correction
+    nb_brouillon = sum(1 for f in finissants if f.statut_correction == 'BROUILLON')
+    nb_corrige   = sum(1 for f in finissants if f.statut_correction == 'CORRIGE')
+    nb_transmis  = sum(1 for f in finissants if f.statut_correction == 'TRANSMIS')
+    tous_transmis = len(finissants) > 0 and all(f.statut_correction == 'TRANSMIS' for f in finissants if f.valide)
+
+    return render_template(
+        'representant/finissants.html',
+        finissants=finissants,
+        annee=annee,
+        nb_brouillon=nb_brouillon,
+        nb_corrige=nb_corrige,
+        nb_transmis=nb_transmis,
+        tous_transmis=tous_transmis,
+    )
+
+
+@representant_bp.route('/finissants/<int:id>/corriger', methods=['POST'])
+@login_required
+@role_required('representant', 'chef_bureau')
+def corriger_finissant(id):
+    """Corrige les données d'un finissant (nom, prenom, date/lieu naissance)."""
+    f = ListeFinissants.query.get_or_404(id)
+    if f.filiere != current_user.filiere_geree:
+        abort(403)
+    if f.statut_correction == 'TRANSMIS':
+        flash('Impossible de modifier : déjà transmis au Chef de Bureau.', 'warning')
+        return redirect(url_for('representant.liste_finissants'))
+
+    f.nom            = request.form.get('nom', f.nom).strip().upper()
+    f.prenom         = request.form.get('prenom', f.prenom).strip()
+    ddn_str          = request.form.get('date_naissance', '').strip()
+    if ddn_str:
+        try:
+            f.date_naissance = datetime.datetime.strptime(ddn_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    f.lieu_naissance = request.form.get('lieu_naissance', f.lieu_naissance or '').strip()
+    f.statut_correction = 'CORRIGE'
+    db.session.commit()
+    flash(f'Corrections enregistrées pour {f.prenom} {f.nom}.', 'success')
+    return redirect(url_for('representant.liste_finissants'))
+
+
+@representant_bp.route('/finissants/<int:id>/retirer', methods=['POST'])
+@login_required
+@role_required('representant', 'chef_bureau')
+def retirer_finissant(id):
+    """
+    Retire un étudiant du processus de diplomation :
+    invalide son entrée dans la liste ET marque son dossier NON_ELIGIBLE.
+    """
+    f = ListeFinissants.query.get_or_404(id)
+    if f.filiere != current_user.filiere_geree:
+        abort(403)
+    if f.statut_correction == 'TRANSMIS':
+        flash('Impossible de retirer : déjà transmis au Chef de Bureau.', 'warning')
+        return redirect(url_for('representant.liste_finissants'))
+
+    motif = request.form.get('motif', 'Absent de la liste officielle des finissants').strip()
+    f.valide = False
+    f.motif_invalidation = motif
+
+    # Marquer le dossier correspondant comme NON_ELIGIBLE
+    dossier = DossierDiplomation.query.filter_by(matricule=f.matricule).first()
+    if dossier and dossier.statut not in ('CLOTURE', 'NON_ELIGIBLE', 'REJETE'):
+        ancien = dossier.statut
+        dossier.statut = 'NON_ELIGIBLE'
+        dossier.observations = motif
+        _log(dossier.id_dossier, 'NON_ELIGIBLE', ancien, 'NON_ELIGIBLE',
+             str(current_user.id_representant), 'representant')
+
+    db.session.commit()
+    flash(f'{f.prenom} {f.nom} retiré du processus de diplomation.', 'warning')
+    return redirect(url_for('representant.liste_finissants'))
+
+
+@representant_bp.route('/finissants/transmettre', methods=['POST'])
+@login_required
+@role_required('representant', 'chef_bureau')
+def transmettre_finissants():
+    """
+    Transmet la liste corrigée au Chef de Bureau.
+    Copie automatiquement les données corrigées dans les dossiers de diplomation
+    (nom_sur_diplome, prenom_sur_diplome, ddn_sur_diplome, lddn_sur_diplome).
+    """
+    annee = session.get('annee_active_code', '')
+    finissants = ListeFinissants.query.filter_by(
+        filiere=current_user.filiere_geree,
+        annee_academique=annee,
+        valide=True,
+    ).all()
+
+    if not finissants:
+        flash('Aucun finissant valide à transmettre.', 'warning')
+        return redirect(url_for('representant.liste_finissants'))
+
+    nb_transmis = 0
+    for f in finissants:
+        if f.statut_correction == 'TRANSMIS':
+            continue
+
+        # Copier les données corrigées dans le dossier de diplomation
+        dossier = DossierDiplomation.query.filter_by(
+            matricule=f.matricule,
+            annee_academique=annee,
+        ).first()
+
+        if dossier:
+            dossier.nom_sur_diplome    = f.nom
+            dossier.prenom_sur_diplome = f.prenom
+            if f.date_naissance:
+                dossier.ddn_sur_diplome = f.date_naissance
+            if f.lieu_naissance:
+                dossier.lddn_sur_diplome = f.lieu_naissance
+
+            # Passer en LISTE_FINISSANTS si ce n'est pas déjà un statut avancé
+            STATUTS_ELIGIBLES = ['AUTHENTIFICATION', 'EN_VERIFICATION']
+            if dossier.statut in STATUTS_ELIGIBLES:
+                ancien = dossier.statut
+                dossier.statut = 'LISTE_FINISSANTS'
+                _log(dossier.id_dossier, 'LISTE_FINISSANTS', ancien, 'LISTE_FINISSANTS',
+                     str(current_user.id_representant), 'representant')
+
+        f.statut_correction = 'TRANSMIS'
+        nb_transmis += 1
+
+    db.session.commit()
+    flash(
+        f'{nb_transmis} fiche(s) transmise(s) au Chef de Bureau — '
+        f'données corrigées copiées dans les dossiers.',
+        'success'
+    )
+    return redirect(url_for('representant.liste_finissants'))
 
 
 def _log(id_dossier, phase, ancien, nouveau, id_acteur, role):

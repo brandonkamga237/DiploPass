@@ -79,6 +79,11 @@
       <i class="bi bi-shield-check"></i>
       <span class="sidebar-label">Authentification</span>
     </a>
+    <a href="{{ url_for('representant.liste_finissants') }}"
+       class="nav-link {% if 'finissant' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-pencil-square"></i>
+      <span class="sidebar-label">Corriger finissants</span>
+    </a>
 
     {# ── Espace Chef de Bureau (uniquement pour chef_bureau) ── #}
     {% if session.role == 'chef_bureau' %}
