@@ -14,13 +14,32 @@ from minio.error import S3Error
 
 BUCKET = os.environ.get('MINIO_BUCKET', 'diplopass')
 
+# Endpoint interne Docker (SDK → upload/download)
+_INTERNAL_ENDPOINT = os.environ.get('MINIO_ENDPOINT', 'localhost:9000')
+
+# URL publique pour les URLs signées (navigateur → téléchargement direct)
+# En prod : storage.diplopass.lescracks.com  |  En dev : localhost:9000
+_PUBLIC_ENDPOINT = os.environ.get('MINIO_PUBLIC_URL', _INTERNAL_ENDPOINT)
+_PUBLIC_SECURE   = os.environ.get('MINIO_PUBLIC_SECURE', 'false').lower() == 'true'
+
 
 def _client() -> Minio:
+    """Client interne pour les opérations SDK (upload, bucket management)."""
     return Minio(
-        os.environ.get('MINIO_ENDPOINT', 'localhost:9000'),
+        _INTERNAL_ENDPOINT,
         access_key=os.environ.get('MINIO_ACCESS_KEY', 'diplopass'),
         secret_key=os.environ.get('MINIO_SECRET_KEY', 'diplopass2026'),
-        secure=os.environ.get('MINIO_SECURE', 'false').lower() == 'true',
+        secure=False,  # réseau Docker interne, toujours HTTP
+    )
+
+
+def _public_client() -> Minio:
+    """Client public pour générer des URLs signées accessibles depuis le navigateur."""
+    return Minio(
+        _PUBLIC_ENDPOINT,
+        access_key=os.environ.get('MINIO_ACCESS_KEY', 'diplopass'),
+        secret_key=os.environ.get('MINIO_SECRET_KEY', 'diplopass2026'),
+        secure=_PUBLIC_SECURE,
     )
 
 
@@ -56,8 +75,8 @@ def upload_piece(file_obj, id_dossier: int, id_document: int | None,
 
 
 def presigned_url(cle: str, expires_sec: int = 3600) -> str:
-    """Retourne une URL signée valable `expires_sec` secondes."""
-    client = _client()
+    """Retourne une URL signée valable `expires_sec` secondes (via endpoint public)."""
+    client = _public_client()
     return client.presigned_get_object(
         BUCKET, cle, expires=timedelta(seconds=expires_sec)
     )
