@@ -112,6 +112,11 @@
       <i class="bi bi-archive"></i>
       <span class="sidebar-label">Tous les dossiers</span>
     </a>
+    <a href="{{ url_for('chef_service.comparaison_eligibilite') }}"
+       class="nav-link {% if request.endpoint == 'chef_service.comparaison_eligibilite' %}active{% endif %}">
+      <i class="bi bi-people"></i>
+      <span class="sidebar-label">Éligibilité finissants</span>
+    </a>
 
     {% elif session.role == 'directeur' %}
     <div class="sidebar-section">Direction</div>

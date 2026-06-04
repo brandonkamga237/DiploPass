@@ -559,8 +559,11 @@ def liste_finissants():
         annee_academique=annee
     ).order_by(ListeFinissants.nom).all() if annee else []
     annees = AnneeDiplomation.query.order_by(AnneeDiplomation.code.desc()).all()
+    annee_obj = AnneeDiplomation.query.filter_by(code=annee).first() if annee else None
+    annee_finalisee = annee_obj.liste_finalisee if annee_obj else False
     return render_template('admin/liste_finissants.html',
-                           finissants=finissants, annee=annee, annees=annees)
+                           finissants=finissants, annee=annee, annees=annees,
+                           annee_finalisee=annee_finalisee)
 
 
 @admin_bp.route('/finissants/ajouter', methods=['POST'])
@@ -608,6 +611,11 @@ def importer_finissants():
         flash("Aucune année académique active.", 'danger')
         return redirect(url_for('admin.liste_finissants'))
 
+    annee_obj = AnneeDiplomation.query.filter_by(code=annee).first()
+    if annee_obj and annee_obj.liste_finalisee:
+        flash('La liste est déjà finalisée — aucune modification possible.', 'danger')
+        return redirect(url_for('admin.liste_finissants'))
+
     fichier = request.files.get('fichier')
     if not fichier or not fichier.filename.endswith('.json'):
         flash('Fichier JSON requis.', 'danger')
@@ -618,22 +626,23 @@ def importer_finissants():
         if not isinstance(data, list):
             raise ValueError("Le fichier doit contenir une liste JSON.")
 
-        nb_ajoutes = 0
-        nb_ignores = 0
+        nb_ajoutes = nb_maj = nb_ignores = 0
         for item in data:
             matricule = str(item.get('matricule', '')).strip().upper()
-            nom = str(item.get('nom', '')).strip().upper()
-            prenom = str(item.get('prenom', '')).strip()
-            filiere = str(item.get('filiere', '')).strip().upper()
+            nom       = str(item.get('nom', '')).strip().upper()
+            prenom    = str(item.get('prenom', '')).strip()
+            filiere   = str(item.get('filiere', '')).strip().upper()
+            cycle     = str(item.get('cycle', '')).strip()
+            niveau    = item.get('niveau')
 
             if not matricule or not nom:
                 nb_ignores += 1
                 continue
 
-            # Pré-remplir depuis etudiant si disponible
+            # Enrichir depuis la table etudiant si disponible
             etu = Etudiant.query.get(matricule)
             if etu:
-                nom = nom or etu.nom
+                nom    = nom    or etu.nom
                 prenom = prenom or etu.prenom
                 filiere = filiere or etu.filiere
 
@@ -641,21 +650,110 @@ def importer_finissants():
                 matricule=matricule, annee_academique=annee
             ).first()
             if existant:
-                nb_ignores += 1
-                continue
-
-            db.session.add(ListeFinissants(
-                matricule=matricule, nom=nom, prenom=prenom,
-                filiere=filiere, annee_academique=annee, valide=True
-            ))
-            nb_ajoutes += 1
+                # Mise à jour si déjà présent
+                existant.nom    = nom
+                existant.prenom = prenom
+                existant.filiere = filiere
+                nb_maj += 1
+            else:
+                db.session.add(ListeFinissants(
+                    matricule=matricule, nom=nom, prenom=prenom,
+                    filiere=filiere, annee_academique=annee, valide=True
+                ))
+                nb_ajoutes += 1
 
         db.session.commit()
-        flash(f'{nb_ajoutes} finissant(s) importé(s). {nb_ignores} ignoré(s) (doublons ou données manquantes).', 'success')
+        flash(
+            f'{nb_ajoutes} ajouté(s), {nb_maj} mis à jour, {nb_ignores} ignoré(s).',
+            'success'
+        )
     except Exception as e:
         db.session.rollback()
         flash(f'Erreur lors de l\'import : {e}', 'danger')
 
+    return redirect(url_for('admin.liste_finissants'))
+
+
+@admin_bp.route('/finissants/finaliser', methods=['POST'])
+@login_required
+@role_required('admin')
+def finaliser_liste():
+    """
+    Finalise la liste des finissants pour l'année active.
+    Déclenche automatiquement le cross-référencement :
+    - Dossiers AUTHENTIFICATION dont le matricule est dans la liste → LISTE_FINISSANTS
+    - Dossiers AUTHENTIFICATION dont le matricule est ABSENT de la liste → NON_ELIGIBLE
+    """
+    from app.models.dossier_diplomation import DossierDiplomation
+    from app.models.historique_phases import HistoriquePhases
+    import datetime
+
+    annee = session.get('annee_active_code', '')
+    if not annee:
+        flash("Aucune année académique active.", 'danger')
+        return redirect(url_for('admin.liste_finissants'))
+
+    annee_obj = AnneeDiplomation.query.filter_by(code=annee).first()
+    if not annee_obj:
+        flash("Année introuvable.", 'danger')
+        return redirect(url_for('admin.liste_finissants'))
+
+    if annee_obj.liste_finalisee:
+        flash('La liste est déjà finalisée.', 'warning')
+        return redirect(url_for('admin.liste_finissants'))
+
+    # Matricules validés sur la liste
+    matricules_valides = {
+        f.matricule for f in
+        ListeFinissants.query.filter_by(annee_academique=annee, valide=True).all()
+    }
+
+    if not matricules_valides:
+        flash('Impossible de finaliser : la liste est vide.', 'danger')
+        return redirect(url_for('admin.liste_finissants'))
+
+    # Dossiers éligibles au cross-référencement (statut AUTHENTIFICATION)
+    dossiers = DossierDiplomation.query.filter_by(
+        annee_academique=annee, statut='AUTHENTIFICATION'
+    ).all()
+
+    nb_eligibles = nb_non_eligibles = 0
+
+    for dossier in dossiers:
+        ancien = dossier.statut
+        if dossier.matricule in matricules_valides:
+            dossier.statut = 'LISTE_FINISSANTS'
+            nb_eligibles += 1
+            nouveau = 'LISTE_FINISSANTS'
+        else:
+            dossier.statut = 'NON_ELIGIBLE'
+            dossier.observations = (
+                "Votre matricule ne figure pas dans la liste officielle "
+                "des finissants ayant validé leur année académique. "
+                "La diplomation ne peut pas continuer."
+            )
+            nb_non_eligibles += 1
+            nouveau = 'NON_ELIGIBLE'
+
+        db.session.add(HistoriquePhases(
+            id_dossier=dossier.id_dossier,
+            phase='LISTE_FINISSANTS',
+            ancien_statut=ancien,
+            nouveau_statut=nouveau,
+            commentaire='Finalisation automatique de la liste des finissants',
+            id_acteur='admin',
+            role_acteur='admin',
+            date_action=datetime.datetime.now(),
+        ))
+
+    annee_obj.liste_finalisee = True
+    db.session.commit()
+
+    flash(
+        f'Liste finalisée ✓ — {nb_eligibles} dossier(s) passé(s) en LISTE_FINISSANTS, '
+        f'{nb_non_eligibles} marqué(s) NON_ELIGIBLE.',
+        'success'
+    )
     return redirect(url_for('admin.liste_finissants'))
 
 

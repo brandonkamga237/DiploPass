@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS dossier_diplomation (
             'LISTE_FINISSANTS','IMPRESSION_PROVISOIRE',
             'PRODUCTION_DEFINITIVE','SIGNATURE_DIRECTEUR',
             'SIGNATURE_RECTEUR','SIGNATURE_MINISTRE',
-            'FORMALISATION','CLOTURE','REJETE'
+            'FORMALISATION','CLOTURE','REJETE','NON_ELIGIBLE'
         )),
     montant_frais                 NUMERIC(10,2),
     frais_payes                   BOOLEAN     DEFAULT FALSE,
@@ -215,6 +215,7 @@ CREATE TABLE IF NOT EXISTS annee_diplomation (
     code             VARCHAR(9)  UNIQUE NOT NULL,
     actif            BOOLEAN     DEFAULT TRUE,
     processus_lance  BOOLEAN     NOT NULL DEFAULT FALSE,
+    liste_finalisee  BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at       TIMESTAMP   DEFAULT NOW()
 );
 

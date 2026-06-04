@@ -7,7 +7,7 @@ STATUTS_DIPLOMATION = [
     'LISTE_FINISSANTS', 'IMPRESSION_PROVISOIRE',
     'PRODUCTION_DEFINITIVE', 'SIGNATURE_DIRECTEUR',
     'SIGNATURE_RECTEUR', 'SIGNATURE_MINISTRE',
-    'FORMALISATION', 'CLOTURE', 'REJETE',
+    'FORMALISATION', 'CLOTURE', 'REJETE', 'NON_ELIGIBLE',
 ]
 
 
@@ -88,8 +88,9 @@ class DossierDiplomation(db.Model):
             'SIGNATURE_RECTEUR': 'Signature Recteur',
             'SIGNATURE_MINISTRE': 'Signature Ministre',
             'FORMALISATION': 'Formalisation',
-            'CLOTURE': 'Clôturé',
-            'REJETE': 'Rejeté',
+            'CLOTURE':       'Clôturé',
+            'REJETE':        'Rejeté',
+            'NON_ELIGIBLE':  'Non éligible',
         }
         return labels.get(self.statut, self.statut)
 
@@ -109,6 +110,7 @@ class DossierDiplomation(db.Model):
             'FORMALISATION':        'success',
             'CLOTURE':              'success',
             'REJETE':               'danger',
+            'NON_ELIGIBLE':         'dark',
         }
         return couleurs.get(self.statut, 'success')
 

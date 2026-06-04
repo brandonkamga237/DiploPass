@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Éligibilité — Finissants{% endblock %}
+{% block page_title %}Éligibilité à la diplomation{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-people-fill me-2"></i>Éligibilité à la diplomation</h1>
+    <p>
+      Comparaison entre les dossiers soumis et la liste officielle des finissants.
+      {% if annee %}<strong>Année : {{ annee }}</strong>{% endif %}
+      {% if liste_finalisee %}
+      <span class="badge bg-success ms-2"><i class="bi bi-lock-fill me-1"></i>Liste finalisée</span>
+      {% else %}
+      <span class="badge bg-warning text-dark ms-2"><i class="bi bi-clock me-1"></i>Liste non finalisée</span>
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+{% if not liste_finalisee %}
+<div class="d-flex gap-3 p-3 rounded-3 mb-4" style="background:#fff3cd;border-left:4px solid #ffc107">
+  <i class="bi bi-exclamation-triangle-fill mt-1" style="color:#856404"></i>
+  <div style="font-size:.85rem">
+    <strong>La liste des finissants n'a pas encore été finalisée par l'admin.</strong><br>
+    Le statut d'éligibilité ci-dessous est indicatif et basé sur la liste actuelle (non définitive).
+    Les dossiers ne seront mis à jour qu'à la finalisation.
+  </div>
+</div>
+{% endif %}
+
+{# Stats #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Total dossiers</div>
+        <div class="stat-value">{{ dossiers | length }}</div>
+        <div class="stat-sub">Soumis pour {{ annee }}</div>
+      </div>
+      <i class="bi bi-folder2 stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Sur la liste</div>
+        <div class="stat-value">{{ nb_liste }}</div>
+        <div class="stat-sub">Finissants validés</div>
+      </div>
+      <i class="bi bi-list-check stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Éligibles confirmés</div>
+        <div class="stat-value">{{ nb_eligible }}</div>
+        <div class="stat-sub">Statut LISTE_FINISSANTS</div>
+      </div>
+      <i class="bi bi-check-circle stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card red">
+      <div>
+        <div class="stat-label">Non éligibles</div>
+        <div class="stat-value">{{ nb_non_eligible }}</div>
+        <div class="stat-sub">Diplomation stoppée</div>
+      </div>
+      <i class="bi bi-slash-circle stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# Tableau #}
+<div class="card">
+  <div class="card-header">
+    <span>Tableau de comparaison — tous les dossiers</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Matricule</th>
+          <th>Étudiant</th>
+          <th>Filière</th>
+          <th>Statut dossier</th>
+          <th>Sur la liste</th>
+          <th>Éligibilité</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        {% set sur_liste = d.matricule in matricules_valides %}
+        <tr style="{% if d.statut == 'NON_ELIGIBLE' %}background:#fff8f8{% elif sur_liste and liste_finalisee %}background:#f7fdf9{% endif %}">
+          <td><code>{{ d.matricule }}</code></td>
+          <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+          <td>{{ d.etudiant.filiere }}</td>
+          <td>
+            <span class="badge bg-{{ d.couleur_statut() }}">{{ d.libelle_statut() }}</span>
+          </td>
+          <td>
+            {% if sur_liste %}
+            <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Oui</span>
+            {% else %}
+            <span class="badge bg-danger"><i class="bi bi-x-lg me-1"></i>Non</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if d.statut == 'NON_ELIGIBLE' %}
+            <span style="font-size:.78rem;color:var(--red);font-weight:700">
+              <i class="bi bi-slash-circle me-1"></i>Diplomation stoppée
+            </span>
+            {% elif d.statut == 'LISTE_FINISSANTS' or (sur_liste and liste_finalisee) %}
+            <span style="font-size:.78rem;color:var(--green);font-weight:700">
+              <i class="bi bi-check-circle me-1"></i>Éligible — peut continuer
+            </span>
+            {% elif sur_liste %}
+            <span style="font-size:.78rem;color:#92400e;font-weight:600">
+              <i class="bi bi-hourglass me-1"></i>Éligible — en attente finalisation
+            </span>
+            {% else %}
+            <span style="font-size:.78rem;color:var(--gris-dark)">
+              <i class="bi bi-question-circle me-1"></i>Absent de la liste
+            </span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center py-4 text-muted">
+            Aucun dossier soumis pour cette année.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

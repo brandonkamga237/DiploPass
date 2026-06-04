@@ -243,23 +243,22 @@
   </div>
 </div>
 
-{# Alerte : non validé sur la liste des finissants #}
-{% if sur_liste_finissants == false %}
-<div class="d-flex align-items-flex-start gap-3 p-4 rounded-3 mb-4" style="background:#fdecea;border-left:4px solid var(--red)">
-  <i class="bi bi-slash-circle-fill flex-shrink-0 mt-1" style="color:var(--red);font-size:1.3rem"></i>
+{# Statut NON_ELIGIBLE — bloque tout #}
+{% if dossier and dossier.statut == 'NON_ELIGIBLE' %}
+<div class="d-flex align-items-flex-start gap-3 p-4 rounded-3 mb-4" style="background:#1e1e2e;border-left:4px solid #64748b;border-radius:12px">
+  <i class="bi bi-slash-circle-fill flex-shrink-0 mt-1" style="color:#94a3b8;font-size:1.5rem"></i>
   <div>
-    <div style="font-size:.95rem;font-weight:800;color:var(--red)">Diplomation suspendue</div>
-    <div style="font-size:.83rem;color:var(--dark);margin-top:4px">
-      Votre matricule <strong>{{ current_user.matricule }}</strong> ne figure pas parmi les étudiants
-      ayant validé leur année académique <strong>{{ dossier.annee_academique }}</strong>.
-      La poursuite du processus de diplomation est impossible jusqu'à régularisation.
+    <div style="font-size:1rem;font-weight:800;color:#f8fafc">Diplomation non éligible</div>
+    <div style="font-size:.84rem;color:#cbd5e1;margin-top:6px;line-height:1.6">
+      {{ dossier.observations or "Votre matricule ne figure pas dans la liste officielle des finissants ayant validé leur année académique. La diplomation ne peut pas continuer." }}
     </div>
-    <div style="font-size:.78rem;color:#64748b;margin-top:6px">
-      Rapprochez-vous de votre représentant de filière ou du bureau de la scolarité.
+    <div style="margin-top:10px;font-size:.76rem;color:#64748b">
+      <i class="bi bi-telephone me-1"></i>
+      Rapprochez-vous de la scolarité ou de votre représentant de filière pour plus d'informations.
     </div>
   </div>
 </div>
-{% elif sur_liste_finissants == true %}
+{% elif sur_liste_finissants == true and dossier.statut not in ['NON_ELIGIBLE', 'REJETE', 'CLOTURE'] %}
 <div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-4" style="background:#e6f5ef;border-left:4px solid var(--green)">
   <i class="bi bi-patch-check-fill" style="color:var(--green);font-size:1.2rem"></i>
   <div style="font-size:.83rem;color:var(--dark)">

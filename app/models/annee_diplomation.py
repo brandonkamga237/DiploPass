@@ -13,6 +13,7 @@ class AnneeDiplomation(db.Model):
     code = db.Column(db.String(9), unique=True, nullable=False)   # ex: "2024-2025"
     actif = db.Column(db.Boolean, default=True)
     processus_lance = db.Column(db.Boolean, default=False, nullable=False)
+    liste_finalisee = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
     def __repr__(self):

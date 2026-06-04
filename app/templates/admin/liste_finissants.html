@@ -3,12 +3,21 @@
 {% block page_title %}Liste des finissants{% endblock %}
 
 {% block topbar_actions %}
+{% if not annee_finalisee %}
 <button class="btn btn-outline-secondary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#importModal">
   <i class="bi bi-upload me-1"></i>Importer JSON
 </button>
-<button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#ajoutModal">
-  <i class="bi bi-plus-circle me-1"></i>Ajouter manuellement
+<button class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#ajoutModal">
+  <i class="bi bi-plus-circle me-1"></i>Ajouter
 </button>
+<button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#finaliserModal">
+  <i class="bi bi-lock-fill me-1"></i>Finaliser la liste
+</button>
+{% else %}
+<span class="badge bg-success fs-6 px-3 py-2">
+  <i class="bi bi-lock-fill me-1"></i>Liste finalisée — verrouillée
+</span>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -19,9 +28,24 @@
     <p>
       Étudiants ayant validé leur année et autorisés à recevoir leur diplôme.
       {% if annee %}<strong>Année : {{ annee }}</strong>{% endif %}
+      {% if annee_finalisee %}
+      <span class="badge bg-success ms-2"><i class="bi bi-lock-fill me-1"></i>Liste finalisée et verrouillée</span>
+      {% endif %}
     </p>
   </div>
 </div>
+
+{% if annee_finalisee %}
+<div class="d-flex align-items-center gap-3 p-3 rounded-3 mb-4" style="background:#e6f5ef;border-left:4px solid var(--green)">
+  <i class="bi bi-info-circle-fill" style="color:var(--green);font-size:1.2rem"></i>
+  <div style="font-size:.85rem">
+    <strong>Liste finalisée.</strong> Le cross-référencement a été effectué :
+    les dossiers éligibles sont passés en <strong>LISTE_FINISSANTS</strong>
+    et les non-éligibles sont marqués <strong>NON_ELIGIBLE</strong>.
+    Aucune modification n'est possible.
+  </div>
+</div>
+{% endif %}
 
 {# Alertes #}
 {% with msgs = get_flashed_messages(with_categories=true) %}
@@ -106,8 +130,8 @@
             {% endif %}
           </td>
           <td>
+            {% if not annee_finalisee %}
             <div class="d-flex gap-1">
-              {# Toggle validé/invalidé #}
               {% if f.valide %}
               <button class="btn btn-sm btn-outline-danger"
                       data-bs-toggle="modal" data-bs-target="#invalidModal{{ f.id }}">
@@ -120,7 +144,6 @@
                 </button>
               </form>
               {% endif %}
-
               <form method="POST" action="{{ url_for('admin.supprimer_finissant', id=f.id) }}"
                     onsubmit="return confirm('Supprimer {{ f.nom }} {{ f.prenom }} de la liste ?')">
                 <button class="btn btn-sm btn-outline-secondary">
@@ -128,6 +151,9 @@
                 </button>
               </form>
             </div>
+            {% else %}
+            <span class="text-muted small"><i class="bi bi-lock"></i> Verrouillé</span>
+            {% endif %}
 
             {# Modal invalidation #}
             {% if f.valide %}
@@ -234,12 +260,28 @@
             <input type="file" name="fichier" class="form-control" accept=".json" required>
           </div>
           <div class="p-3 rounded-3" style="background:#f8f9fa;font-size:.8rem">
-            <strong>Format attendu :</strong>
-            <pre style="margin-top:8px;margin-bottom:0;font-size:.75rem;background:#fff;padding:10px;border-radius:6px">[
-  {"matricule": "22G0001", "nom": "MBALLA", "prenom": "Jean"},
-  {"matricule": "22M0001", "nom": "ESSOMBA", "prenom": "Rachel"},
-  {"matricule": "22G0006", "nom": "OWONA", "prenom": "Lucie"}
+            <strong>Format JSON attendu (même format que l'import des étudiants) :</strong>
+            <pre style="margin-top:8px;margin-bottom:0;font-size:.74rem;background:#fff;padding:10px;border-radius:6px">[
+  {
+    "matricule": "22G0001",
+    "nom": "MBALLA",
+    "prenom": "Jean",
+    "filiere": "GINFO",
+    "cycle": "LICENCE",
+    "niveau": 3
+  },
+  {
+    "matricule": "22M0001",
+    "nom": "ESSOMBA",
+    "prenom": "Rachel",
+    "filiere": "GEL"
+  }
 ]</pre>
+            <div class="mt-2" style="color:#64748b">
+              <i class="bi bi-info-circle me-1"></i>
+              Seuls <code>matricule</code> et <code>nom</code> sont obligatoires.
+              Si le matricule existe dans le système, les données sont complétées automatiquement.
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -252,5 +294,41 @@
     </div>
   </div>
 </div>
+
+{# Modal finalisation #}
+{% if not annee_finalisee %}
+<div class="modal fade" id="finaliserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:12px;border:none">
+      <div class="modal-header" style="background:var(--green);color:#fff;border-radius:12px 12px 0 0">
+        <h6 class="modal-title fw-700"><i class="bi bi-lock-fill me-2"></i>Finaliser la liste</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="p-3 rounded-3 mb-3" style="background:#fff3cd;border-left:4px solid #ffc107">
+          <strong>⚠️ Action irréversible</strong><br>
+          <span style="font-size:.85rem">Une fois finalisée, la liste est <strong>verrouillée</strong>. Le système va automatiquement :</span>
+          <ul style="font-size:.83rem;margin-top:8px;margin-bottom:0">
+            <li>Passer les dossiers <strong>éligibles</strong> → <strong class="text-success">LISTE_FINISSANTS</strong></li>
+            <li>Marquer les non-éligibles → <strong class="text-danger">NON_ELIGIBLE</strong></li>
+          </ul>
+        </div>
+        <p style="font-size:.85rem">
+          <strong>{{ finissants | selectattr('valide') | list | length }}</strong> étudiant(s) validé(s) sur la liste.
+          Êtes-vous sûr ?
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        <form method="POST" action="{{ url_for('admin.finaliser_liste') }}">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-lock-fill me-1"></i>Finaliser
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 {% endblock %}
