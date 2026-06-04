@@ -35,8 +35,17 @@
 
       <div class="mb-5">
         <label class="form-label">Mot de passe</label>
-        <input type="password" name="mot_de_passe" class="form-control form-control-lg"
-               required autocomplete="current-password">
+        <div style="position:relative">
+          <input type="password" name="mot_de_passe" id="mot_de_passe"
+                 class="form-control form-control-lg"
+                 required autocomplete="current-password"
+                 style="padding-right:3rem">
+          <button type="button" id="togglePwd"
+                  style="position:absolute;top:50%;right:12px;transform:translateY(-50%);background:none;border:none;color:#94a3b8;cursor:pointer;padding:4px;line-height:1"
+                  onclick="(function(){var i=document.getElementById('mot_de_passe'),b=document.getElementById('togglePwd');if(i.type==='password'){i.type='text';b.innerHTML='<i class=\'bi bi-eye-slash\'></i>';}else{i.type='password';b.innerHTML='<i class=\'bi bi-eye\'></i>';}})()">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
       </div>
 
       <button type="submit" class="login-submit">
