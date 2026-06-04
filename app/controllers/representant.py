@@ -45,12 +45,14 @@ def dashboard():
                        'SIGNATURE_DIRECTEUR', 'SIGNATURE_RECTEUR',
                        'SIGNATURE_MINISTRE', 'FORMALISATION', 'CLOTURE']
     stats = {
-        'total':          len(dossiers),
-        'deposes':        sum(1 for d in dossiers if d.statut == 'DEPOSE'),
-        'en_verification':sum(1 for d in dossiers if d.statut == 'EN_VERIFICATION'),
-        'incomplets':     sum(1 for d in dossiers if d.statut == 'INCOMPLET'),
-        'valides':        sum(1 for d in dossiers if d.statut in STATUTS_AVANCES),
-        'clotures':       sum(1 for d in dossiers if d.statut == 'CLOTURE'),
+        'total':              len(dossiers),
+        'deposes':            sum(1 for d in dossiers if d.statut == 'DEPOSE'),
+        'en_verification':    sum(1 for d in dossiers if d.statut == 'EN_VERIFICATION'),
+        'incomplets':         sum(1 for d in dossiers if d.statut == 'INCOMPLET'),
+        'a_authentifier':     sum(1 for d in dossiers if d.statut == 'EN_VERIFICATION'),
+        'authentifies':       sum(1 for d in dossiers if d.statut == 'AUTHENTIFICATION'),
+        'valides':            sum(1 for d in dossiers if d.statut in STATUTS_AVANCES),
+        'clotures':           sum(1 for d in dossiers if d.statut == 'CLOTURE'),
     }
     return render_template(
         'representant/dashboard.html',
@@ -123,6 +125,43 @@ def verifier_dossier(id):
     db.session.commit()
     flash('Statut mis à jour.', 'success')
     return redirect(url_for('representant.detail_dossier', id=id))
+
+
+@representant_bp.route('/authentification')
+@login_required
+@role_required('representant', 'chef_bureau')
+def liste_authentification():
+    """Dossiers en attente d'authentification pour la filière du représentant."""
+    dossiers = _dossiers_filiere().filter(
+        DossierDiplomation.statut == 'EN_VERIFICATION'
+    ).order_by(DossierDiplomation.date_depot).all()
+    return render_template('representant/authentification.html', dossiers=dossiers)
+
+
+@representant_bp.route('/dossiers/<int:id>/authentifier', methods=['POST'])
+@login_required
+@role_required('representant', 'chef_bureau')
+def authentifier(id):
+    dossier = DossierDiplomation.query.get_or_404(id)
+    ancien  = dossier.statut
+    resultat = request.form.get('resultat')
+
+    if resultat == 'AUTHENTIQUE':
+        dossier.statut                    = 'AUTHENTIFICATION'
+        dossier.resultat_authentification = 'AUTHENTIQUE'
+        nouveau = 'AUTHENTIFICATION'
+        flash('Diplôme authentifié — dossier validé.', 'success')
+    else:
+        dossier.statut                    = 'AUTH_REJETEE'
+        dossier.resultat_authentification = 'FAUX'
+        dossier.observations              = request.form.get('motif', '')
+        nouveau = 'AUTH_REJETEE'
+        flash('Diplôme rejeté — dossier marqué comme non authentique.', 'danger')
+
+    _log(id, 'AUTHENTIFICATION', ancien, nouveau,
+         str(current_user.id_representant), 'representant')
+    db.session.commit()
+    return redirect(url_for('representant.liste_authentification'))
 
 
 @representant_bp.route('/dossiers/<int:id>/corriger', methods=['POST'])

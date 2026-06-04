@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Authentification des diplômes{% endblock %}
+{% block page_title %}Authentification{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('representant.liste_dossiers') }}" class="btn btn-outline-secondary btn-sm">
+  <i class="bi bi-arrow-left me-1"></i>Tous les dossiers
+</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-shield-check me-2"></i>Authentification des diplômes</h1>
+    <p>Vérifiez l'authenticité des diplômes des étudiants de votre filière avant de valider leur dossier.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span>Dossiers en attente d'authentification — <strong>{{ current_user.filiere_geree }}</strong></span>
+    <span class="badge bg-primary">{{ dossiers|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Étudiant</th>
+          <th>Matricule</th>
+          <th>Filière</th>
+          <th>Déposé le</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        <tr>
+          <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+          <td><code>{{ d.matricule }}</code></td>
+          <td>{{ d.etudiant.filiere }}</td>
+          <td>{{ d.date_depot.strftime('%d/%m/%Y') if d.date_depot else '—' }}</td>
+          <td>
+            <a href="{{ url_for('representant.detail_dossier', id=d.id_dossier) }}"
+               class="btn btn-sm btn-outline-secondary me-1">
+              <i class="bi bi-eye"></i>
+            </a>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                    data-bs-target="#authModal{{ d.id_dossier }}">
+              <i class="bi bi-shield-check me-1"></i>Saisir résultat
+            </button>
+
+            <!-- Modal authentification -->
+            <div class="modal fade" id="authModal{{ d.id_dossier }}" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content" style="border-radius:12px;border:none">
+                  <div class="modal-header" style="border-bottom:1px solid #e2e8f0">
+                    <h6 class="modal-title fw-700">
+                      <i class="bi bi-shield-check me-2 text-primary"></i>
+                      Résultat — {{ d.etudiant.nom }} {{ d.etudiant.prenom }}
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="POST" action="{{ url_for('representant.authentifier', id=d.id_dossier) }}">
+                    <div class="modal-body">
+                      <div class="mb-3 p-3 rounded-3" style="background:#f8f9fa">
+                        <div style="font-size:.8rem;color:#64748b">Étudiant</div>
+                        <strong>{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</strong>
+                        &nbsp;·&nbsp;
+                        <code>{{ d.matricule }}</code>
+                        &nbsp;·&nbsp;
+                        {{ d.etudiant.filiere }}
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-600">Résultat d'authentification <span class="text-danger">*</span></label>
+                        <div class="d-flex flex-column gap-2">
+                          <label class="d-flex align-items-center gap-3 p-3 rounded-3 border" style="cursor:pointer"
+                                 onclick="this.closest('.modal-body').querySelector('.motif-bloc').style.display='none'">
+                            <input type="radio" name="resultat" value="AUTHENTIQUE" required
+                                   style="width:18px;height:18px;accent-color:var(--green)">
+                            <div>
+                              <div class="fw-600" style="color:var(--green)"><i class="bi bi-check-circle me-1"></i>Diplôme authentique</div>
+                              <div style="font-size:.78rem;color:#64748b">Le diplôme d'origine est valide et reconnu</div>
+                            </div>
+                          </label>
+                          <label class="d-flex align-items-center gap-3 p-3 rounded-3 border" style="cursor:pointer"
+                                 onclick="this.closest('.modal-body').querySelector('.motif-bloc').style.display='block'">
+                            <input type="radio" name="resultat" value="FAUX"
+                                   style="width:18px;height:18px;accent-color:var(--red)">
+                            <div>
+                              <div class="fw-600" style="color:var(--red)"><i class="bi bi-x-circle me-1"></i>Diplôme non authentique / rejeté</div>
+                              <div style="font-size:.78rem;color:#64748b">Document falsifié ou non reconnu</div>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                      <div class="motif-bloc mb-3" style="display:none">
+                        <label class="form-label">Motif du rejet <span class="text-danger">*</span></label>
+                        <input type="text" name="motif" class="form-control"
+                               placeholder="Ex : Diplôme non reconnu par l'université d'origine…">
+                      </div>
+                    </div>
+                    <div class="modal-footer" style="border-top:1px solid #e2e8f0">
+                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                      <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i>Confirmer
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5">
+            <div class="text-center py-5">
+              <i class="bi bi-shield-check" style="font-size:2.5rem;color:#c8ead8"></i>
+              <p class="mt-3 mb-0 fw-600" style="color:var(--green)">Aucun dossier en attente d'authentification</p>
+              <p class="text-muted small">Tous les dossiers vérifiés ont été traités.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
