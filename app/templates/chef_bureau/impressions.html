@@ -111,22 +111,29 @@
               </form>
 
             {% elif d.statut == 'IMPRESSION_PROVISOIRE' %}
-              {% if d.est_diplome_conforme == false %}
-                {# Corrections à apporter + réimpression #}
-                <button class="btn btn-sm btn-warning"
-                        data-bs-toggle="modal"
-                        data-bs-target="#corrModal{{ d.id_dossier }}">
-                  <i class="bi bi-pencil me-1"></i>Corriger et réimprimer
-                </button>
-              {% elif d.est_diplome_conforme == true %}
-                <span class="badge bg-success py-2 px-3">
-                  <i class="bi bi-check-all me-1"></i>Validé par le représentant
-                </span>
-              {% else %}
-                <span class="text-muted small">
-                  <i class="bi bi-hourglass me-1"></i>Attente du représentant
-                </span>
-              {% endif %}
+              <div class="d-flex gap-1 flex-wrap">
+                {% if d.est_diplome_conforme != true %}
+                  {# Chef de Bureau peut valider directement #}
+                  <form method="POST"
+                        action="{{ url_for('chef_bureau.valider_conformite', id=d.id_dossier) }}">
+                    <button type="submit" class="btn btn-sm btn-success"
+                            title="Marquer conforme"
+                            onclick="return confirm('Confirmer que le diplôme de {{ d.nom_sur_diplome }} est conforme ?')">
+                      <i class="bi bi-check-lg me-1"></i>Conforme
+                    </button>
+                  </form>
+                  {# Corriger et réimprimer #}
+                  <button class="btn btn-sm btn-warning"
+                          data-bs-toggle="modal"
+                          data-bs-target="#corrModal{{ d.id_dossier }}">
+                    <i class="bi bi-pencil me-1"></i>Corriger
+                  </button>
+                {% else %}
+                  <span class="badge bg-success py-2 px-3">
+                    <i class="bi bi-check-all me-1"></i>Conforme ✓
+                  </span>
+                {% endif %}
+              </div>
 
             {% elif d.statut == 'PRODUCTION_DEFINITIVE' %}
               <form method="POST"

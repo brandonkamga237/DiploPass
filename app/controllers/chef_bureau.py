@@ -121,6 +121,21 @@ def lancer_impression_provisoire(id):
     return redirect(url_for('chef_bureau.impressions'))
 
 
+@chef_bureau_bp.route('/dossiers/<int:id>/valider-conformite', methods=['POST'])
+@login_required
+@role_required('chef_bureau')
+def valider_conformite(id):
+    """Chef de Bureau valide directement la conformité d'un diplôme (privilège supérieur au représentant)."""
+    dossier = DossierDiplomation.query.get_or_404(id)
+    dossier.est_diplome_conforme = True
+    dossier.observations = None
+    _log(id, 'VALIDATION_CONFORMITE', 'IMPRESSION_PROVISOIRE', 'IMPRESSION_PROVISOIRE',
+         str(current_user.id_representant), 'chef_bureau')
+    db.session.commit()
+    flash(f'Diplôme de {dossier.nom_sur_diplome} {dossier.prenom_sur_diplome} marqué conforme.', 'success')
+    return redirect(url_for('chef_bureau.impressions'))
+
+
 @chef_bureau_bp.route('/dossiers/<int:id>/corriger-et-reimprimer', methods=['POST'])
 @login_required
 @role_required('chef_bureau')
