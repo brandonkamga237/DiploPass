@@ -21,13 +21,11 @@
     </div>
   </div>
   <div class="col-md-4">
-    {% set nb_deposes = pieces_map|length %}
-    {% set nb_requis = documents|selectattr('obligatoire')|list|length %}
-    <div class="stat-card {% if nb_deposes >= nb_requis %}green{% elif nb_deposes > 0 %}yellow{% else %}red{% endif %}">
+    <div class="stat-card {% if nb_pieces_deposees >= nb_pieces_requises and nb_pieces_requises > 0 %}green{% elif nb_pieces_deposees > 0 %}yellow{% else %}red{% endif %}">
       <div>
         <div class="stat-label">Pièces déposées</div>
-        <div class="stat-value">{{ nb_deposes }}<span style="font-size:.9rem;font-weight:400;color:var(--gris-dark)">/{{ documents|length }}</span></div>
-        <div class="stat-sub">{{ nb_requis }} obligatoires</div>
+        <div class="stat-value">{{ nb_pieces_deposees }}<span style="font-size:.9rem;font-weight:400;color:var(--gris-dark)">/{{ nb_pieces_requises }}</span></div>
+        <div class="stat-sub">{% if nb_pieces_deposees >= nb_pieces_requises and nb_pieces_requises > 0 %}Dossier complet ✓{% else %}{{ nb_pieces_requises }} documents requis{% endif %}</div>
       </div>
       <i class="bi bi-paperclip stat-icon"></i>
     </div>

@@ -222,6 +222,16 @@
     </div>
   </div>
   <div class="col-6 col-md-3">
+    <div class="stat-card {% if nb_pieces_deposees >= nb_pieces_requises and nb_pieces_requises > 0 %}green{% elif nb_pieces_deposees > 0 %}yellow{% else %}blue{% endif %}">
+      <div>
+        <div class="stat-label">Pièces déposées</div>
+        <div class="stat-value">{{ nb_pieces_deposees }}<span style="font-size:.9rem;font-weight:400;color:var(--gris-dark)">/{{ nb_pieces_requises }}</span></div>
+        <div class="stat-sub">{% if nb_pieces_deposees >= nb_pieces_requises and nb_pieces_requises > 0 %}Dossier complet{% else %}Documents requis{% endif %}</div>
+      </div>
+      <i class="bi bi-paperclip stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
     <div class="stat-card blue">
       <div>
         <div class="stat-label">Promotion</div>
@@ -279,33 +289,60 @@
         <div style="display:flex;flex-direction:column;gap:0">
           {% for statut_key, label, desc, icon in phases_info %}
           {% set idx = loop.index0 %}
-          {% set state = 'done' if idx < current_idx else ('active' if idx == current_idx else 'pending') %}
+
+          {# Étapes <= current_idx = DONE, current_idx+1 = ACTIVE, reste = PENDING #}
+          {# Pour les états d'erreur, l'étape bloquée reste ACTIVE avec style d'alerte #}
+          {% set is_error = dossier.statut in ['INCOMPLET','AUTH_REJETEE','REJETE'] %}
+          {% if idx <= current_idx %}
+            {% if is_error and idx == current_idx %}
+              {% set state = 'blocked' %}
+            {% else %}
+              {% set state = 'done' %}
+            {% endif %}
+          {% elif idx == current_idx + 1 and not is_error %}
+            {% set state = 'active' %}
+          {% else %}
+            {% set state = 'pending' %}
+          {% endif %}
+
           <div style="display:flex;gap:16px;position:relative">
             {% if not loop.last %}
-            <div style="position:absolute;left:18px;top:38px;width:2px;height:calc(100% - 8px);background:{% if state == 'done' %}var(--green){% else %}var(--gris-bg){% endif %};z-index:0"></div>
+            <div style="position:absolute;left:18px;top:38px;width:2px;height:calc(100% - 8px);
+              background:{% if state == 'done' %}var(--green){% elif state == 'blocked' %}var(--red){% else %}var(--gris-bg){% endif %};z-index:0"></div>
             {% endif %}
+
             <div style="flex-shrink:0;z-index:1">
               <div style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;border:3px solid;
                 {% if state == 'done' %}background:var(--green);border-color:var(--green);color:#fff
                 {% elif state == 'active' %}background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 0 0 5px rgba(37,102,158,.15)
+                {% elif state == 'blocked' %}background:var(--red);border-color:var(--red);color:#fff
                 {% else %}background:#f8f9fa;border-color:#d0d3d8;color:#bbb{% endif %}">
                 {% if state == 'done' %}<i class="bi bi-check-lg"></i>
+                {% elif state == 'blocked' %}<i class="bi bi-exclamation-lg"></i>
                 {% else %}<i class="bi {{ icon }}"></i>{% endif %}
               </div>
             </div>
+
             <div style="flex:1;border-radius:11px;padding:13px 16px;margin-bottom:12px;
               {% if state == 'active' %}background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.05);border:2px solid var(--blue)
               {% elif state == 'done' %}background:#f7fdf9;border:2px solid #c8ead8
+              {% elif state == 'blocked' %}background:#fff8f8;border:2px solid #f5c6c6
               {% else %}background:#f8f9fa;border:2px solid transparent{% endif %}">
-              <div style="font-size:.88rem;font-weight:700;color:{% if state == 'pending' %}var(--gris-dark){% else %}var(--dark){% endif %}">{{ label }}</div>
+              <div style="font-size:.88rem;font-weight:700;color:{% if state == 'pending' %}var(--gris-dark){% elif state == 'blocked' %}var(--red){% else %}var(--dark){% endif %}">
+                {{ label }}
+              </div>
               {% if state != 'pending' %}
               <div style="font-size:.76rem;color:var(--gris-dark);margin-top:2px">{{ desc }}</div>
               {% endif %}
               <span style="font-size:.7rem;font-weight:700;padding:2px 8px;border-radius:99px;margin-top:5px;display:inline-block;
                 {% if state == 'done' %}background:#e6f5ef;color:#1f7a52
                 {% elif state == 'active' %}background:#e8f0fc;color:var(--blue)
+                {% elif state == 'blocked' %}background:#fdecea;color:var(--red)
                 {% else %}background:var(--gris-bg);color:var(--gris-dark){% endif %}">
-                {% if state == 'done' %}✓ Complété{% elif state == 'active' %}→ En cours{% else %}En attente{% endif %}
+                {% if state == 'done' %}✓ Complété
+                {% elif state == 'active' %}→ En cours
+                {% elif state == 'blocked' %}⚠ {{ dossier.libelle_statut() }}
+                {% else %}En attente{% endif %}
               </span>
             </div>
           </div>

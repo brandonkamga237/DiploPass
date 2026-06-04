@@ -68,22 +68,28 @@ def _representant_pour_filiere(filiere):
 @login_required
 @role_required('etudiant')
 def dashboard():
+    from app.models.document_requis import DocumentRequis
     dossier = current_user.dossier_diplomation
     processus = _processus_actif_pour_etudiant(current_user)
     communique = _communique_pour_etudiant(current_user) if processus else None
 
-    # Étudiant d'une année passée dont le dossier est clôturé → vue résultats
     est_ancien_diplome = (
         dossier is not None
         and dossier.statut == 'CLOTURE'
         and processus is None
     )
+
+    nb_pieces_deposees = len(dossier.pieces_jointes) if dossier else 0
+    nb_pieces_requises = DocumentRequis.query.filter_by(actif=True).count()
+
     return render_template(
         'etudiant/dashboard.html',
         communique=communique,
         dossier=dossier,
         processus=processus,
         est_ancien_diplome=est_ancien_diplome,
+        nb_pieces_deposees=nb_pieces_deposees,
+        nb_pieces_requises=nb_pieces_requises,
     )
 
 
@@ -199,13 +205,16 @@ def detail_dossier():
         flash('Vous n\'avez pas encore soumis de dossier.', 'info')
         return redirect(url_for('etudiant.dashboard'))
     documents   = DocumentRequis.query.order_by(DocumentRequis.numero).all()
-    # index des pièces déjà déposées : id_document_requis → PieceJointe
     pieces_map  = {p.id_document_requis: p for p in dossier.pieces_jointes}
+    nb_pieces_deposees = len(dossier.pieces_jointes)
+    nb_pieces_requises = len(documents)
     return render_template(
         'etudiant/detail_dossier.html',
         dossier=dossier,
         documents=documents,
         pieces_map=pieces_map,
+        nb_pieces_deposees=nb_pieces_deposees,
+        nb_pieces_requises=nb_pieces_requises,
     )
 
 
