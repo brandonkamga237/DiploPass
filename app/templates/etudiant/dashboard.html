@@ -4,10 +4,20 @@
 
 {% block content %}
 
-{# ── Définition de l'ordre des statuts pour le stepper ── #}
+{# ── Ordre officiel des étapes (sans les états d'erreur) ── #}
 {% set statuts_order = ['DEPOSE','EN_VERIFICATION','AUTHENTIFICATION','LISTE_FINISSANTS',
   'IMPRESSION_PROVISOIRE','PRODUCTION_DEFINITIVE','SIGNATURE_DIRECTEUR',
   'SIGNATURE_RECTEUR','SIGNATURE_MINISTRE','FORMALISATION','CLOTURE'] %}
+
+{# ── Mapping états d'erreur → indice équivalent pour le stepper ── #}
+{# INCOMPLET = bloqué à EN_VERIFICATION (idx 1), AUTH_REJETEE = bloqué à AUTHENTIFICATION (idx 2) #}
+{% if dossier is defined and dossier %}
+  {% if   dossier.statut == 'INCOMPLET'    %}{% set current_idx = 1 %}
+  {% elif dossier.statut == 'AUTH_REJETEE' %}{% set current_idx = 2 %}
+  {% elif dossier.statut == 'REJETE'       %}{% set current_idx = 1 %}
+  {% elif dossier.statut in statuts_order  %}{% set current_idx = statuts_order.index(dossier.statut) %}
+  {% else %}{% set current_idx = 0 %}{% endif %}
+{% endif %}
 
 {# ── Carte profil étudiant ── #}
 <div class="panel mb-4" style="overflow:visible">
@@ -174,8 +184,7 @@
 {# ══════════════════════════════════════════════════════════════════ #}
 {% elif dossier %}
 
-{# Statut actuel #}
-{% set current_idx = statuts_order.index(dossier.statut) if dossier.statut in statuts_order else -1 %}
+{# Statut actuel — current_idx déjà calculé en tête de fichier #}
 {% set nb_etapes = statuts_order | length %}
 {% set pct_avancement = ((current_idx + 1) / nb_etapes * 100) | round | int if current_idx >= 0 else 0 %}
 
@@ -191,7 +200,7 @@
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="stat-card {% if dossier.statut == 'CLOTURE' %}green{% elif dossier.statut in ['REJETE','AUTH_REJETEE','INCOMPLET'] %}red{% else %}yellow{% endif %}">
+    <div class="stat-card {% if dossier.statut in ['REJETE','AUTH_REJETEE','INCOMPLET'] %}red{% else %}green{% endif %}">
       <div>
         <div class="stat-label">Statut</div>
         <div class="stat-value" style="font-size:.9rem;margin-top:4px">
@@ -320,12 +329,12 @@
           <div style="font-size:.8rem;color:var(--gris-dark)">étapes complétées</div>
         </div>
         <div style="height:10px;border-radius:99px;background:var(--gris-bg);margin-bottom:16px;overflow:hidden">
-          <div style="height:100%;border-radius:99px;background:var(--blue);width:{{ pct_avancement }}%"></div>
+          <div style="height:100%;border-radius:99px;background:var(--green);width:{{ pct_avancement }}%"></div>
         </div>
         <div class="d-flex flex-column gap-2">
           <div class="d-flex justify-content-between" style="font-size:.82rem">
             <span>Statut actuel</span>
-            <strong style="color:var(--blue)">{{ dossier.libelle_statut() }}</strong>
+            <strong style="color:{% if dossier.statut in ['REJETE','AUTH_REJETEE','INCOMPLET'] %}var(--red){% else %}var(--green){% endif %}">{{ dossier.libelle_statut() }}</strong>
           </div>
           <div class="d-flex justify-content-between" style="font-size:.82rem">
             <span>Matricule</span>
