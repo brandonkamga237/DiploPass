@@ -80,7 +80,7 @@ def dashboard():
     )
 
     nb_pieces_deposees = len(dossier.pieces_jointes) if dossier else 0
-    nb_pieces_requises = DocumentRequis.query.filter_by(actif=True).count()
+    nb_pieces_requises = DocumentRequis.query.count()
 
     return render_template(
         'etudiant/dashboard.html',
