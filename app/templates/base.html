@@ -57,11 +57,17 @@
     </a>
 
     {% elif session.role in ('representant', 'chef_bureau') %}
-    <div class="sidebar-section">Ma filière — {{ current_user.filiere_geree }}</div>
+
+    {# ── Espace Représentant ── #}
+    <div class="sidebar-section">
+      Représentant — {{ current_user.filiere_geree }}
+    </div>
     <a href="{{ url_for('representant.dashboard') }}"
        class="nav-link {% if request.endpoint == 'representant.dashboard' %}active{% endif %}">
       <i class="bi bi-speedometer2"></i>
-      <span class="sidebar-label">Tableau de bord</span>
+      <span class="sidebar-label">
+        Tableau de bord{% if session.role == 'chef_bureau' %} <span style="font-size:.65rem;opacity:.7">(1)</span>{% endif %}
+      </span>
     </a>
     <a href="{{ url_for('representant.liste_dossiers') }}"
        class="nav-link {% if request.endpoint == 'representant.liste_dossiers' %}active{% endif %}">
@@ -74,17 +80,23 @@
       <span class="sidebar-label">Authentification</span>
     </a>
 
+    {# ── Espace Chef de Bureau (uniquement pour chef_bureau) ── #}
     {% if session.role == 'chef_bureau' %}
-    <div class="sidebar-section">Bureau Diplomation</div>
-    <a href="{{ url_for('chef_bureau.dossiers_authentification') }}"
-       class="nav-link {% if request.endpoint == 'chef_bureau.dossiers_authentification' %}active{% endif %}">
-      <i class="bi bi-shield-check"></i>
-      <span class="sidebar-label">Authentification</span>
+    <div class="sidebar-section">Bureau de Diplomation</div>
+    <a href="{{ url_for('chef_bureau.dashboard') }}"
+       class="nav-link {% if request.endpoint == 'chef_bureau.dashboard' %}active{% endif %}">
+      <i class="bi bi-speedometer2"></i>
+      <span class="sidebar-label">Tableau de bord <span style="font-size:.65rem;opacity:.7">(2)</span></span>
     </a>
     <a href="{{ url_for('chef_bureau.impressions') }}"
        class="nav-link {% if request.endpoint == 'chef_bureau.impressions' %}active{% endif %}">
       <i class="bi bi-printer"></i>
       <span class="sidebar-label">Impressions</span>
+    </a>
+    <a href="{{ url_for('chef_bureau.dossiers_authentification') }}"
+       class="nav-link {% if request.endpoint == 'chef_bureau.dossiers_authentification' %}active{% endif %}">
+      <i class="bi bi-archive"></i>
+      <span class="sidebar-label">Tous les dossiers</span>
     </a>
     {% endif %}
 
