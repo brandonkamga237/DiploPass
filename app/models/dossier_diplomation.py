@@ -95,22 +95,22 @@ class DossierDiplomation(db.Model):
 
     def couleur_statut(self):
         couleurs = {
-            'DEPOSE': 'secondary',
-            'EN_VERIFICATION': 'info',
-            'INCOMPLET': 'warning',
-            'AUTHENTIFICATION': 'primary',
-            'AUTH_REJETEE': 'danger',
-            'LISTE_FINISSANTS': 'info',
-            'IMPRESSION_PROVISOIRE': 'primary',
-            'PRODUCTION_DEFINITIVE': 'primary',
-            'SIGNATURE_DIRECTEUR': 'primary',
-            'SIGNATURE_RECTEUR': 'primary',
-            'SIGNATURE_MINISTRE': 'primary',
-            'FORMALISATION': 'warning',
-            'CLOTURE': 'success',
-            'REJETE': 'danger',
+            'DEPOSE':               'success',
+            'EN_VERIFICATION':      'success',
+            'INCOMPLET':            'warning',
+            'AUTHENTIFICATION':     'success',
+            'AUTH_REJETEE':         'danger',
+            'LISTE_FINISSANTS':     'success',
+            'IMPRESSION_PROVISOIRE':'success',
+            'PRODUCTION_DEFINITIVE':'success',
+            'SIGNATURE_DIRECTEUR':  'success',
+            'SIGNATURE_RECTEUR':    'success',
+            'SIGNATURE_MINISTRE':   'success',
+            'FORMALISATION':        'success',
+            'CLOTURE':              'success',
+            'REJETE':               'danger',
         }
-        return couleurs.get(self.statut, 'secondary')
+        return couleurs.get(self.statut, 'success')
 
     def __repr__(self):
         return f'<Dossier {self.id_dossier} — {self.matricule} — {self.statut}>'

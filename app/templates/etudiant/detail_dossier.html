@@ -7,7 +7,7 @@
 {# ── En-tête statut ── #}
 <div class="row g-3 mb-4">
   <div class="col-md-4">
-    <div class="stat-card {% if dossier.statut == 'CLOTURE' %}green{% elif dossier.statut in ['INCOMPLET','REJETE','AUTH_REJETEE'] %}red{% else %}blue{% endif %}">
+    <div class="stat-card {% if dossier.statut in ['INCOMPLET','REJETE','AUTH_REJETEE'] %}red{% else %}green{% endif %}">
       <div>
         <div class="stat-label">Statut actuel</div>
         <div class="stat-value" style="font-size:.95rem;margin-top:6px">
