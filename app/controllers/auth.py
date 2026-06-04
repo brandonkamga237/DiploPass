@@ -23,7 +23,7 @@ def index():
     if current_user.is_authenticated:
         role = session.get('role', '')
         return redirect(url_for(ROLE_REDIRECTS.get(role, 'auth.login')))
-    return redirect(url_for('auth.login'))
+    return render_template('home.html')
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
