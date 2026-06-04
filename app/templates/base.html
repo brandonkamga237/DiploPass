@@ -80,9 +80,14 @@
       <span class="sidebar-label">Authentification</span>
     </a>
     <a href="{{ url_for('representant.liste_finissants') }}"
-       class="nav-link {% if 'finissant' in request.endpoint %}active{% endif %}">
+       class="nav-link {% if request.endpoint == 'representant.liste_finissants' %}active{% endif %}">
       <i class="bi bi-pencil-square"></i>
       <span class="sidebar-label">Corriger finissants</span>
+    </a>
+    <a href="{{ url_for('representant.verification_premier_jet') }}"
+       class="nav-link {% if 'premier_jet' in request.endpoint %}active{% endif %}">
+      <i class="bi bi-printer"></i>
+      <span class="sidebar-label">Vérifier premier jet</span>
     </a>
 
     {# ── Espace Chef de Bureau (uniquement pour chef_bureau) ── #}

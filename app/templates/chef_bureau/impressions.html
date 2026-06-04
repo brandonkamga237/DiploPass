@@ -2,74 +2,249 @@
 {% block title %}Gestion des impressions{% endblock %}
 {% block page_title %}Impressions{% endblock %}
 
+{% block topbar_actions %}
+{% set nb_conformes  = dossiers | selectattr('est_diplome_conforme', 'equalto', true)  | list | length %}
+{% set nb_provisoires = dossiers | selectattr('statut', 'equalto', 'IMPRESSION_PROVISOIRE') | list | length %}
+{% if nb_conformes > 0 and nb_conformes == nb_provisoires and nb_provisoires > 0 %}
+<button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#prodDefModal">
+  <i class="bi bi-check-all me-1"></i>Valider production définitive ({{ nb_conformes }})
+</button>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 
 <div class="page-header">
-  <h1><i class="bi bi-printer me-2"></i>Gestion des impressions</h1>
-  <p>
-    <a href="{{ url_for('chef_bureau.dashboard') }}" class="text-decoration-none" style="color:#64748b">
-      <i class="bi bi-arrow-left me-1"></i>Retour au tableau de bord
-    </a>
-  </p>
+  <div>
+    <h1><i class="bi bi-printer me-2"></i>Premier jet — Gestion des impressions</h1>
+    <p>
+      Lancez l'impression provisoire, suivez les vérifications des représentants,
+      corrigez si besoin, puis validez la production définitive.
+    </p>
+  </div>
+</div>
+
+{# Légende états #}
+<div class="d-flex gap-2 mb-3 flex-wrap">
+  <span class="badge bg-secondary px-3">En attente de vérification</span>
+  <span class="badge bg-success px-3">✓ Conforme</span>
+  <span class="badge bg-danger px-3">✗ Corrections requises</span>
+  <span class="badge" style="background:#1e1e2e;color:#fff;padding:.4em .8em">Production définitive</span>
 </div>
 
 <div class="card">
-  <div class="card-header">
+  <div class="card-header d-flex align-items-center justify-content-between">
     <span>Dossiers en cours d'impression</span>
-    <span class="badge bg-secondary">{{ dossiers|length }}</span>
+    <span class="badge bg-secondary">{{ dossiers | length }}</span>
   </div>
   <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table mb-0">
-        <thead>
-          <tr>
-            <th>Étudiant</th>
-            <th>Matricule</th>
-            <th>Statut</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d in dossiers %}
-          <tr>
-            <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
-            <td><code>{{ d.matricule }}</code></td>
-            <td><span class="badge bg-{{ d.couleur_statut() }}">{{ d.libelle_statut() }}</span></td>
-            <td>
-              {% if d.statut == 'LISTE_FINISSANTS' %}
-              <form method="POST" action="{{ url_for('chef_bureau.lancer_impression_provisoire', id=d.id_dossier) }}" class="d-inline">
-                <button class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-printer me-1"></i>Impression provisoire
-                </button>
-              </form>
-              {% elif d.statut == 'IMPRESSION_PROVISOIRE' %}
-              <form method="POST" action="{{ url_for('chef_bureau.production_definitive', id=d.id_dossier) }}" class="d-inline">
-                <button class="btn btn-sm btn-outline-primary">
-                  <i class="bi bi-file-earmark-text me-1"></i>Production définitive
-                </button>
-              </form>
-              {% elif d.statut == 'PRODUCTION_DEFINITIVE' %}
-              <form method="POST" action="{{ url_for('chef_bureau.envoyer_directeur', id=d.id_dossier) }}" class="d-inline">
-                <button class="btn btn-sm btn-success">
-                  <i class="bi bi-arrow-right me-1"></i>Envoyer au Directeur
-                </button>
-              </form>
+    <table class="table mb-0" style="font-size:.84rem">
+      <thead>
+        <tr>
+          <th>Étudiant</th>
+          <th>Matricule</th>
+          <th>Nom sur diplôme</th>
+          <th>Statut</th>
+          <th>Vérification représentant</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        <tr style="
+          {% if d.est_diplome_conforme == true %}background:#f7fdf9
+          {% elif d.est_diplome_conforme == false %}background:#fff8f8
+          {% elif d.statut == 'PRODUCTION_DEFINITIVE' %}background:#f0f4ff
+          {% endif %}">
+
+          <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+          <td><code>{{ d.matricule }}</code></td>
+          <td style="font-size:.8rem">
+            {{ d.nom_sur_diplome or '—' }} {{ d.prenom_sur_diplome or '' }}<br>
+            <span style="color:var(--gris-dark)">
+              {{ d.ddn_sur_diplome.strftime('%d/%m/%Y') if d.ddn_sur_diplome else '' }}
+              {% if d.lddn_sur_diplome %} · {{ d.lddn_sur_diplome }}{% endif %}
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-{{ d.couleur_statut() }}">{{ d.libelle_statut() }}</span>
+          </td>
+
+          {# État de la vérification par le représentant #}
+          <td>
+            {% if d.statut == 'IMPRESSION_PROVISOIRE' %}
+              {% if d.est_diplome_conforme == true %}
+                <span style="color:var(--green);font-weight:700;font-size:.8rem">
+                  <i class="bi bi-check-circle-fill me-1"></i>Conforme
+                </span>
+              {% elif d.est_diplome_conforme == false %}
+                <span style="color:var(--red);font-weight:700;font-size:.8rem">
+                  <i class="bi bi-exclamation-circle-fill me-1"></i>Corrections requises
+                </span>
+                {% if d.observations %}
+                <div style="font-size:.72rem;color:var(--red);margin-top:2px">
+                  {{ d.observations }}
+                </div>
+                {% endif %}
+              {% else %}
+                <span style="color:var(--gris-dark);font-size:.8rem">
+                  <i class="bi bi-hourglass me-1"></i>En attente de vérification
+                </span>
               {% endif %}
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="4">
-              <div class="empty-state">
-                <i class="bi bi-printer"></i>
-                <h6>Aucun dossier en cours d'impression</h6>
-                <p>Les dossiers apparaissent ici après la confirmation de la liste des finissants.</p>
+            {% elif d.statut == 'PRODUCTION_DEFINITIVE' %}
+              <span style="color:#4338ca;font-size:.8rem">
+                <i class="bi bi-clock-history me-1"></i>Attente résultats définitifs
+              </span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+
+          {# Actions #}
+          <td>
+            {% if d.statut == 'LISTE_FINISSANTS' %}
+              <form method="POST"
+                    action="{{ url_for('chef_bureau.lancer_impression_provisoire', id=d.id_dossier) }}">
+                <button class="btn btn-sm btn-primary">
+                  <i class="bi bi-printer me-1"></i>Lancer le premier jet
+                </button>
+              </form>
+
+            {% elif d.statut == 'IMPRESSION_PROVISOIRE' %}
+              {% if d.est_diplome_conforme == false %}
+                {# Corrections à apporter + réimpression #}
+                <button class="btn btn-sm btn-warning"
+                        data-bs-toggle="modal"
+                        data-bs-target="#corrModal{{ d.id_dossier }}">
+                  <i class="bi bi-pencil me-1"></i>Corriger et réimprimer
+                </button>
+              {% elif d.est_diplome_conforme == true %}
+                <span class="badge bg-success py-2 px-3">
+                  <i class="bi bi-check-all me-1"></i>Validé par le représentant
+                </span>
+              {% else %}
+                <span class="text-muted small">
+                  <i class="bi bi-hourglass me-1"></i>Attente du représentant
+                </span>
+              {% endif %}
+
+            {% elif d.statut == 'PRODUCTION_DEFINITIVE' %}
+              <form method="POST"
+                    action="{{ url_for('chef_bureau.envoyer_directeur', id=d.id_dossier) }}">
+                <button class="btn btn-sm btn-outline-success">
+                  <i class="bi bi-pen me-1"></i>Envoyer au Directeur
+                </button>
+              </form>
+            {% endif %}
+          </td>
+        </tr>
+
+        {# Modal correction + réimpression #}
+        {% if d.statut == 'IMPRESSION_PROVISOIRE' and d.est_diplome_conforme == false %}
+        <div class="modal fade" id="corrModal{{ d.id_dossier }}" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content" style="border-radius:12px;border:none">
+              <div class="modal-header" style="background:#fff3cd">
+                <h6 class="modal-title fw-700">
+                  <i class="bi bi-pencil me-2 text-warning"></i>
+                  Corriger et réimprimer — {{ d.nom_sur_diplome }} {{ d.prenom_sur_diplome }}
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              <form method="POST"
+                    action="{{ url_for('chef_bureau.corriger_et_reimprimer', id=d.id_dossier) }}">
+                <div class="modal-body">
+                  {% if d.observations %}
+                  <div class="p-2 mb-3 rounded-3" style="background:#fdecea;font-size:.82rem">
+                    <strong>Corrections demandées par le représentant :</strong><br>
+                    {{ d.observations }}
+                  </div>
+                  {% endif %}
+                  <div class="row g-3">
+                    <div class="col-6">
+                      <label class="form-label">Nom sur le diplôme</label>
+                      <input type="text" name="nom_sur_diplome" class="form-control"
+                             value="{{ d.nom_sur_diplome or '' }}"
+                             style="text-transform:uppercase">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Prénom sur le diplôme</label>
+                      <input type="text" name="prenom_sur_diplome" class="form-control"
+                             value="{{ d.prenom_sur_diplome or '' }}">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Date de naissance</label>
+                      <input type="date" name="ddn_sur_diplome" class="form-control"
+                             value="{{ d.ddn_sur_diplome.strftime('%Y-%m-%d') if d.ddn_sur_diplome else '' }}">
+                    </div>
+                    <div class="col-6">
+                      <label class="form-label">Lieu de naissance</label>
+                      <input type="text" name="lddn_sur_diplome" class="form-control"
+                             value="{{ d.lddn_sur_diplome or '' }}">
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary"
+                          data-bs-dismiss="modal">Annuler</button>
+                  <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-printer me-1"></i>Appliquer et relancer l'impression
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <tr>
+          <td colspan="6">
+            <div class="text-center py-5">
+              <i class="bi bi-printer" style="font-size:2rem;color:#cbd5e1"></i>
+              <p class="mt-3 mb-0 text-muted fw-600">Aucun dossier en cours d'impression</p>
+              <p class="text-muted small">
+                Les dossiers LISTE_FINISSANTS et IMPRESSION_PROVISOIRE apparaissent ici.
+              </p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{# Modal production définitive globale #}
+{% set nb_conformes  = dossiers | selectattr('est_diplome_conforme', 'equalto', true)  | list | length %}
+{% set nb_provisoires = dossiers | selectattr('statut', 'equalto', 'IMPRESSION_PROVISOIRE') | list | length %}
+<div class="modal fade" id="prodDefModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content" style="border-radius:12px;border:none">
+      <div class="modal-header" style="background:#4338ca;color:#fff;border-radius:12px 12px 0 0">
+        <h6 class="modal-title fw-700">
+          <i class="bi bi-check-all me-2"></i>Valider la production définitive
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="p-3 rounded-3 mb-3" style="background:#e6f5ef">
+          <strong>{{ nb_conformes }}</strong> dossier(s) conforme(s) seront passés en
+          <strong>PRODUCTION_DÉFINITIVE</strong> — mise en attente des résultats officiels de l'année.
+        </div>
+        <p style="font-size:.85rem">
+          Vous et vos agents serez maintenant en attente des résultats définitifs
+          de l'année académique avant de procéder à l'impression finale officielle.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        <form method="POST" action="{{ url_for('chef_bureau.production_definitive_globale') }}">
+          <button type="submit" class="btn" style="background:#4338ca;color:#fff">
+            <i class="bi bi-check-all me-1"></i>Confirmer — Mise en attente
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 </div>

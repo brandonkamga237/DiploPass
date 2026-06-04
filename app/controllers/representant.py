@@ -253,6 +253,67 @@ def cloturer(id):
     return redirect(url_for('representant.liste_dossiers'))
 
 
+@representant_bp.route('/premier-jet')
+@login_required
+@role_required('representant', 'chef_bureau')
+def verification_premier_jet():
+    """Liste des dossiers IMPRESSION_PROVISOIRE à vérifier pour la filière."""
+    dossiers = _dossiers_filiere().filter(
+        DossierDiplomation.statut == 'IMPRESSION_PROVISOIRE'
+    ).all()
+
+    nb_total    = len(dossiers)
+    nb_conformes = sum(1 for d in dossiers if d.est_diplome_conforme is True)
+    nb_rejetes   = sum(1 for d in dossiers if d.est_diplome_conforme is False)
+    nb_en_attente = sum(1 for d in dossiers if d.est_diplome_conforme is None)
+    tous_conformes = nb_total > 0 and nb_conformes == nb_total
+
+    return render_template(
+        'representant/premier_jet.html',
+        dossiers=dossiers,
+        nb_total=nb_total,
+        nb_conformes=nb_conformes,
+        nb_rejetes=nb_rejetes,
+        nb_en_attente=nb_en_attente,
+        tous_conformes=tous_conformes,
+    )
+
+
+@representant_bp.route('/dossiers/<int:id>/valider-premier-jet', methods=['POST'])
+@login_required
+@role_required('representant', 'chef_bureau')
+def valider_premier_jet(id):
+    """Marque le diplôme comme conforme après vérification du premier jet."""
+    dossier = DossierDiplomation.query.get_or_404(id)
+    dossier.est_diplome_conforme = True
+    dossier.observations = None
+    _log(id, 'VERIFICATION_PREMIER_JET', 'IMPRESSION_PROVISOIRE', 'IMPRESSION_PROVISOIRE',
+         str(current_user.id_representant), 'representant')
+    db.session.commit()
+    flash(f'Diplôme de {dossier.etudiant.nom} {dossier.etudiant.prenom} — marqué conforme ✓', 'success')
+    return redirect(url_for('representant.verification_premier_jet'))
+
+
+@representant_bp.route('/dossiers/<int:id>/rejeter-premier-jet', methods=['POST'])
+@login_required
+@role_required('representant', 'chef_bureau')
+def rejeter_premier_jet(id):
+    """Signale des corrections nécessaires sur le premier jet d'impression."""
+    dossier = DossierDiplomation.query.get_or_404(id)
+    corrections = request.form.get('corrections', '').strip()
+    if not corrections:
+        flash('Veuillez indiquer les corrections à effectuer.', 'danger')
+        return redirect(url_for('representant.verification_premier_jet'))
+
+    dossier.est_diplome_conforme = False
+    dossier.observations = corrections
+    _log(id, 'CORRECTION_PREMIER_JET', 'IMPRESSION_PROVISOIRE', 'IMPRESSION_PROVISOIRE',
+         str(current_user.id_representant), 'representant')
+    db.session.commit()
+    flash(f'Corrections signalées pour {dossier.etudiant.nom} {dossier.etudiant.prenom}.', 'warning')
+    return redirect(url_for('representant.verification_premier_jet'))
+
+
 @representant_bp.route('/finissants')
 @login_required
 @role_required('representant', 'chef_bureau')

@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}Vérification premier jet{% endblock %}
+{% block page_title %}Vérification — Premier jet d'impression{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-printer me-2"></i>Vérification du premier jet</h1>
+    <p>
+      Filière <strong>{{ current_user.filiere_geree }}</strong> ·
+      Vérifiez chaque diplôme imprimé et signalez les corrections si nécessaire.
+    </p>
+  </div>
+</div>
+
+{# Stats #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card blue">
+      <div>
+        <div class="stat-label">Total à vérifier</div>
+        <div class="stat-value">{{ nb_total }}</div>
+        <div class="stat-sub">Diplômes imprimés</div>
+      </div>
+      <i class="bi bi-printer stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card green">
+      <div>
+        <div class="stat-label">Conformes</div>
+        <div class="stat-value">{{ nb_conformes }}</div>
+        <div class="stat-sub">Validés ✓</div>
+      </div>
+      <i class="bi bi-check-circle stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card red">
+      <div>
+        <div class="stat-label">À corriger</div>
+        <div class="stat-value">{{ nb_rejetes }}</div>
+        <div class="stat-sub">Corrections signalées</div>
+      </div>
+      <i class="bi bi-pencil stat-icon"></i>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card {% if nb_en_attente > 0 %}yellow{% else %}green{% endif %}">
+      <div>
+        <div class="stat-label">En attente</div>
+        <div class="stat-value">{{ nb_en_attente }}</div>
+        <div class="stat-sub">Non encore vérifiés</div>
+      </div>
+      <i class="bi bi-hourglass stat-icon"></i>
+    </div>
+  </div>
+</div>
+
+{# Bannière tous conformes #}
+{% if tous_conformes %}
+<div class="d-flex gap-3 p-4 rounded-3 mb-4" style="background:#e6f5ef;border-left:4px solid var(--green)">
+  <i class="bi bi-patch-check-fill mt-1" style="color:var(--green);font-size:1.4rem"></i>
+  <div>
+    <div style="font-size:.95rem;font-weight:800;color:var(--green)">Tous les diplômes sont conformes !</div>
+    <div style="font-size:.83rem;color:var(--dark);margin-top:4px">
+      Le premier jet numérique de votre filière est validé.
+      Le Chef de Bureau peut maintenant lancer la production définitive.
+    </div>
+  </div>
+</div>
+{% elif nb_rejetes > 0 %}
+<div class="d-flex gap-3 p-3 rounded-3 mb-4" style="background:#fff3cd;border-left:4px solid #ffc107">
+  <i class="bi bi-exclamation-triangle-fill mt-1" style="color:#856404"></i>
+  <div style="font-size:.84rem">
+    <strong>{{ nb_rejetes }} diplôme(s) nécessitent des corrections.</strong>
+    Le Chef de Bureau va effectuer les corrections et relancer l'impression.
+    Re-vérifiez après la nouvelle impression.
+  </div>
+</div>
+{% endif %}
+
+{# Tableau #}
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table mb-0" style="font-size:.85rem">
+      <thead>
+        <tr>
+          <th>Matricule</th>
+          <th>Nom sur le diplôme</th>
+          <th>Prénom sur le diplôme</th>
+          <th>Date naissance</th>
+          <th>Lieu naissance</th>
+          <th>État</th>
+          <th style="width:180px">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        <tr style="
+          {% if d.est_diplome_conforme == true %}background:#f7fdf9
+          {% elif d.est_diplome_conforme == false %}background:#fff8f8
+          {% endif %}">
+
+          <td><code>{{ d.matricule }}</code></td>
+          <td class="fw-600">{{ d.nom_sur_diplome or d.etudiant.nom }}</td>
+          <td>{{ d.prenom_sur_diplome or d.etudiant.prenom }}</td>
+          <td>{{ d.ddn_sur_diplome.strftime('%d/%m/%Y') if d.ddn_sur_diplome else '—' }}</td>
+          <td>{{ d.lddn_sur_diplome or '—' }}</td>
+          <td>
+            {% if d.est_diplome_conforme == true %}
+              <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Conforme</span>
+            {% elif d.est_diplome_conforme == false %}
+              <span class="badge bg-danger"><i class="bi bi-pencil me-1"></i>À corriger</span>
+              {% if d.observations %}
+              <div style="font-size:.72rem;color:var(--red);margin-top:3px">
+                <i class="bi bi-arrow-right me-1"></i>{{ d.observations }}
+              </div>
+              {% endif %}
+            {% else %}
+              <span class="badge bg-warning text-dark">En attente</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if d.est_diplome_conforme != true %}
+            <div class="d-flex gap-1">
+              {# Valider conforme #}
+              <form method="POST"
+                    action="{{ url_for('representant.valider_premier_jet', id=d.id_dossier) }}">
+                <button type="submit" class="btn btn-sm btn-success"
+                        title="Marquer conforme"
+                        onclick="return confirm('Confirmer que le diplôme de {{ d.nom_sur_diplome }} est conforme ?')">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+              </form>
+              {# Signaler correction #}
+              <button class="btn btn-sm btn-outline-danger"
+                      title="Signaler une correction"
+                      data-bs-toggle="modal"
+                      data-bs-target="#corrModal{{ d.id_dossier }}">
+                <i class="bi bi-pencil"></i>
+              </button>
+            </div>
+
+            {# Modal corrections #}
+            <div class="modal fade" id="corrModal{{ d.id_dossier }}" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content" style="border-radius:12px;border:none">
+                  <div class="modal-header" style="background:#fdecea">
+                    <h6 class="modal-title fw-700" style="color:var(--red)">
+                      <i class="bi bi-pencil me-2"></i>
+                      Corrections — {{ d.nom_sur_diplome }} {{ d.prenom_sur_diplome }}
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <form method="POST"
+                        action="{{ url_for('representant.rejeter_premier_jet', id=d.id_dossier) }}">
+                    <div class="modal-body">
+                      <div class="mb-3 p-2 rounded-3" style="background:#f8f9fa;font-size:.8rem">
+                        <strong>Diplôme actuel :</strong>
+                        {{ d.nom_sur_diplome }} {{ d.prenom_sur_diplome }} ·
+                        {{ d.ddn_sur_diplome.strftime('%d/%m/%Y') if d.ddn_sur_diplome else '?' }} ·
+                        {{ d.lddn_sur_diplome or '?' }}
+                      </div>
+                      <label class="form-label fw-600">
+                        Corrections à effectuer <span class="text-danger">*</span>
+                      </label>
+                      <textarea name="corrections" class="form-control" rows="3" required
+                                placeholder="Ex : Nom mal orthographié → MBALLA au lieu de MBALA&#10;Date de naissance incorrecte → 15/03/2001 au lieu de 15/03/2000">{{ d.observations or '' }}</textarea>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-outline-secondary btn-sm"
+                              data-bs-dismiss="modal">Annuler</button>
+                      <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="bi bi-send me-1"></i>Envoyer les corrections
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+
+            {% else %}
+            {# Déjà conforme → annuler la validation si besoin #}
+            <form method="POST"
+                  action="{{ url_for('representant.rejeter_premier_jet', id=d.id_dossier) }}">
+              <input type="hidden" name="corrections" value="Vérification à refaire">
+              <button type="submit" class="btn btn-sm btn-outline-secondary"
+                      title="Annuler la validation"
+                      onclick="return confirm('Annuler la validation de ce diplôme ?')">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center py-5">
+            <i class="bi bi-printer" style="font-size:2rem;color:#cbd5e1"></i>
+            <p class="mt-3 mb-0 text-muted fw-600">Aucun diplôme en attente de vérification</p>
+            <p class="text-muted small">
+              Le Chef de Bureau n'a pas encore lancé l'impression provisoire pour votre filière.
+            </p>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

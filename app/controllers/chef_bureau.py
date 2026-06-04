@@ -103,21 +103,106 @@ def impressions():
 def lancer_impression_provisoire(id):
     dossier = DossierDiplomation.query.get_or_404(id)
 
-    # Vérifier que l'étudiant est sur la liste des finissants
     if not _est_sur_liste(dossier.matricule, dossier.annee_academique):
         flash(
-            f'Impression impossible : {dossier.matricule} n\'est pas sur la liste '
-            f'officielle des finissants validés pour {dossier.annee_academique}.',
+            f'Impression impossible : {dossier.matricule} n\'est pas sur la liste officielle.',
             'danger'
         )
         return redirect(url_for('chef_bureau.impressions'))
 
     ancien = dossier.statut
     dossier.statut = 'IMPRESSION_PROVISOIRE'
+    # Réinitialiser la conformité pour ce nouveau jet
+    dossier.est_diplome_conforme = None
     _log(id, 'IMPRESSION_PROVISOIRE', ancien, 'IMPRESSION_PROVISOIRE',
-         current_user.id_representant, 'chef_bureau')
+         str(current_user.id_representant), 'chef_bureau')
     db.session.commit()
-    flash('Impression provisoire lancée.', 'success')
+    flash('Premier jet lancé — les représentants peuvent maintenant vérifier les diplômes.', 'success')
+    return redirect(url_for('chef_bureau.impressions'))
+
+
+@chef_bureau_bp.route('/dossiers/<int:id>/corriger-et-reimprimer', methods=['POST'])
+@login_required
+@role_required('chef_bureau')
+def corriger_et_reimprimer(id):
+    """
+    Applique les corrections signalées par le représentant
+    et relance l'impression provisoire (nouveau jet).
+    """
+    dossier = DossierDiplomation.query.get_or_404(id)
+    # Appliquer les corrections manuelles si fournies
+    nom  = request.form.get('nom_sur_diplome', '').strip().upper()
+    prenom = request.form.get('prenom_sur_diplome', '').strip()
+    ddn  = request.form.get('ddn_sur_diplome', '').strip()
+    lddn = request.form.get('lddn_sur_diplome', '').strip()
+
+    if nom:    dossier.nom_sur_diplome    = nom
+    if prenom: dossier.prenom_sur_diplome = prenom
+    if ddn:
+        try:
+            import datetime as dt
+            dossier.ddn_sur_diplome = dt.datetime.strptime(ddn, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    if lddn: dossier.lddn_sur_diplome = lddn
+
+    # Réinitialiser conformité et relancer le jet
+    dossier.est_diplome_conforme = None
+    dossier.observations = None
+    _log(id, 'REIMPRESSON_PROVISOIRE', 'IMPRESSION_PROVISOIRE', 'IMPRESSION_PROVISOIRE',
+         str(current_user.id_representant), 'chef_bureau')
+    db.session.commit()
+    flash(
+        f'Corrections appliquées — nouveau jet lancé pour {dossier.nom_sur_diplome} {dossier.prenom_sur_diplome}.',
+        'success'
+    )
+    return redirect(url_for('chef_bureau.impressions'))
+
+
+@chef_bureau_bp.route('/production-definitive-globale', methods=['POST'])
+@login_required
+@role_required('chef_bureau')
+def production_definitive_globale():
+    """
+    Passe TOUS les dossiers conformes (est_diplome_conforme=True)
+    en PRODUCTION_DEFINITIVE — mise en attente des résultats définitifs.
+    """
+    from flask import session as flask_session
+    annee = flask_session.get('annee_active_code', '')
+    dossiers = _q_annee().filter(
+        DossierDiplomation.statut == 'IMPRESSION_PROVISOIRE',
+        DossierDiplomation.est_diplome_conforme == True
+    ).all()
+
+    if not dossiers:
+        flash('Aucun dossier conforme à passer en production définitive.', 'warning')
+        return redirect(url_for('chef_bureau.impressions'))
+
+    non_conformes = _q_annee().filter(
+        DossierDiplomation.statut == 'IMPRESSION_PROVISOIRE',
+        DossierDiplomation.est_diplome_conforme != True
+    ).count()
+
+    if non_conformes > 0:
+        flash(
+            f'Impossible : {non_conformes} dossier(s) ne sont pas encore confirmés conformes '
+            f'par les représentants.',
+            'danger'
+        )
+        return redirect(url_for('chef_bureau.impressions'))
+
+    for dossier in dossiers:
+        ancien = dossier.statut
+        dossier.statut = 'PRODUCTION_DEFINITIVE'
+        _log(dossier.id_dossier, 'PRODUCTION_DEFINITIVE', ancien, 'PRODUCTION_DEFINITIVE',
+             str(current_user.id_representant), 'chef_bureau')
+
+    db.session.commit()
+    flash(
+        f'{len(dossiers)} dossier(s) passé(s) en PRODUCTION_DÉFINITIVE — '
+        f'en attente des résultats officiels.',
+        'success'
+    )
     return redirect(url_for('chef_bureau.impressions'))
 
 
@@ -129,7 +214,7 @@ def production_definitive(id):
     ancien = dossier.statut
     dossier.statut = 'PRODUCTION_DEFINITIVE'
     _log(id, 'PRODUCTION_DEFINITIVE', ancien, 'PRODUCTION_DEFINITIVE',
-         current_user.id_representant, 'chef_bureau')
+         str(current_user.id_representant), 'chef_bureau')
     db.session.commit()
     flash('Production définitive enregistrée.', 'success')
     return redirect(url_for('chef_bureau.impressions'))
