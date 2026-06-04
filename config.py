@@ -9,7 +9,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     WTF_CSRF_ENABLED = True
-    MAX_CONTENT_LENGTH = 16 * 1024 * 1024
+    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 Mo max par upload
 
 
 class DevelopmentConfig(Config):
