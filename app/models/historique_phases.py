@@ -12,7 +12,7 @@ class HistoriquePhases(db.Model):
     ancien_statut = db.Column(db.String(30))
     nouveau_statut = db.Column(db.String(30))
     commentaire = db.Column(db.Text)
-    id_acteur = db.Column(db.Integer)
+    id_acteur = db.Column(db.String(50))
     role_acteur = db.Column(db.String(50))
     date_action = db.Column(db.DateTime, server_default=db.func.now())
 

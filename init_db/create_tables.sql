@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS historique_phases (
     ancien_statut  VARCHAR(30),
     nouveau_statut VARCHAR(30),
     commentaire    TEXT,
-    id_acteur      INTEGER,
+    id_acteur      VARCHAR(50),
     role_acteur    VARCHAR(50),
     date_action    TIMESTAMP   DEFAULT NOW()
 );
