@@ -4,6 +4,7 @@ app = create_app()
 
 with app.app_context():
     from app.models.admin import Admin
+    from app.models.departement import Departement
     from app.models.filiere import Filiere
     from app.models.annee_diplomation import AnneeDiplomation
     from app.models.etudiant import Etudiant
@@ -17,28 +18,75 @@ with app.app_context():
         db.session.commit()
         print('[DiploPass] Compte admin créé : login=admin / mdp=admin1234')
 
-    # ── Filières ENSET de base ────────────────────────────────────────────────
-    FILIERES_BASE = [
-        ('GI',   'Génie Informatique',                    'Licence/Master'),
-        ('GE',   'Génie Électrique',                      'Licence/Master'),
-        ('GC',   'Génie Civil',                           'Licence/Master'),
-        ('GM',   'Génie Mécanique',                       'Licence/Master'),
-        ('MAT',  'Mathématiques',                         'Licence/Master'),
-        ('PHY',  'Physique',                              'Licence/Master'),
-        ('SI',   'Sciences Industrielles',                'Licence/Master'),
-        ('STI',  'Sciences & Technologies Industrielles', 'Licence'),
-        ('SPC',  'Sciences Physiques & Chimiques',        'Licence/Master'),
-        ('EEA',  'Électronique, Énergie & Automatique',  'Licence/Master'),
+    # ── Départements et filières réels de l'ENSET ─────────────────────────────
+    # Format : (code_dept, nom_dept, [(code_filiere, nom_filiere, cycle), ...])
+    STRUCTURE = [
+        ('GCI',   'Génie Civil', [
+            ('BTP', 'Bâtiment et Travaux Publics',         'Licence/Master'),
+            ('GT',  'Géomètre Topographe',                 'Licence/Master'),
+            ('ISA', 'Installation Sanitaire et Assainissement', 'Licence/Master'),
+        ]),
+        ('GEL',   'Génie Électrique', [
+            ('EN', 'Électronique',        'Licence/Master'),
+            ('ET', 'Électrotechnique',    'Licence/Master'),
+            ('FC', 'Froid et Climatisation', 'Licence/Master'),
+            ('TE', 'Thermique et Énergie',   'Licence/Master'),
+        ]),
+        ('GME',   'Génie Mécanique', [
+            ('CM', 'Construction Mécanique', 'Licence/Master'),
+            ('FM', 'Fabrication Mécanique',  'Licence/Master'),
+            ('MA', 'Mécanique Automobile',   'Licence/Master'),
+        ]),
+        ('STEG',  'Sciences et Techniques Éco. et de Gestion', [
+            ('CF',  'Comptabilité et Finance', 'Licence/Master'),
+            ('ECO', 'Économie',                'Licence/Master'),
+            ('MKG', 'Marketing',               'Licence/Master'),
+        ]),
+        ('TAD',   'Techniques Administratives', [
+            ('CA', 'Communication Administrative', 'Licence/Master'),
+        ]),
+        ('ESF',   'Économie Sociale et Familiale', [
+            ('ESF', 'Économie Sociale et Familiale', 'Licence/Master'),
+        ]),
+        ('ITH',   'Industrie Textile et de l\'Habillement', [
+            ('ITH', 'Industrie Textiles et de l\'Habillement', 'Licence/Master'),
+        ]),
+        ('GFO',   'Génie Forestier', [
+            ('STB', 'Sciences et Technologie du Bois', 'Licence/Master'),
+        ]),
+        ('GCH',   'Génie Chimique', [
+            ('GCH', 'Chimie Industrielle', 'Licence/Master'),
+        ]),
+        ('GINFO', 'Génie Informatique', [
+            ('II',  'Informatique Industriel',                          'Licence/Master'),
+            ('TIC', 'Technologie de l\'Information et de la Communication', 'Licence/Master'),
+        ]),
+        ('SED',   'Sciences de l\'Éducation', [
+            ('CO', 'Conseil d\'Orientation', 'Licence/Master'),
+        ]),
+        ('ESB',   'Enseignement Scientifique de Base', [
+            ('IM', 'Ingénierie Mathématique', 'Licence/Master'),
+        ]),
     ]
-    codes_existants = {f.code for f in Filiere.query.all()}
-    nouvelles = [
-        Filiere(code=c, nom=n, cycle=cy)
-        for c, n, cy in FILIERES_BASE if c not in codes_existants
-    ]
-    if nouvelles:
-        db.session.add_all(nouvelles)
-        db.session.commit()
-        print(f'[DiploPass] {len(nouvelles)} filière(s) de base créée(s).')
+
+    codes_depts    = {d.code for d in Departement.query.all()}
+    codes_filieres = {f.code for f in Filiere.query.all()}
+
+    for code_dept, nom_dept, filieres in STRUCTURE:
+        if code_dept not in codes_depts:
+            db.session.add(Departement(code=code_dept, nom=nom_dept))
+            codes_depts.add(code_dept)
+
+        for code_f, nom_f, cycle_f in filieres:
+            if code_f not in codes_filieres:
+                db.session.add(Filiere(
+                    code=code_f, nom=nom_f, cycle=cycle_f,
+                    code_departement=code_dept,
+                ))
+                codes_filieres.add(code_f)
+
+    db.session.commit()
+    print(f'[DiploPass] Structure ENSET : {len(codes_depts)} depts, {len(codes_filieres)} filières.')
 
     # ── Années académiques ────────────────────────────────────────────────────
     ANNEE_COURANTE = '2025-2026'
