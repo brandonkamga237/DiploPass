@@ -30,15 +30,32 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_BROWSER_REDIRECT_URL: https://console.diplopass.lescracks.com
     volumes:
       - minio_data:/data
     networks:
       - internal
+      - traefik-public
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3
+    labels:
+      # API S3 — uploads/downloads
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-public"
+      - "traefik.http.routers.diplopass-minio.rule=Host(`storage.diplopass.lescracks.com`)"
+      - "traefik.http.routers.diplopass-minio.entrypoints=websecure"
+      - "traefik.http.routers.diplopass-minio.tls.certresolver=le"
+      - "traefik.http.routers.diplopass-minio.service=diplopass-minio"
+      - "traefik.http.services.diplopass-minio.loadbalancer.server.port=9000"
+      # Console web MinIO
+      - "traefik.http.routers.diplopass-minio-console.rule=Host(`console.diplopass.lescracks.com`)"
+      - "traefik.http.routers.diplopass-minio-console.entrypoints=websecure"
+      - "traefik.http.routers.diplopass-minio-console.tls.certresolver=le"
+      - "traefik.http.routers.diplopass-minio-console.service=diplopass-minio-console"
+      - "traefik.http.services.diplopass-minio-console.loadbalancer.server.port=9001"
 
   web:
     image: brandoniscoding/diplopass:latest
