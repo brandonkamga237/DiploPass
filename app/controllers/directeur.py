@@ -28,10 +28,21 @@ def dashboard():
         q_com = q_com.filter_by(annee_academique=annee)
     communiques = q_com.order_by(Communique.created_at.desc()).limit(5).all()
     nb_dossiers_signature = _q_dossiers_annee().filter_by(statut='SIGNATURE_DIRECTEUR').count()
+    nb_dossiers_signes = _q_dossiers_annee().filter(
+        DossierDiplomation.date_signature_directeur.isnot(None)
+    ).count()
+    # Vérifier si une procédure est déjà en cours pour l'année active
+    procedure_en_cours = False
+    if annee:
+        from app.models.annee_diplomation import AnneeDiplomation
+        annee_obj = AnneeDiplomation.query.filter_by(code=annee, processus_lance=True).first()
+        procedure_en_cours = annee_obj is not None
     return render_template(
         'directeur/dashboard.html',
         communiques=communiques,
         nb_dossiers_signature=nb_dossiers_signature,
+        nb_dossiers_signes=nb_dossiers_signes,
+        procedure_en_cours=procedure_en_cours,
     )
 
 
@@ -45,8 +56,15 @@ def liste_communiques():
         q_com = q_com.filter_by(annee_academique=annee)
     communiques = q_com.order_by(Communique.created_at.desc()).all()
     annees = AnneeDiplomation.query.order_by(AnneeDiplomation.code.desc()).all()
+    # Procédure en cours ?
+    procedure_en_cours = False
+    if annee:
+        from app.models.annee_diplomation import AnneeDiplomation as _AD
+        annee_obj = _AD.query.filter_by(code=annee, processus_lance=True).first()
+        procedure_en_cours = annee_obj is not None
     return render_template('directeur/communiques.html',
-                           communiques=communiques, annees=annees)
+                           communiques=communiques, annees=annees,
+                           procedure_en_cours=procedure_en_cours)
 
 
 @directeur_bp.route('/communiques/nouveau', methods=['GET', 'POST'])
@@ -89,6 +107,36 @@ def publier_communique(id):
     db.session.commit()
     flash('Communiqué publié.', 'success')
     return redirect(url_for('directeur.liste_communiques'))
+
+
+@directeur_bp.route('/communiques/<int:id>/supprimer', methods=['POST'])
+@login_required
+@role_required('directeur')
+def supprimer_communique(id):
+    communique = Communique.query.get_or_404(id)
+    if communique.statut == 'PUBLIE':
+        flash('Impossible de supprimer un communiqué déjà publié.', 'danger')
+        return redirect(url_for('directeur.liste_communiques'))
+    db.session.delete(communique)
+    db.session.commit()
+    flash('Communiqué supprimé.', 'success')
+    return redirect(url_for('directeur.liste_communiques'))
+
+
+@directeur_bp.route('/dossiers-signes')
+@login_required
+@role_required('directeur')
+def dossiers_signes():
+    annee_filtre = request.args.get('annee', session.get('annee_active_code', ''))
+    annees = AnneeDiplomation.query.order_by(AnneeDiplomation.code.desc()).all()
+    q = DossierDiplomation.query.filter(
+        DossierDiplomation.date_signature_directeur.isnot(None)
+    )
+    if annee_filtre:
+        q = q.filter(DossierDiplomation.annee_academique == annee_filtre)
+    dossiers = q.order_by(DossierDiplomation.date_signature_directeur.desc()).all()
+    return render_template('directeur/dossiers_signes.html',
+                           dossiers=dossiers, annees=annees, annee_filtre=annee_filtre)
 
 
 @directeur_bp.route('/annees/<int:id>/lancer-processus', methods=['POST'])

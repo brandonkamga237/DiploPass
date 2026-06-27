@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Notifications{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><i class="bi bi-bell me-2"></i>Notifications</h1>
+</div>
+
+{% if not notifs %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="bi bi-bell-slash"></i>
+      <h6>Aucune notification</h6>
+      <p>Vous n'avez reçu aucune notification pour le moment.</p>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-header">
+    <span>Toutes les notifications</span>
+    <span class="badge bg-secondary">{{ notifs|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <ul class="list-group list-group-flush">
+      {% for n in notifs %}
+      <li class="list-group-item d-flex align-items-start gap-3 py-3
+                  {% if not n.lue %}list-group-item-light{% endif %}"
+          style="border-left: 3px solid
+            {% if n.type_notif == 'success' %}#22c55e
+            {% elif n.type_notif == 'warning' %}#f59e0b
+            {% elif n.type_notif == 'danger' %}#ef4444
+            {% else %}#3b82f6{% endif %};">
+        <i class="bi
+          {% if n.type_notif == 'success' %}bi-check-circle-fill text-success
+          {% elif n.type_notif == 'warning' %}bi-exclamation-triangle-fill text-warning
+          {% elif n.type_notif == 'danger' %}bi-x-circle-fill text-danger
+          {% else %}bi-info-circle-fill text-primary{% endif %}"
+          style="font-size:1.1rem;margin-top:2px;flex-shrink:0"></i>
+        <div class="flex-grow-1">
+          <div style="font-size:.9rem">{{ n.message }}</div>
+          <div style="font-size:.75rem;color:#94a3b8;margin-top:3px">
+            {{ n.created_at.strftime('%d/%m/%Y à %H:%M') }}
+          </div>
+        </div>
+        {% if not n.lue %}
+        <span class="badge bg-primary" style="font-size:.65rem;align-self:center">Nouveau</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

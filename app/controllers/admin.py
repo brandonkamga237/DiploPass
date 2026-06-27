@@ -240,14 +240,35 @@ def creer_compte():
         if not filiere_geree:
             flash('La filière représentée est obligatoire.', 'danger')
             return redirect(url_for('admin.liste_comptes'))
+        is_chef = (role == 'chef_bureau')
+        existing = RepresentantFiliere.query.filter_by(
+            filiere_geree=filiere_geree, est_chef_bureau=is_chef
+        ).first()
+        if existing:
+            type_label = 'Chef de Bureau de la Diplomation' if is_chef else 'Représentant de filière'
+            flash(
+                f'Un {type_label} existe déjà pour la filière {filiere_geree} '
+                f'({existing.prenom} {existing.nom}). '
+                f'Désactivez ce compte avant d\'en créer un nouveau.',
+                'danger',
+            )
+            return redirect(url_for('admin.liste_comptes'))
         compte = RepresentantFiliere(
             nom=nom, prenom=prenom, login=login_val,
             filiere_geree=filiere_geree,
-            est_chef_bureau=(role == 'chef_bureau'),
+            est_chef_bureau=is_chef,
         )
         compte.set_password(mdp)
 
     elif role == 'directeur':
+        existing = Directeur.query.first()
+        if existing:
+            flash(
+                f'Un directeur existe déjà ({existing.prenom} {existing.nom}). '
+                f'Désactivez ce compte avant d\'en créer un nouveau.',
+                'danger',
+            )
+            return redirect(url_for('admin.liste_comptes'))
         compte = Directeur(
             nom=nom, prenom=prenom, login=login_val,
             grade=request.form.get('grade', '').strip(),
@@ -255,6 +276,14 @@ def creer_compte():
         compte.set_password(mdp)
 
     elif role == 'chef_service':
+        existing = ChefServiceScolarite.query.first()
+        if existing:
+            flash(
+                f'Un Chef de Scolarité existe déjà ({existing.prenom} {existing.nom}). '
+                f'Désactivez ce compte avant d\'en créer un nouveau.',
+                'danger',
+            )
+            return redirect(url_for('admin.liste_comptes'))
         compte = ChefServiceScolarite(nom=nom, prenom=prenom, login=login_val)
         compte.set_password(mdp)
 
@@ -440,6 +469,14 @@ def importer_etudiants():
         flash(f'{importes} étudiant(s) importé(s) pour {annee_active}, {erreurs} erreur(s).', 'info')
         for d in details:
             flash(d, 'warning')
+        if importes > 0:
+            from app.models.notification import notifier_tous
+            notifier_tous(
+                f'Liste des étudiants importée pour {annee_active} — {importes} étudiant(s).',
+                type_notif='info',
+                lien=None,
+            )
+            db.session.commit()
 
     return render_template('admin/importer_etudiants.html', annee_active=annee_active)
 
@@ -667,6 +704,14 @@ def importer_finissants():
             f'{nb_ajoutes} ajouté(s), {nb_maj} mis à jour, {nb_ignores} ignoré(s).',
             'success'
         )
+        if nb_ajoutes + nb_maj > 0:
+            from app.models.notification import notifier_tous
+            notifier_tous(
+                f'Liste des finissants importée pour {annee} — '
+                f'{nb_ajoutes} ajouté(s), {nb_maj} mis à jour.',
+                type_notif='success',
+            )
+            db.session.commit()
     except Exception as e:
         db.session.rollback()
         flash(f'Erreur lors de l\'import : {e}', 'danger')
@@ -712,9 +757,14 @@ def finaliser_liste():
         flash('Impossible de finaliser : la liste est vide.', 'danger')
         return redirect(url_for('admin.liste_finissants'))
 
-    # Dossiers éligibles au cross-référencement (statut AUTHENTIFICATION)
-    dossiers = DossierDiplomation.query.filter_by(
-        annee_academique=annee, statut='AUTHENTIFICATION'
+    # Dossiers éligibles au cross-référencement (SOUMISSION_PHYSIQUE ou AUTHENTIFICATION)
+    from sqlalchemy import or_
+    dossiers = DossierDiplomation.query.filter(
+        DossierDiplomation.annee_academique == annee,
+        or_(
+            DossierDiplomation.statut == 'SOUMISSION_PHYSIQUE',
+            DossierDiplomation.statut == 'AUTHENTIFICATION',
+        )
     ).all()
 
     nb_eligibles = nb_non_eligibles = 0

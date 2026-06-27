@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Soumission physique{% endblock %}
+{% block page_title %}Soumission physique & paiement{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1><i class="bi bi-cash-coin me-2"></i>Soumission physique & paiement des frais</h1>
+    <p class="text-muted mb-0" style="font-size:.85rem">
+      Dossiers numériques authentifiés en attente de dépôt physique et paiement.
+    </p>
+  </div>
+</div>
+
+{% if not dossiers %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h6>Aucun dossier en attente</h6>
+      <p>Tous les dossiers authentifiés ont été pris en charge.</p>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-header">
+    <span>Dossiers à traiter</span>
+    <span class="badge bg-primary">{{ dossiers|length }}</span>
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Matricule</th>
+          <th>Étudiant</th>
+          <th>Filière</th>
+          <th>Date authentif.</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        <tr>
+          <td><code>{{ d.etudiant.matricule }}</code></td>
+          <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+          <td>{{ d.etudiant.filiere }}</td>
+          <td>{{ d.date_depot.strftime('%d/%m/%Y') if d.date_depot else '—' }}</td>
+          <td>
+            <button class="btn btn-primary btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#modal-soumission-{{ d.id_dossier }}">
+              <i class="bi bi-cash-coin me-1"></i>Valider paiement
+            </button>
+          </td>
+        </tr>
+
+        {# Modal de validation #}
+        <div class="modal fade" id="modal-soumission-{{ d.id_dossier }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">
+                  <i class="bi bi-cash-coin me-2 text-primary"></i>
+                  Valider soumission physique
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <form method="POST"
+                    action="{{ url_for('representant.valider_soumission', id=d.id_dossier) }}">
+                <div class="modal-body">
+                  <div class="alert alert-info py-2" style="font-size:.85rem">
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</strong>
+                    ({{ d.etudiant.matricule }}) a remis son dossier physique et payé les frais.
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label fw-500">Montant des frais payés (FCFA)</label>
+                    <input type="number" name="montant_frais" class="form-control"
+                           min="0" step="100" placeholder="Ex. : 25000">
+                    <div class="form-text">Laisser vide si non applicable.</div>
+                  </div>
+                  <div class="alert alert-warning py-2" style="font-size:.82rem">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Un reçu numérique imprimable sera généré automatiquement.
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg me-1"></i>Confirmer & générer reçu
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

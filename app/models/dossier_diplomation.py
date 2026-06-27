@@ -4,6 +4,7 @@ from app import db
 STATUTS_DIPLOMATION = [
     'DEPOSE', 'EN_VERIFICATION', 'INCOMPLET',
     'AUTHENTIFICATION', 'AUTH_REJETEE',
+    'SOUMISSION_PHYSIQUE',
     'LISTE_FINISSANTS', 'IMPRESSION_PROVISOIRE',
     'PRODUCTION_DEFINITIVE', 'SIGNATURE_DIRECTEUR',
     'SIGNATURE_RECTEUR', 'SIGNATURE_MINISTRE',
@@ -21,6 +22,8 @@ class DossierDiplomation(db.Model):
 
     montant_frais = db.Column(db.Numeric(10, 2))
     frais_payes = db.Column(db.Boolean, default=False)
+    date_soumission_physique = db.Column(db.Date)
+    reference_recu = db.Column(db.String(50))
 
     resultat_authentification = db.Column(db.String(15))
     nom_sur_diplome = db.Column(db.String(150))
@@ -81,6 +84,7 @@ class DossierDiplomation(db.Model):
             'INCOMPLET': 'Incomplet',
             'AUTHENTIFICATION': 'Authentification',
             'AUTH_REJETEE': 'Auth. rejetée',
+            'SOUMISSION_PHYSIQUE': 'Soumission physique',
             'LISTE_FINISSANTS': 'Liste finissants',
             'IMPRESSION_PROVISOIRE': 'Impression provisoire',
             'PRODUCTION_DEFINITIVE': 'Production définitive',
@@ -101,6 +105,7 @@ class DossierDiplomation(db.Model):
             'INCOMPLET':            'warning',
             'AUTHENTIFICATION':     'success',
             'AUTH_REJETEE':         'danger',
+            'SOUMISSION_PHYSIQUE':  'info',
             'LISTE_FINISSANTS':     'success',
             'IMPRESSION_PROVISOIRE':'success',
             'PRODUCTION_DEFINITIVE':'success',

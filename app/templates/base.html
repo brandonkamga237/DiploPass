@@ -90,6 +90,11 @@
       <i class="bi bi-shield-check"></i>
       <span class="sidebar-label">Authentification</span>
     </a>
+    <a href="{{ url_for('representant.liste_soumissions') }}"
+       class="nav-link {% if request.endpoint in ('representant.liste_soumissions', 'representant.valider_soumission', 'representant.recu_paiement') %}active{% endif %}">
+      <i class="bi bi-cash-coin"></i>
+      <span class="sidebar-label">Soumission & paiement</span>
+    </a>
     <a href="{{ url_for('representant.liste_finissants') }}"
        class="nav-link {% if request.endpoint == 'representant.liste_finissants' %}active{% endif %}">
       <i class="bi bi-pencil-square"></i>
@@ -151,6 +156,11 @@
       <i class="bi bi-pen"></i>
       <span class="sidebar-label">Dossiers à signer</span>
     </a>
+    <a href="{{ url_for('directeur.dossiers_signes') }}"
+       class="nav-link {% if request.endpoint == 'directeur.dossiers_signes' %}active{% endif %}">
+      <i class="bi bi-check-circle"></i>
+      <span class="sidebar-label">Dossiers signés</span>
+    </a>
     <a href="{{ url_for('directeur.liste_communiques') }}"
        class="nav-link {% if request.endpoint in ('directeur.liste_communiques', 'directeur.nouveau_communique') %}active{% endif %}">
       <i class="bi bi-megaphone"></i>
@@ -200,6 +210,23 @@
        class="nav-link {% if request.endpoint in ('admin.liste_annees', 'admin.nouvelle_annee') %}active{% endif %}">
       <i class="bi bi-calendar-range"></i>
       <span class="sidebar-label">Années diplomation</span>
+    </a>
+    {% endif %}
+
+    {# ── Notifications (tous les rôles sauf étudiant) ── #}
+    {% if session.role not in ('etudiant', None) and session.role %}
+    <div class="sidebar-section">Système</div>
+    <a href="{{ url_for('notifications.liste') }}"
+       class="nav-link {% if request.blueprint == 'notifications' %}active{% endif %}"
+       style="position:relative">
+      <i class="bi bi-bell"></i>
+      <span class="sidebar-label">Notifications</span>
+      {% if nb_notifs_non_lues > 0 %}
+      <span class="badge bg-danger ms-auto"
+            style="font-size:.65rem;position:absolute;right:10px;top:50%;transform:translateY(-50%)">
+        {{ nb_notifs_non_lues }}
+      </span>
+      {% endif %}
     </a>
     {% endif %}
 

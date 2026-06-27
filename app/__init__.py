@@ -32,6 +32,7 @@ def create_app(env=None):
     from app.controllers.chef_bureau import chef_bureau_bp
     from app.controllers.representant import representant_bp
     from app.controllers.etudiant import etudiant_bp
+    from app.controllers.notifications import notif_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
@@ -40,6 +41,31 @@ def create_app(env=None):
     app.register_blueprint(chef_bureau_bp, url_prefix='/chef-bureau')
     app.register_blueprint(representant_bp, url_prefix='/representant')
     app.register_blueprint(etudiant_bp, url_prefix='/etudiant')
+    app.register_blueprint(notif_bp, url_prefix='/notifications')
+
+    # ── Context processor : notifications non lues ───────────────────────────
+    @app.context_processor
+    def inject_notifs():
+        from flask import session
+        from flask_login import current_user
+        if not current_user or not current_user.is_authenticated:
+            return dict(nb_notifs_non_lues=0, notifs_recentes=[])
+        try:
+            from app.models.notification import Notification
+            role = session.get('role', '')
+            if role == 'etudiant':
+                return dict(nb_notifs_non_lues=0, notifs_recentes=[])
+            q = Notification.query.filter_by(destinataire_type=role, lue=False)
+            nb = q.count()
+            recentes = (
+                Notification.query
+                .filter_by(destinataire_type=role)
+                .order_by(Notification.created_at.desc())
+                .limit(5).all()
+            )
+            return dict(nb_notifs_non_lues=nb, notifs_recentes=recentes)
+        except Exception:
+            return dict(nb_notifs_non_lues=0, notifs_recentes=[])
 
     # ── Context processor : année académique active ───────────────────────────
     @app.context_processor

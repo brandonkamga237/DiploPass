@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Dossiers signés{% endblock %}
+{% block page_title %}Dossiers signés{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex align-items-center gap-3 flex-wrap">
+  <div>
+    <h1><i class="bi bi-check-circle me-2 text-success"></i>Dossiers signés</h1>
+    <p class="text-muted mb-0" style="font-size:.85rem">
+      Historique des dossiers ayant reçu votre signature.
+    </p>
+  </div>
+  {# Filtre par session #}
+  <form method="GET" class="ms-auto d-flex align-items-center gap-2">
+    <label class="form-label mb-0" style="font-size:.85rem;white-space:nowrap">Filtrer par année :</label>
+    <select name="annee" class="form-select form-select-sm" style="min-width:130px"
+            onchange="this.form.submit()">
+      <option value="">Toutes</option>
+      {% for a in annees %}
+      <option value="{{ a.code }}" {% if a.code == annee_filtre %}selected{% endif %}>{{ a.code }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+{% if not dossiers %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h6>Aucun dossier signé</h6>
+      <p>Aucun dossier ne correspond au filtre sélectionné.</p>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-header">
+    <span>{{ dossiers|length }} dossier(s)</span>
+    {% if annee_filtre %}<span class="badge bg-primary ms-2">{{ annee_filtre }}</span>{% endif %}
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Matricule</th>
+          <th>Étudiant</th>
+          <th>Filière</th>
+          <th>Année</th>
+          <th>Date signature</th>
+          <th>Statut actuel</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dossiers %}
+        <tr>
+          <td><code>{{ d.etudiant.matricule }}</code></td>
+          <td class="fw-500">{{ d.etudiant.nom }} {{ d.etudiant.prenom }}</td>
+          <td>{{ d.etudiant.filiere }}</td>
+          <td>{{ d.annee_academique }}</td>
+          <td>
+            <span class="badge bg-success">
+              {{ d.date_signature_directeur.strftime('%d/%m/%Y') if d.date_signature_directeur else '—' }}
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-{{ d.couleur_statut() }}">{{ d.libelle_statut() }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

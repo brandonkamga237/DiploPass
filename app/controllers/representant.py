@@ -139,6 +139,63 @@ def liste_authentification():
     return render_template('representant/authentification.html', dossiers=dossiers)
 
 
+@representant_bp.route('/soumissions')
+@login_required
+@role_required('representant', 'chef_bureau')
+def liste_soumissions():
+    """Dossiers authentifiés en attente de soumission physique et paiement."""
+    dossiers = _dossiers_filiere().filter(
+        DossierDiplomation.statut == 'AUTHENTIFICATION'
+    ).order_by(DossierDiplomation.date_depot).all()
+    return render_template('representant/soumissions.html', dossiers=dossiers)
+
+
+@representant_bp.route('/dossiers/<int:id>/valider-soumission', methods=['POST'])
+@login_required
+@role_required('representant', 'chef_bureau')
+def valider_soumission(id):
+    """Valide la soumission physique + paiement des frais par l'étudiant."""
+    import uuid as _uuid
+    dossier = DossierDiplomation.query.get_or_404(id)
+    if dossier.statut != 'AUTHENTIFICATION':
+        flash('Ce dossier n\'est pas en attente de soumission physique.', 'warning')
+        return redirect(url_for('representant.liste_soumissions'))
+
+    montant = request.form.get('montant_frais', '').strip()
+    try:
+        dossier.montant_frais = float(montant) if montant else None
+    except ValueError:
+        dossier.montant_frais = None
+
+    dossier.frais_payes = True
+    dossier.date_soumission_physique = datetime.date.today()
+    dossier.reference_recu = 'REC-' + _uuid.uuid4().hex[:8].upper()
+    ancien = dossier.statut
+    dossier.statut = 'SOUMISSION_PHYSIQUE'
+
+    _log(id, 'SOUMISSION_PHYSIQUE', ancien, 'SOUMISSION_PHYSIQUE',
+         str(current_user.id_representant), 'representant')
+    db.session.commit()
+    flash(
+        f'Soumission physique et paiement validés — Réf. reçu : {dossier.reference_recu}',
+        'success',
+    )
+    return redirect(url_for('representant.recu_paiement', id=id))
+
+
+@representant_bp.route('/dossiers/<int:id>/recu')
+@login_required
+@role_required('representant', 'chef_bureau')
+def recu_paiement(id):
+    """Affiche le reçu imprimable de paiement des frais de diplomation."""
+    dossier = DossierDiplomation.query.get_or_404(id)
+    if not dossier.reference_recu:
+        flash('Aucun reçu disponible pour ce dossier.', 'warning')
+        return redirect(url_for('representant.liste_soumissions'))
+    etudiant = Etudiant.query.get(dossier.matricule)
+    return render_template('documents/recu_paiement.html', dossier=dossier, etudiant=etudiant)
+
+
 @representant_bp.route('/dossiers/<int:id>/authentifier', methods=['POST'])
 @login_required
 @role_required('representant', 'chef_bureau')
@@ -442,7 +499,7 @@ def transmettre_finissants():
                 dossier.lddn_sur_diplome = f.lieu_naissance
 
             # Passer en LISTE_FINISSANTS si ce n'est pas déjà un statut avancé
-            STATUTS_ELIGIBLES = ['AUTHENTIFICATION', 'EN_VERIFICATION']
+            STATUTS_ELIGIBLES = ['SOUMISSION_PHYSIQUE', 'AUTHENTIFICATION', 'EN_VERIFICATION']
             if dossier.statut in STATUTS_ELIGIBLES:
                 ancien = dossier.statut
                 dossier.statut = 'LISTE_FINISSANTS'

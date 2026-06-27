@@ -3,9 +3,16 @@
 {% block page_title %}Communiqués{% endblock %}
 
 {% block topbar_actions %}
+{% if not procedure_en_cours %}
 <a href="{{ url_for('directeur.nouveau_communique') }}" class="btn btn-primary btn-sm">
-  <i class="bi bi-plus-lg"></i> Nouveau communiqué
+  <i class="bi bi-play-circle me-1"></i>Lancer une procédure
 </a>
+{% else %}
+<span class="btn btn-sm" style="background:#e2e8f0;color:#64748b;cursor:not-allowed"
+      title="Une procédure est déjà en cours pour cette année">
+  <i class="bi bi-play-circle me-1"></i>Lancer une procédure
+</span>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -86,11 +93,17 @@
               {{ c.statut }}
             </span>
           </td>
-          <td>
+          <td class="d-flex gap-2 align-items-center">
             {% if c.statut == 'BROUILLON' %}
             <form method="POST" action="{{ url_for('directeur.publier_communique', id=c.id_communique) }}" class="d-inline">
               <button type="submit" class="btn btn-sm btn-success">
                 <i class="bi bi-send me-1"></i>Publier
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('directeur.supprimer_communique', id=c.id_communique) }}" class="d-inline"
+                  onsubmit="return confirm('Supprimer ce communiqué ?')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
               </button>
             </form>
             {% endif %}

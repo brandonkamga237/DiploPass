@@ -14,3 +14,4 @@ from app.models.dossier_formalisation import DossierFormalisation
 from app.models.dossier_integration import DossierIntegration
 from app.models.document_requis import DocumentRequis
 from app.models.historique_phases import HistoriquePhases
+from app.models.notification import Notification

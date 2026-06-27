@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Reçu de paiement — {{ etudiant.nom }} {{ etudiant.prenom }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; background: #fff; color: #000; font-size: 11pt; }
+
+    .no-print { text-align: center; padding: 16px; background: #f1f5f9; }
+    .btn-print {
+      background: #1a4f8a; color: #fff; border: none;
+      padding: 10px 28px; font-size: 14px; border-radius: 6px; cursor: pointer;
+    }
+    .btn-print:hover { background: #133a68; }
+
+    .recu {
+      width: 190mm;
+      margin: 20px auto;
+      border: 2px solid #1a4f8a;
+      padding: 14mm 16mm;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12mm;
+      border-bottom: 2px solid #1a4f8a;
+      padding-bottom: 8mm;
+      margin-bottom: 8mm;
+    }
+    .logo-zone {
+      width: 22mm; height: 22mm;
+      border: 1.5px solid #1a4f8a;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .logo-zone img { width: 100%; height: 100%; object-fit: contain; }
+    .header-text { flex: 1; }
+    .header-text .inst { font-size: 8.5pt; line-height: 1.4; color: #333; }
+    .header-text .doc-title {
+      font-size: 14pt; font-weight: bold; color: #1a4f8a;
+      text-transform: uppercase; margin-top: 4mm;
+    }
+    .ref-bloc {
+      text-align: right;
+      font-size: 8.5pt;
+      color: #333;
+    }
+    .ref-bloc .ref {
+      font-size: 10pt; font-weight: bold;
+      border: 1px solid #1a4f8a;
+      padding: 2mm 5mm;
+      display: inline-block;
+      color: #1a4f8a;
+    }
+
+    /* Champs */
+    .section-title {
+      font-size: 9pt; font-weight: bold; text-transform: uppercase;
+      color: #1a4f8a; letter-spacing: .5pt;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 2mm; margin: 6mm 0 4mm;
+    }
+    .champ-row {
+      display: grid;
+      grid-template-columns: 55mm 1fr;
+      align-items: baseline;
+      margin-bottom: 3mm;
+      gap: 4mm;
+    }
+    .champ-label { font-size: 9pt; color: #555; }
+    .champ-val {
+      font-size: 10pt; font-weight: bold;
+      border-bottom: 1px dotted #94a3b8;
+      padding-bottom: 1mm;
+    }
+
+    /* Montant en évidence */
+    .montant-bloc {
+      text-align: center;
+      border: 2px solid #1a4f8a;
+      border-radius: 4mm;
+      padding: 5mm 10mm;
+      margin: 6mm 0;
+    }
+    .montant-label { font-size: 9pt; color: #555; text-transform: uppercase; }
+    .montant-val { font-size: 22pt; font-weight: bold; color: #1a4f8a; }
+
+    /* Signatures */
+    .signatures {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10mm;
+      margin-top: 12mm;
+      font-size: 8.5pt;
+    }
+    .sig-zone { height: 20mm; border-bottom: 1px solid #000; }
+    .sig-titre { font-weight: bold; margin-top: 2mm; }
+    .sig-nom { font-size: 8pt; color: #555; }
+
+    /* Footer */
+    .footer {
+      margin-top: 8mm;
+      padding-top: 4mm;
+      border-top: 1px solid #000;
+      font-size: 7.5pt;
+      text-align: center;
+      color: #555;
+    }
+
+    @media print {
+      body { margin: 0; }
+      .no-print { display: none; }
+      .recu { margin: 0; border: 1px solid #000; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimer le reçu</button>
+  &nbsp;
+  <a href="javascript:history.back()"
+     style="display:inline-block;padding:10px 20px;background:#64748b;color:#fff;border-radius:6px;text-decoration:none;font-size:14px">
+    ← Retour
+  </a>
+</div>
+
+<div class="recu">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-zone">
+      <img src="/static/img/logo.png" alt="ENSET"
+           onerror="this.style.display='none'">
+    </div>
+    <div class="header-text">
+      <div class="inst">
+        République du Cameroun &nbsp;·&nbsp; <em>Republic of Cameroon</em><br>
+        Ministère de l'Enseignement Supérieur<br>
+        Université de Douala — École Normale Supérieure d'Enseignement Technique
+      </div>
+      <div class="doc-title">Reçu de paiement — Diplomation</div>
+    </div>
+    <div class="ref-bloc">
+      <div class="ref">{{ dossier.reference_recu }}</div>
+      <div style="margin-top:2mm">
+        Date : <strong>{{ dossier.date_soumission_physique.strftime('%d/%m/%Y') if dossier.date_soumission_physique else '—' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- BÉNÉFICIAIRE -->
+  <div class="section-title">Informations de l'étudiant</div>
+  <div class="champ-row">
+    <div class="champ-label">Nom et prénom</div>
+    <div class="champ-val">{{ etudiant.nom }} {{ etudiant.prenom }}</div>
+  </div>
+  <div class="champ-row">
+    <div class="champ-label">Matricule</div>
+    <div class="champ-val">{{ etudiant.matricule }}</div>
+  </div>
+  <div class="champ-row">
+    <div class="champ-label">Filière</div>
+    <div class="champ-val">{{ etudiant.filiere }}</div>
+  </div>
+  <div class="champ-row">
+    <div class="champ-label">Année académique</div>
+    <div class="champ-val">{{ dossier.annee_academique }}</div>
+  </div>
+
+  <!-- PAIEMENT -->
+  <div class="section-title">Détail du paiement</div>
+  <div class="champ-row">
+    <div class="champ-label">Motif</div>
+    <div class="champ-val">Frais de diplomation — dossier physique</div>
+  </div>
+  <div class="champ-row">
+    <div class="champ-label">Mode de paiement</div>
+    <div class="champ-val">Espèces</div>
+  </div>
+  <div class="champ-row">
+    <div class="champ-label">Numéro de dossier</div>
+    <div class="champ-val">{{ dossier.id_dossier }}</div>
+  </div>
+
+  <!-- MONTANT -->
+  <div class="montant-bloc">
+    <div class="montant-label">Montant perçu</div>
+    <div class="montant-val">
+      {% if dossier.montant_frais %}
+        {{ "{:,.0f}".format(dossier.montant_frais).replace(",", " ") }} FCFA
+      {% else %}
+        — FCFA
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SIGNATURES -->
+  <div class="signatures">
+    <div>
+      <div class="sig-zone"></div>
+      <div class="sig-titre">L'étudiant(e)</div>
+      <div class="sig-nom">{{ etudiant.nom }} {{ etudiant.prenom }}</div>
+    </div>
+    <div>
+      <div class="sig-zone"></div>
+      <div class="sig-titre">Le Représentant de filière</div>
+      <div class="sig-nom">(cachet & signature)</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Ce reçu est généré automatiquement par DiploPass — ENSET de Douala.
+    Il atteste du dépôt du dossier physique et du paiement des frais de diplomation.
+    Réf : <strong>{{ dossier.reference_recu }}</strong>
+  </div>
+
+</div>
+</body>
+</html>

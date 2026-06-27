@@ -113,6 +113,7 @@ CREATE TABLE IF NOT EXISTS dossier_diplomation (
         CHECK (statut IN (
             'DEPOSE','EN_VERIFICATION','INCOMPLET',
             'AUTHENTIFICATION','AUTH_REJETEE',
+            'SOUMISSION_PHYSIQUE',
             'LISTE_FINISSANTS','IMPRESSION_PROVISOIRE',
             'PRODUCTION_DEFINITIVE','SIGNATURE_DIRECTEUR',
             'SIGNATURE_RECTEUR','SIGNATURE_MINISTRE',
@@ -120,6 +121,8 @@ CREATE TABLE IF NOT EXISTS dossier_diplomation (
         )),
     montant_frais                 NUMERIC(10,2),
     frais_payes                   BOOLEAN     DEFAULT FALSE,
+    date_soumission_physique      DATE,
+    reference_recu                VARCHAR(50),
     resultat_authentification     VARCHAR(15) CHECK (resultat_authentification IN ('AUTHENTIQUE','FAUX')),
     nom_sur_diplome               VARCHAR(150),
     prenom_sur_diplome            VARCHAR(150),
@@ -229,6 +232,18 @@ CREATE TABLE IF NOT EXISTS piece_jointe (
     taille_octets      INTEGER,
     date_upload        TIMESTAMP    DEFAULT NOW(),
     statut             VARCHAR(20)  DEFAULT 'DEPOSE'
+);
+
+CREATE TABLE IF NOT EXISTS notification (
+    id                  SERIAL       PRIMARY KEY,
+    destinataire_type   VARCHAR(30)  NOT NULL,
+    destinataire_id     INTEGER,
+    filiere             VARCHAR(100),
+    message             TEXT         NOT NULL,
+    lue                 BOOLEAN      DEFAULT FALSE,
+    type_notif          VARCHAR(20)  DEFAULT 'info',
+    lien                VARCHAR(255),
+    created_at          TIMESTAMP    DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS liste_finissants (
